@@ -1,0 +1,33 @@
+season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,sweaterNumber,heightInInches,weightInPounds,heightInCentimeters,weightInKilograms,birthDate,birthCity,birthCountry,birthStateProvince,pos_F,pos_D,pos_G,hand_R,hand_L
+2023,WPG,8478891,https://assets.nhle.com/mugs/nhl/20222023/WPG/8478891.png,Mason,Appleton,C,R,22,75,197,191,89,1996-01-15,Green Bay,USA,Wisconsin,1,0,0,1,0
+2023,WPG,8480289,https://assets.nhle.com/mugs/nhl/20222023/WPG/8480289.png,Morgan,Barron,C,L,36,76,220,193,100,1998-12-02,Halifax,CAN,Nova Scotia,1,0,0,0,1
+2023,WPG,8478398,https://assets.nhle.com/mugs/nhl/20222023/WPG/8478398.png,Kyle,Connor,L,L,81,74,179,188,81,1996-12-09,Shelby Township,USA,Michigan,1,0,0,0,1
+2023,WPG,8479400,https://assets.nhle.com/mugs/nhl/20222023/WPG/8479400.png,Pierre-Luc,Dubois,L,L,80,76,214,193,97,1998-06-24,Ste-Agathe-des-Monts,CAN,Quebec,1,0,0,0,1
+2023,WPG,8477940,https://assets.nhle.com/mugs/nhl/20222023/WPG/8477940.png,Nikolaj,Ehlers,L,L,27,72,169,183,77,1996-02-14,Aalborg,DNK,"",1,0,0,0,1
+2023,WPG,8479591,https://assets.nhle.com/mugs/nhl/20222023/WPG/8479591.png,Michael,Eyssimont,C,L,23,72,180,183,82,1996-09-09,Littleton,USA,Colorado,1,0,0,0,1
+2023,WPG,8474040,https://assets.nhle.com/mugs/nhl/20222023/WPG/8474040.png,Sam,Gagner,C,R,89,71,201,180,91,1989-08-10,London,CAN,Ontario,1,0,0,1,0
+2023,WPG,8481019,https://assets.nhle.com/mugs/nhl/20222023/WPG/8481019.png,David,Gustafsson,C,L,19,74,212,188,96,2000-04-11,Tingsryd,SWE,"",1,0,0,0,1
+2023,WPG,8478424,https://assets.nhle.com/mugs/nhl/20222023/WPG/8478424.png,Jansen,Harkins,C,L,12,74,197,188,89,1997-05-23,Cleveland,USA,Ohio,1,0,0,0,1
+2023,WPG,8479536,https://assets.nhle.com/mugs/nhl/20222023/WPG/8479536.png,Axel,Jonsson-Fjallby,L,L,71,73,189,185,86,1998-02-10,Stockholm,SWE,"",1,0,0,0,1
+2023,WPG,8480901,https://assets.nhle.com/mugs/nhl/20222023/WPG/8480901.png,Karson,Kuhlman,C,R,20,70,184,178,83,1995-09-26,Esko,USA,Minnesota,1,0,0,1,0
+2023,WPG,8476392,https://assets.nhle.com/mugs/nhl/20222023/WPG/8476392.png,Adam,Lowry,C,L,17,78,208,198,94,1993-03-29,St. Louis,USA,Missouri,1,0,0,0,1
+2023,WPG,8477357,https://assets.nhle.com/mugs/nhl/20222023/WPG/8477357.png,Saku,Maenalanen,R,L,8,76,214,193,97,1994-05-29,Kemi,FIN,"",1,0,0,0,1
+2023,WPG,8476480,https://assets.nhle.com/mugs/nhl/20222023/WPG/8476480.png,Vladislav,Namestnikov,C,L,7,72,179,183,81,1992-11-22,Zhukovskiy,RUS,"",1,0,0,0,1
+2023,WPG,8475799,https://assets.nhle.com/mugs/nhl/20222023/WPG/8475799.png,Nino,Niederreiter,R,L,62,74,218,188,99,1992-09-08,Chur,CHE,"",1,0,0,0,1
+2023,WPG,8482149,https://assets.nhle.com/mugs/nhl/20222023/WPG/8482149.png,Cole,Perfetti,C,L,91,71,184,180,83,2002-01-01,Whitby,CAN,Ontario,1,0,0,0,1
+2023,WPG,8480443,https://assets.nhle.com/mugs/nhl/20222023/WPG/8480443.png,Kristian,Reichel,C,R,87,74,192,188,87,1998-06-11,Most,CZE,"",1,0,0,1,0
+2023,WPG,8476460,https://assets.nhle.com/mugs/nhl/20222023/WPG/8476460.png,Mark,Scheifele,C,R,55,75,198,191,90,1993-03-15,Kitchener,CAN,Ontario,1,0,0,1,0
+2023,WPG,8478831,https://assets.nhle.com/mugs/nhl/20222023/WPG/8478831.png,Kevin,Stenlund,C,R,28,77,215,196,98,1996-09-20,Stockholm,SWE,"",1,0,0,1,0
+2023,WPG,8476952,https://assets.nhle.com/mugs/nhl/20222023/WPG/8476952.png,Dominic,Toninato,C,L,21,74,201,188,91,1994-03-09,Duluth,USA,Minnesota,1,0,0,0,1
+2023,WPG,8471218,https://assets.nhle.com/mugs/nhl/20222023/WPG/8471218.png,Blake,Wheeler,R,R,26,77,220,196,100,1986-08-31,Plymouth,USA,Minnesota,1,0,0,1,0
+2023,WPG,8478476,https://assets.nhle.com/mugs/nhl/20222023/WPG/8478476.png,Kyle,Capobianco,D,L,77,74,201,188,91,1997-08-13,Mississauga,CAN,Ontario,0,0,0,0,1
+2023,WPG,8476331,https://assets.nhle.com/mugs/nhl/20222023/WPG/8476331.png,Dylan,DeMelo,D,R,2,72,195,183,88,1993-05-01,London,CAN,Ontario,0,0,0,1,0
+2023,WPG,8475455,https://assets.nhle.com/mugs/nhl/20222023/WPG/8475455.png,Brenden,Dillon,D,L,5,76,224,193,102,1990-11-13,New Westminster,CAN,British Columbia,0,0,0,0,1
+2023,WPG,8481572,https://assets.nhle.com/mugs/nhl/20222023/WPG/8481572.png,Ville,Heinola,D,L,14,73,185,185,84,2001-03-02,Honkajoki,FIN,"",0,0,0,0,1
+2023,WPG,8477504,https://assets.nhle.com/mugs/nhl/20222023/WPG/8477504.png,Josh,Morrissey,D,L,44,72,185,183,84,1995-03-28,Calgary,CAN,Alberta,0,0,0,0,1
+2023,WPG,8480145,https://assets.nhle.com/mugs/nhl/20222023/WPG/8480145.png,Neal,Pionk,D,R,4,72,185,183,84,1995-07-29,Omaha,USA,Nebraska,0,0,0,1,0
+2023,WPG,8480049,https://assets.nhle.com/mugs/nhl/20222023/WPG/8480049.png,Dylan,Samberg,D,L,54,76,219,193,99,1999-01-24,Saginaw,USA,Minnesota,0,0,0,0,1
+2023,WPG,8477220,https://assets.nhle.com/mugs/nhl/20222023/WPG/8477220.png,Nate,Schmidt,D,L,88,72,195,183,88,1991-07-16,St. Cloud,USA,Minnesota,0,0,0,0,1
+2023,WPG,8479378,https://assets.nhle.com/mugs/nhl/20222023/WPG/8479378.png,Logan,Stanley,D,L,64,79,242,201,110,1998-05-26,Waterloo,CAN,Ontario,0,0,0,0,1
+2023,WPG,8476945,https://assets.nhle.com/mugs/nhl/20222023/WPG/8476945.png,Connor,Hellebuyck,G,L,37,76,216,193,98,1993-05-19,Commerce,USA,Michigan,0,0,1,0,1
+2023,WPG,8479496,https://assets.nhle.com/mugs/nhl/20222023/WPG/8479496.png,David,Rittich,G,L,33,76,205,193,93,1992-08-19,Jihlava,CZE,"",0,0,1,0,1

@@ -1,0 +1,35 @@
+season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,sweaterNumber,heightInInches,weightInPounds,heightInCentimeters,weightInKilograms,birthDate,birthCity,birthCountry,birthStateProvince,pos_F,pos_D,pos_G,hand_R,hand_L
+2010,LAK,8470606,https://assets.nhle.com/mugs/nhl/20092010/LAK/8470606.png,Dustin,Brown,R,R,23,72,205,183,93,1984-11-04,Ithaca,USA,New York,1,0,0,1,0
+2010,LAK,8471718,https://assets.nhle.com/mugs/nhl/20092010/LAK/8471718.png,Marc-Andre,Cliche,C,R,67,72,202,183,92,1987-03-23,Rouyn-Noranda,CAN,Quebec,1,0,0,1,0
+2010,LAK,8471733,https://assets.nhle.com/mugs/nhl/20092010/LAK/8471733.png,Rich,Clune,L,L,56,71,211,180,96,1987-04-25,Toronto,CAN,Ontario,1,0,0,0,1
+2010,LAK,8475086,https://assets.nhle.com/mugs/nhl/20092010/LAK/8475086.png,Corey,Elkins,C,L,47,74,214,188,97,1985-02-23,West Bloomfield,USA,Michigan,1,0,0,0,1
+2010,LAK,8468500,https://assets.nhle.com/mugs/nhl/20092010/LAK/8468500.png,Alex,Frolov,L,R,24,74,210,188,95,1982-06-19,Moscow,RUS,"",1,0,0,1,0
+2010,LAK,8467831,https://assets.nhle.com/mugs/nhl/20092010/LAK/8467831.png,Jeff,Halpern,C,R,22,72,190,183,86,1976-05-03,Washington,USA,District of Columbia,1,0,0,1,0
+2010,LAK,8462129,https://assets.nhle.com/mugs/nhl/20092010/LAK/8462129.png,Michal,Handzus,C,L,26,77,215,196,98,1977-03-11,Banská Bystrica,SVK,"",1,0,0,0,1
+2010,LAK,8469120,https://assets.nhle.com/mugs/nhl/20092010/LAK/8469120.png,Raitis,Ivanans,L,L,41,76,231,193,105,1979-01-03,Riga,LVA,"",1,0,0,0,1
+2010,LAK,8471685,https://assets.nhle.com/mugs/nhl/20092010/LAK/8471685.png,Anze,Kopitar,C,L,11,75,225,191,102,1987-08-24,Jesenice,SVN,"",1,0,0,0,1
+2010,LAK,8473453,https://assets.nhle.com/mugs/nhl/20092010/LAK/8473453.png,Trevor,Lewis,C,R,22,73,201,185,91,1987-01-08,Salt Lake City,USA,Utah,1,0,0,1,0
+2010,LAK,8474681,https://assets.nhle.com/mugs/nhl/20092010/LAK/8474681.png,Andrei,Loktionov,C,L,48,71,190,180,86,1990-05-30,Voskresensk,RUS,"",1,0,0,0,1
+2010,LAK,8460556,https://assets.nhle.com/mugs/nhl/20092010/LAK/8460556.png,Freddy,Modin,L,L,33,76,220,193,100,1974-10-08,Sundsvall,SWE,"",1,0,0,0,1
+2010,LAK,8474114,https://assets.nhle.com/mugs/nhl/20092010/LAK/8474114.png,Oscar,Moller,R,R,9,70,189,178,86,1989-01-22,Stockholm,SWE,"",1,0,0,1,0
+2010,LAK,8471386,https://assets.nhle.com/mugs/nhl/20092010/LAK/8471386.png,Scott,Parse,L,R,21,71,189,180,86,1984-09-05,Portage,USA,Michigan,1,0,0,1,0
+2010,LAK,8473962,https://assets.nhle.com/mugs/nhl/20092010/LAK/8473962.png,Teddy,Purcell,L,R,9,74,195,188,88,1985-09-08,St. John's,CAN,Newfoundland and Labrador,1,0,0,1,0
+2010,LAK,8470755,https://assets.nhle.com/mugs/nhl/20092010/LAK/8470755.png,Brad,Richardson,C,L,15,72,190,183,86,1985-02-04,Belleville,CAN,Ontario,1,0,0,0,1
+2010,LAK,8475170,https://assets.nhle.com/mugs/nhl/20092010/LAK/8475170.png,Brayden,Schenn,C,L,10,73,199,185,90,1991-08-22,Saskatoon,CAN,Saskatchewan,1,0,0,0,1
+2010,LAK,8469755,https://assets.nhle.com/mugs/nhl/20092010/LAK/8469755.png,Brandon,Segal,R,R,49,74,215,188,98,1983-07-12,Richmond,CAN,British Columbia,1,0,0,1,0
+2010,LAK,8474190,https://assets.nhle.com/mugs/nhl/20092010/LAK/8474190.png,Wayne,Simmonds,R,R,17,74,184,188,83,1988-08-26,Scarborough,CAN,Ontario,1,0,0,1,0
+2010,LAK,8460496,https://assets.nhle.com/mugs/nhl/20092010/LAK/8460496.png,Ryan,Smyth,L,L,94,74,191,188,87,1976-02-21,Banff,CAN,Alberta,1,0,0,0,1
+2010,LAK,8468526,https://assets.nhle.com/mugs/nhl/20092010/LAK/8468526.png,Jarret,Stoll,C,R,28,73,216,185,98,1982-06-24,Melville,CAN,Saskatchewan,1,0,0,1,0
+2010,LAK,8468508,https://assets.nhle.com/mugs/nhl/20092010/LAK/8468508.png,Justin,Williams,R,R,14,73,184,185,83,1981-10-04,Cobourg,CAN,Ontario,1,0,0,1,0
+2010,LAK,8474563,https://assets.nhle.com/mugs/nhl/20092010/LAK/8474563.png,Drew,Doughty,D,R,8,73,210,185,95,1989-12-08,London,CAN,Ontario,0,0,0,1,0
+2010,LAK,8474518,https://assets.nhle.com/mugs/nhl/20092010/LAK/8474518.png,Davis,Drewiske,D,L,44,74,222,188,101,1984-11-22,Hudson,USA,Wisconsin,0,0,0,0,1
+2010,LAK,8470121,https://assets.nhle.com/mugs/nhl/20092010/LAK/8470121.png,Matt,Greene,D,R,2,75,236,191,107,1983-05-13,Grand Ledge,USA,Michigan,0,0,0,1,0
+2010,LAK,8472394,https://assets.nhle.com/mugs/nhl/20092010/LAK/8472394.png,Peter,Harrold,D,R,5,71,180,180,82,1983-06-08,Kirtland Hills,USA,Ohio,0,0,0,1,0
+2010,LAK,8471677,https://assets.nhle.com/mugs/nhl/20092010/LAK/8471677.png,Jack,Johnson,D,L,3,73,227,185,103,1987-01-13,Indianapolis,USA,Indiana,0,0,0,0,1
+2010,LAK,8470905,https://assets.nhle.com/mugs/nhl/20092010/LAK/8470905.png,Randy,Jones,D,L,12,74,210,188,95,1981-07-23,Quispamsis,CAN,New Brunswick,0,0,0,0,1
+2010,LAK,8474166,https://assets.nhle.com/mugs/nhl/20092010/LAK/8474166.png,Alec,Martinez,D,L,27,73,210,185,95,1987-07-26,Rochester Hills,USA,Michigan,0,0,0,0,1
+2010,LAK,8458637,https://assets.nhle.com/mugs/nhl/20092010/LAK/8458637.png,Sean,O'Donnell,D,L,6,74,238,188,108,1971-10-13,Ottawa,CAN,Ontario,0,0,0,0,1
+2010,LAK,8467452,https://assets.nhle.com/mugs/nhl/20092010/LAK/8467452.png,Rob,Scuderi,D,L,7,73,216,185,98,1978-12-30,Syosset,USA,New York,0,0,0,0,1
+2010,LAK,8473541,https://assets.nhle.com/mugs/nhl/20092010/LAK/8473541.png,Jonathan,Bernier,G,L,45,72,185,183,84,1988-08-07,Laval,CAN,Quebec,0,0,1,0,1
+2010,LAK,8473975,https://assets.nhle.com/mugs/nhl/20092010/LAK/8473975.png,Erik,Ersberg,G,L,31,72,165,183,75,1982-03-08,Sala,SWE,"",0,0,1,0,1
+2010,LAK,8471734,https://assets.nhle.com/mugs/nhl/20092010/LAK/8471734.png,Jonathan,Quick,G,L,32,73,220,185,100,1986-01-21,Milford,USA,Connecticut,0,0,1,0,1

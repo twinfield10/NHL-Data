@@ -4,8 +4,8 @@ from requirements import *
 ### Schedule Load Functions ###
 
 ## Constants ##
-season_list = [2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,
-               2021,2022,2023,2024]
+#season_list = [2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,
+#               2021,2022,2023,2024]
 
 team_abbr_dict = {
     24: 'ANA',           # Anaheim Ducks         
@@ -59,51 +59,51 @@ pbp_link_pre = 'https://api-web.nhle.com/v1/gamecenter/'
 pbp_link_suf = '/play-by-play'
 shift_link = 'https://api.nhle.com/stats/rest/en/shiftcharts?cayenneExp=gameId='
 
+# 1) Load Historical Schedule From Fast R (From 2010 Season To 2023-06-07)
+def load_fast_schedule(i = 2023):
+    """ Loads a single season schedule. Will loop for each season in load document"""
+    # Load
+    url = f"https://raw.githubusercontent.com/sportsdataverse/fastRhockey-data/main/nhl/schedules/parquet/nhl_schedule_{i}.parquet"
+    df = pl.read_parquet(url)
+    df = (
+    df
+    .drop(['season', 'game_date'])
+    .with_columns([
+        pl.col('game_id').cast(pl.Int32),
+        pl.col('season_full').cast(pl.Int32).alias('season'),
+        pl.col('away_team_id').cast(pl.Utf8),
+        pl.col('home_team_id').cast(pl.Utf8),
+        pl.col("game_date_time").dt.convert_time_zone('America/New_York').dt.strftime(time_fmt).alias('start_time_ET'),
+        pl.col("game_date_time").dt.convert_time_zone('America/New_York').dt.strftime(day_fmt).alias('game_date'),
+        pl.when(pl.col('status_detailed_state') == 'Final').then(pl.lit('OK')).otherwise(pl.col('status_detailed_state')).alias('game_schedule_state')
+    ])
+    .with_columns([
+        pl.concat_str(pl.lit(pbp_link_pre), pl.col('game_id'), pl.lit(pbp_link_suf)).alias('pbp_link'),
+        pl.concat_str(pl.lit(shift_link), pl.col('game_id')).alias('shift_link')
+    ])
+    .rename({'game_type_abbreviation': 'season_type', "game_date_time": 'start_time_utc'})
+    .join(home_teams, on='home_team_id', how='left')
+    .join(away_teams, on='away_team_id', how='left')
+    .select([
+        'game_id', 'season', 'game_date', 'start_time_ET', 'season_type', 'game_schedule_state',
+        'away_team_id', 'away_score', 'away_abbreviation', 'home_score', 'home_team_id', 'home_abbreviation',
+        'pbp_link', 'shift_link', 'start_time_utc'
+    ])
+    )
+    szn_start = i-1
+    szn_lab = f"{i-1}-{i}"
+    csv_save_url = f"Schedule/csv/NHL_Schedule_{szn_lab}.csv"
+    par_save_url = f"Schedule/parquet/NHL_Schedule_{szn_lab}.parquet"
+    df.write_csv(csv_save_url)
+    df.write_parquet(par_save_url)
+    print(f"{szn_start}-{i} NHL Season Schedule Saved | Path: {csv_save_url}")
+
+for year in range(2010, 2024):
+    load_fast_schedule(i = year)
+
 # Dates For Scrape:
 max_date = pl.read_parquet("Schedule/parquet/NHL_Schedule_20232024.parquet")['game_date'].max()
 yday = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
-
-
-# 1) Load Historical Schedule From Fast R (From 2010 Season To 2023-06-07)
-def load_historical_schedule():
-    for i in season_list:
-        # Load
-        url = "https://raw.githubusercontent.com/sportsdataverse/fastRhockey-data/main/nhl/schedules/parquet/nhl_schedule_"+str(i)+".parquet"
-        df = pl.read_parquet(url)
-        df = (
-        df
-        .drop(['season', 'game_date'])
-        .with_columns([
-            pl.col('game_id').cast(pl.Int32),
-            pl.col('season_full').cast(pl.Int32).alias('season'),
-            pl.col('away_team_id').cast(pl.Utf8),
-            pl.col('home_team_id').cast(pl.Utf8),
-            pl.col("game_date_time").dt.convert_time_zone('America/New_York').dt.strftime(time_fmt).alias('start_time_ET'),
-            pl.col("game_date_time").dt.convert_time_zone('America/New_York').dt.strftime(day_fmt).alias('game_date'),
-            pl.when(pl.col('status_detailed_state') == 'Final').then(pl.lit('OK')).otherwise(pl.col('status_detailed_state')).alias('game_schedule_state')
-        ])
-        .with_columns([
-            pl.concat_str(pl.lit(pbp_link_pre), pl.col('game_id'), pl.lit(pbp_link_suf)).alias('pbp_link'),
-            pl.concat_str(pl.lit(shift_link), pl.col('game_id')).alias('shift_link')
-        ])
-        .rename({'game_type_abbreviation': 'season_type', "game_date_time": 'start_time_utc'})
-        .join(home_teams, on='home_team_id', how='left')
-        .join(away_teams, on='away_team_id', how='left')
-        .select([
-            'game_id', 'season', 'game_date', 'start_time_ET', 'season_type', 'game_schedule_state',
-            'away_team_id', 'away_score', 'away_abbreviation', 'home_score', 'home_team_id', 'home_abbreviation',
-            'pbp_link', 'shift_link', 'start_time_utc'
-        ])
-        )
-        szn_start = i-1
-        szn_lab = str(szn_start)+str(i)
-        csv_save_url = f"Schedule/csv/NHL_Schedule_{szn_lab}.csv"
-        par_save_url = f"Schedule/parquet/NHL_Schedule_{szn_lab}.parquet"
-        df.write_csv(csv_save_url)
-        df.write_parquet(par_save_url)
-        
-        print(f"{szn_start}-{i} NHL Season Schedule Saved | Path: {csv_save_url}")
-load_historical_schedule()
 
 # 2) Load Schedule From Current API (All Data)
 def load_current_schedule(start = max_date, end = yday):
@@ -116,7 +116,7 @@ def load_current_schedule(start = max_date, end = yday):
     # 1) Initialize Variables (Start Date, End Date, List of IDs, Existing DF)
     start_date = start
     end_date = end
-    print(f"Now Loading Games From {start_date} to {end_date}")
+    print(f"Now Loading NHL Games From {start_date} to {end_date} And Appending To Schedule")
     
     # DF List
     game_dfs = []
@@ -320,6 +320,7 @@ def historical_roster_load():
         'https://api-web.nhle.com/v1/roster/ANA/20212022',
         'https://api-web.nhle.com/v1/roster/ANA/20222023',
         'https://api-web.nhle.com/v1/roster/ANA/20232024',
+        'https://api-web.nhle.com/v1/roster/ARI/20092010',
         'https://api-web.nhle.com/v1/roster/ARI/20102011',
         'https://api-web.nhle.com/v1/roster/ARI/20112012',
         'https://api-web.nhle.com/v1/roster/ARI/20122013',
@@ -334,6 +335,7 @@ def historical_roster_load():
         'https://api-web.nhle.com/v1/roster/PHX/20212022',
         'https://api-web.nhle.com/v1/roster/PHX/20222023',
         'https://api-web.nhle.com/v1/roster/PHX/20232024',
+        'https://api-web.nhle.com/v1/roster/SEA/20092010',
         'https://api-web.nhle.com/v1/roster/SEA/20102011',
         'https://api-web.nhle.com/v1/roster/SEA/20112012',
         'https://api-web.nhle.com/v1/roster/SEA/20122013',
@@ -345,6 +347,7 @@ def historical_roster_load():
         'https://api-web.nhle.com/v1/roster/SEA/20182019',
         'https://api-web.nhle.com/v1/roster/SEA/20192020',
         'https://api-web.nhle.com/v1/roster/SEA/20202021',
+        'https://api-web.nhle.com/v1/roster/VGK/20092010',
         'https://api-web.nhle.com/v1/roster/VGK/20102011',
         'https://api-web.nhle.com/v1/roster/VGK/20112012',
         'https://api-web.nhle.com/v1/roster/VGK/20122013',
@@ -352,17 +355,18 @@ def historical_roster_load():
         'https://api-web.nhle.com/v1/roster/VGK/20142015',
         'https://api-web.nhle.com/v1/roster/VGK/20152016',
         'https://api-web.nhle.com/v1/roster/VGK/20162017',
+        'https://api-web.nhle.com/v1/roster/WPG/20092010',
         'https://api-web.nhle.com/v1/roster/WPG/20102011'
         ]
     
-    print("Now Loading Historical Rosters (2010 - 2024)")
+    print("Now Loading Historical Rosters (2009 - 2024)")
     start_time = time.time()
     # Constant Team Abbr And Season
     tms_list = [['ATL','ANA', 'ARI', 'BOS', 'BUF', 'CAR', 'CBJ', 'CGY', 'CHI', 'COL', 'DAL',
                 'DET', 'EDM', 'FLA', 'LAK','MIN', 'MTL', 'NJD', 'NSH', 'NYI', 'NYR',
                 'OTT', 'PHI', 'PHX', 'PIT', 'SEA', 'SJS', 'STL', 'TBL', 'TOR', 'VAN', 'VGK', 'WPG', 'WSH']]
 
-    szn_list = ['20102011', '20112012', '20122013','20132014', '20142015', '20152016', '20162017', '20172018', '20182019', '20192020', '20202021', '20212022', '20222023', '20232024']
+    szn_list = ['20092010', '20102011', '20112012', '20122013','20132014', '20142015', '20152016', '20162017', '20172018', '20182019', '20192020', '20202021', '20212022', '20222023', '20232024']
 
     # Generate all combinations of teams and seasons
     combinations = list(product(tms_list[0], szn_list))
@@ -458,11 +462,11 @@ def historical_roster_load():
 
     print(f"Data Loaded in {elap_time} Seconds")
     print(f"Total Rows in Rosters Data Frame: {final_df.height}")
-    print(f"Total PlayerIDs Rosters Data Frame: {len(final_df['id'].unique())}")
+    print(f"Total PlayerIDs Rosters Data Frame: {len(final_df['player_id'].unique())}")
 
     ## Save Full
-    final_df.write_csv('Rosters/csv/NHL_Full_Roster_2010_2024.csv')
-    final_df.write_parquet('Rosters/parquet/NHL_Full_Roster_2010_2024.parquet')
+    final_df.write_csv('Rosters/csv/NHL_Full_Roster_2009_2024.csv')
+    final_df.write_parquet('Rosters/parquet/NHL_Full_Roster_2009_2024.parquet')
 
     ## Create Slim
     slim_df = (
@@ -480,8 +484,8 @@ def historical_roster_load():
     )
 
     # Save Slim
-    slim_df.write_csv('Rosters/csv/NHL_Slim_Roster_2010_2024.csv')
-    slim_df.write_parquet('Rosters/parquet/NHL_Slim_Roster_2010_2024.parquet')
+    slim_df.write_csv('Rosters/csv/NHL_Slim_Roster_2009_2024.csv')
+    slim_df.write_parquet('Rosters/parquet/NHL_Slim_Roster_2009_2024.parquet')
 
     ## Create Goalies (Full & Slim)
     goalies_full = final_df.filter(pl.col('pos_G') == 1)
@@ -490,12 +494,10 @@ def historical_roster_load():
 
     print(" ")
     print(f"Total Rows in Slim Rosters Data Frame: {slim_df.height}")
-    print(f"Total PlayerIDs Slim Rosters Data Frame: {len(slim_df['id'].unique())}")
+    print(f"Total PlayerIDs Slim Rosters Data Frame: {len(slim_df['player_id'].unique())}")
 
     return final_df, slim_df, goalies_full, goalies_slim
 roster_full, roster_slim, goalies_full, goalies_slim = historical_roster_load()
-#print(roster_slim.head())
-#print(historical_roster_load().head())
 
 # 2) Load Missing Player ID's From PBP IDs (May need to have some sort of loop to do this and fill rosters in)
 #def missing_roster_load():
@@ -760,9 +762,9 @@ def align_and_cast_columns(data, sch):
     data = (
         data
         .with_columns([
-            (pl.col('season_type').map_dict(season_type_dict, default = pl.col('season_type'))).alias('season_type'),
-            (pl.col('event_type').map_dict(event_type_dict,default = pl.col('event_type'))).alias('event_type'),
-            (pl.col('secondary_type').map_dict(shot_type_dict,default = pl.col('secondary_type'))).alias('secondary_type'),
+            (pl.col('season_type').replace(season_type_dict, default = pl.col('season_type'))).alias('season_type'),
+            (pl.col('event_type').replace(event_type_dict,default = pl.col('event_type'))).alias('event_type'),
+            (pl.col('secondary_type').replace(shot_type_dict,default = pl.col('secondary_type'))).alias('secondary_type'),
             pl.when(pl.col('event_team_id') == pl.col('home_id')).then(pl.lit('home')).otherwise(pl.lit('away')).alias('event_team_type'),
             pl.when(pl.col('event_team_id') == pl.col('home_id')).then(pl.col('home_abbreviation')).otherwise(pl.col('away_abbreviation')).alias('event_team_abbr')
             ])
@@ -773,7 +775,7 @@ def align_and_cast_columns(data, sch):
     # Create Game and Period Seconds Remaining from timeInPeriod, timeRemaining: 'period', 'period_seconds', 'period_seconds_remaining', 'game_seconds', 'game_seconds_remaining'
     data = (
         data
-        .with_columns(pl.when(pl.col('timeInPeriod').is_null()).then(pl.lit(None)).otherwise(pl.col('timeInPeriod').apply(min_to_sec)).alias('period_seconds'))
+        .with_columns(pl.when(pl.col('timeInPeriod').is_null()).then(pl.lit(None)).otherwise(pl.col('timeInPeriod').map_elements(min_to_sec)).alias('period_seconds'))
         .with_columns([
             (1200 - pl.col('period_seconds')).alias('period_seconds_remaining'),
             (pl.col('period_seconds') + ((pl.col('period')-1)*1200)).alias('game_seconds'),
@@ -943,10 +945,10 @@ def align_and_cast_columns(data, sch):
         .with_columns(
         pl.when(data['x_abs'] >= 0)
           .then(pl.Series.arctan(data['y_abs'] / (89 - pl.Series.abs(data['x_abs'])))
-                .apply(lambda x: abs(x * (180 / pi))))
+                .map_elements(lambda x: abs(x * (180 / pi))))
           .when(data['x_abs'] < 0)
           .then(pl.Series.arctan(data['y_abs'] / (pl.Series.abs(data['x_abs']) + 89))
-                .apply(lambda x: abs(x * (180 / pi))))
+                .map_elements(lambda x: abs(x * (180 / pi))))
           .alias('event_angle')
         )
         .with_columns(
@@ -982,10 +984,10 @@ def append_shift_data(data):
         shift_raw = (
             shift_raw
             .with_columns([
-                pl.col('endTime').str.lengths().alias('endTime_min'),
-                pl.col('startTime').str.lengths().alias('startTime_min'),
-                pl.when(pl.col('startTime').str.lengths() == 4).then(pl.concat_str(pl.lit('0'), pl.col('startTime'))).otherwise(pl.col('startTime')).alias('startTime'),
-                pl.when(pl.col('endTime').str.lengths() == 4).then(pl.concat_str(pl.lit('0'), pl.col('endTime'))).otherwise(pl.col('endTime')).alias('endTime')
+                pl.col('endTime').str.len_bytes().alias('endTime_min'),
+                pl.col('startTime').str.len_bytes().alias('startTime_min'),
+                pl.when(pl.col('startTime').str.len_bytes() == 4).then(pl.concat_str(pl.lit('0'), pl.col('startTime'))).otherwise(pl.col('startTime')).alias('startTime'),
+                pl.when(pl.col('endTime').str.len_bytes() == 4).then(pl.concat_str(pl.lit('0'), pl.col('endTime'))).otherwise(pl.col('endTime')).alias('endTime')
             ])
             .filter((pl.col('startTime_min') != 0) & (pl.col('endTime_min') != 0))
             .drop('startTime_min', 'endTime_min')
@@ -1052,7 +1054,7 @@ def append_shift_data(data):
         result_df = (
             shift_raw
             .sort('game_start_seconds')
-            .groupby(['game_id', 'period', 'period_start_seconds', 'period_end_seconds', 'team_type', 'pos_G'])
+            .group_by(['game_id', 'period', 'period_start_seconds', 'period_end_seconds', 'team_type', 'pos_G'])
             .agg(
                 pl.concat_list('player_id').flatten().unique().alias('player_id_list'),
                 pl.concat_list('player_name').flatten().unique().alias('player_name_list')
@@ -1128,7 +1130,7 @@ def append_shift_data(data):
                 pos_lab = 'skater'
             col_name = f"{prefix}_{pos_lab}_{shift}_{output}"
             game_data = game_data.with_columns([
-                pl.struct(["game_id", "period", "period_seconds"]).apply(lambda x: apply_player_lists_pl(x, prefix, pos, shift, output)).alias(col_name)
+                pl.struct(["game_id", "period", "period_seconds"]).map_elements(lambda x: apply_player_lists_pl(x, prefix, pos, shift, output)).alias(col_name)
             ])
         game_start_end = ['GAME_START', 'PERIOD_START', 'GAME_END', 'PERIOD_END']
         game_data =(
@@ -1236,10 +1238,10 @@ def append_shift_data(data):
 
 ## APPLY AND SAVE FUNCTIONS ##
 max_load_date = pl.read_parquet("Schedule/parquet/NHL_Schedule_20232024.parquet")['game_date'].max()
-min_load_date = pl.read_parquet("Schedule/parquet/NHL_Schedule_20102011.parquet")['game_date'].min()
+min_load_date = pl.read_parquet("Schedule/parquet/NHL_Schedule_20092010.parquet")['game_date'].min()
 
 # 1) Get Game ID's Needed to Load PBP - Default is All
-def get_game_ids(start = '2010-10-07', end = max_load_date):
+def get_game_ids(start = '2009-10-01', end = max_load_date):
     """This will load every game id from 2011-2012 Season to 2023-2024 abd will be used to load play by play
     
     INPUTS:
@@ -1260,17 +1262,18 @@ def get_game_ids(start = '2010-10-07', end = max_load_date):
 
     return(game_ids)
 
-# 2) Load All PBP (Single Season)
-def load_all_pbp(season = 2023):
+# 2) Load Single Season PBP ()
+def load_season_pbp(season = 2023):
     # Initialize Variables
     start_time = time.time()
+    print(f"Now Loading Play By Play Data From {season}-{season+1} NHL Season")
 
     bad_ids = []
     shift_len = []
     df_list = []
     
     # 1) Get Game ID's From Schedule
-    game_ids = pl.read_parquet(f"Schedule/parquet/NHL_Schedule_{str(season)+str(season+1)}.parquet")['game_id'].unique().to_list()
+    game_ids = pl.read_parquet(f"Schedule/parquet/NHL_Schedule_{str(season)+str(season+1)}.parquet").filter((~pl.col('game_id').is_in([2015020497])))['game_id'].unique().to_list()
     n_games = len(game_ids)
 
     # 2) Loop For Tweaking API Data
@@ -1296,11 +1299,17 @@ def load_all_pbp(season = 2023):
     # 3) Combine DataFrames Into One
     data = df_list[0]
     for df in df_list[1:]:
-        data = data.vstack(df)
+        try:
+            data = data.vstack(df)
+        except ValueError as e:
+            print(f"Incomplete Data For Game ID: {df['game_id'][0]}")
+            print(f"Error: {e}")
+            continue
+
     data = data.sort('game_id', 'period', 'event_idx')
 
     # 4) Save File After VStack
-    save_season_path = f"PBP/API_RAW_PBP_Data_{season}.parquet"
+    save_season_path = f"PBP/parquet/API_RAW_PBP_Data_{season}.parquet"
     data.write_parquet(
         save_season_path,
         use_pyarrow=True
@@ -1312,8 +1321,9 @@ def load_all_pbp(season = 2023):
     season_elapsed_time = round((end_time - start_time)/60,2)
     bad_games = len(bad_ids)
     games_loaded = len(game_ids) - bad_games
-    gpm = ((game_ids)/(end_time - start_time)*60)
     szn_gpm = ((games_loaded)/(end_time - start_time)*60)
     time_stamp = datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')
     print(f"Successfully Loaded And Saved {games_loaded} Games From {season_lab} Season in {season_elapsed_time} Minutes ({round(szn_gpm, 2)} GPM) | Path: {save_season_path} | Completed at {time_stamp}")
-load_all_pbp(season = 2011)
+
+for i in range(2015,2016):
+    load_season_pbp(season = i)

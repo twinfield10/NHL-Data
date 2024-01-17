@@ -1,0 +1,39 @@
+season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,sweaterNumber,heightInInches,weightInPounds,heightInCentimeters,weightInKilograms,birthDate,birthCity,birthCountry,birthStateProvince,pos_F,pos_D,pos_G,hand_R,hand_L
+2012,WPG,8467353,https://assets.nhle.com/mugs/nhl/20112012/WPG/8467353.png,Nik,Antropov,C,L,80,78,245,198,111,1980-02-18,Ust-Kamenogorsk,KAZ,"",1,0,0,0,1
+2012,WPG,8475788,https://assets.nhle.com/mugs/nhl/20112012/WPG/8475788.png,Alexander,Burmistrov,C,L,91,73,180,185,82,1991-10-21,Kazan,RUS,"",1,0,0,0,1
+2012,WPG,8474616,https://assets.nhle.com/mugs/nhl/20112012/WPG/8474616.png,Patrice,Cormier,C,L,28,74,215,188,98,1990-06-14,Moncton,CAN,New Brunswick,1,0,0,0,1
+2012,WPG,8470611,https://assets.nhle.com/mugs/nhl/20112012/WPG/8470611.png,Eric,Fehr,R,R,17,76,209,193,95,1985-09-07,Winkler,CAN,Manitoba,1,0,0,1,0
+2012,WPG,8471451,https://assets.nhle.com/mugs/nhl/20112012/WPG/8471451.png,Aaron,Gagnon,C,R,21,71,186,180,84,1986-04-24,Quesnel,CAN,British Columbia,1,0,0,1,0
+2012,WPG,8470854,https://assets.nhle.com/mugs/nhl/20112012/WPG/8470854.png,Tanner,Glass,L,L,15,73,213,185,97,1983-11-29,Regina,CAN,Saskatchewan,1,0,0,0,1
+2012,WPG,8468881,https://assets.nhle.com/mugs/nhl/20112012/WPG/8468881.png,Jason,Jaffray,L,L,41,73,195,185,88,1981-06-30,Olds,CAN,Alberta,1,0,0,0,1
+2012,WPG,8475169,https://assets.nhle.com/mugs/nhl/20112012/WPG/8475169.png,Evander,Kane,L,L,9,74,210,188,95,1991-08-02,Vancouver,CAN,British Columbia,1,0,0,0,1
+2012,WPG,8475159,https://assets.nhle.com/mugs/nhl/20112012/WPG/8475159.png,Carl,Klingberg,L,R,48,75,205,191,93,1991-01-28,Gothenburg,SWE,"",1,0,0,1,0
+2012,WPG,8471217,https://assets.nhle.com/mugs/nhl/20112012/WPG/8471217.png,Andrew,Ladd,L,L,16,75,205,191,93,1985-12-12,Maple Ridge,CAN,British Columbia,1,0,0,0,1
+2012,WPG,8473412,https://assets.nhle.com/mugs/nhl/20112012/WPG/8473412.png,Bryan,Little,C,R,18,72,191,183,87,1987-11-12,Edmonton,CAN,Alberta,1,0,0,1,0
+2012,WPG,8474146,https://assets.nhle.com/mugs/nhl/20112012/WPG/8474146.png,Spencer,Machacek,R,R,46,73,200,185,91,1988-10-14,Lethbridge,CAN,Alberta,1,0,0,1,0
+2012,WPG,8474050,https://assets.nhle.com/mugs/nhl/20112012/WPG/8474050.png,Brett,MacLean,L,R,25,74,201,188,91,1988-12-24,London,CAN,Ontario,1,0,0,1,0
+2012,WPG,8473493,https://assets.nhle.com/mugs/nhl/20112012/WPG/8473493.png,Ben,Maxwell,C,L,49,73,195,185,88,1988-03-30,North Vancouver,CAN,British Columbia,1,0,0,0,1
+2012,WPG,8471694,https://assets.nhle.com/mugs/nhl/20112012/WPG/8471694.png,Kenndal,McArdle,L,L,23,71,190,180,86,1987-01-04,Toronto,CAN,Ontario,1,0,0,0,1
+2012,WPG,8468704,https://assets.nhle.com/mugs/nhl/20112012/WPG/8468704.png,Antti,Miettinen,R,R,20,72,190,183,86,1980-07-03,Hämeenlinna,FIN,"",1,0,0,1,0
+2012,WPG,8476460,https://assets.nhle.com/mugs/nhl/20112012/WPG/8476460.png,Mark,Scheifele,C,R,55,75,198,191,90,1993-03-15,Kitchener,CAN,Ontario,1,0,0,1,0
+2012,WPG,8470289,https://assets.nhle.com/mugs/nhl/20112012/WPG/8470289.png,Jim,Slater,C,L,19,72,195,183,88,1982-12-09,Lapeer,USA,Michigan,1,0,0,0,1
+2012,WPG,8472379,https://assets.nhle.com/mugs/nhl/20112012/WPG/8472379.png,Tim,Stapleton,C,R,14,69,180,175,82,1982-07-19,Forest Park,USA,Illinois,1,0,0,1,0
+2012,WPG,8469501,https://assets.nhle.com/mugs/nhl/20112012/WPG/8469501.png,Chris,Thorburn,R,R,22,75,235,191,107,1983-06-03,Sault Ste. Marie,CAN,Ontario,1,0,0,1,0
+2012,WPG,8469581,https://assets.nhle.com/mugs/nhl/20112012/WPG/8469581.png,Kyle,Wellwood,C,R,13,70,181,178,82,1983-05-16,Windsor,CAN,Ontario,1,0,0,1,0
+2012,WPG,8471218,https://assets.nhle.com/mugs/nhl/20112012/WPG/8471218.png,Blake,Wheeler,R,R,26,77,220,196,100,1986-08-31,Plymouth,USA,Minnesota,1,0,0,1,0
+2012,WPG,8474567,https://assets.nhle.com/mugs/nhl/20112012/WPG/8474567.png,Zach,Bogosian,D,R,44,74,222,188,101,1990-07-15,Massena,USA,New York,0,0,0,1,0
+2012,WPG,8470834,https://assets.nhle.com/mugs/nhl/20112012/WPG/8470834.png,Dustin,Byfuglien,D,R,33,77,260,196,118,1985-03-27,Roseau,USA,Minnesota,0,0,0,1,0
+2012,WPG,8471482,https://assets.nhle.com/mugs/nhl/20112012/WPG/8471482.png,Grant,Clitsome,D,L,24,71,211,180,96,1985-04-14,Gloucester,CAN,Ontario,0,0,0,0,1
+2012,WPG,8470828,https://assets.nhle.com/mugs/nhl/20112012/WPG/8470828.png,Toby,Enstrom,D,L,39,70,180,178,82,1984-11-05,Nordingra,SWE,"",0,0,0,0,1
+2012,WPG,8471978,https://assets.nhle.com/mugs/nhl/20112012/WPG/8471978.png,Brett,Festerling,D,L,53,73,210,185,95,1986-03-03,Prince George,CAN,British Columbia,0,0,0,0,1
+2012,WPG,8470780,https://assets.nhle.com/mugs/nhl/20112012/WPG/8470780.png,Mark,Flood,D,R,36,73,195,185,88,1984-09-29,Charlottetown,CAN,Prince Edward Island,0,0,0,1,0
+2012,WPG,8468493,https://assets.nhle.com/mugs/nhl/20112012/WPG/8468493.png,Ron,Hainsey,D,L,6,75,201,191,91,1981-03-24,Bolton,USA,Connecticut,0,0,0,0,1
+2012,WPG,8470905,https://assets.nhle.com/mugs/nhl/20112012/WPG/8470905.png,Randy,Jones,D,L,12,74,210,188,95,1981-07-23,Quispamsis,CAN,New Brunswick,0,0,0,0,1
+2012,WPG,8473459,https://assets.nhle.com/mugs/nhl/20112012/WPG/8473459.png,Arturs,Kulda,D,L,23,74,215,188,98,1988-07-25,Riga,LVA,"",0,0,0,0,1
+2012,WPG,8470061,https://assets.nhle.com/mugs/nhl/20112012/WPG/8470061.png,Derek,Meech,D,L,7,71,200,180,91,1984-04-21,Winnipeg,CAN,Manitoba,0,0,0,0,1
+2012,WPG,8469665,https://assets.nhle.com/mugs/nhl/20112012/WPG/8469665.png,Johnny,Oduya,D,L,29,72,191,183,87,1981-10-01,Stockholm,SWE,"",0,0,0,0,1
+2012,WPG,8474074,https://assets.nhle.com/mugs/nhl/20112012/WPG/8474074.png,Paul,Postma,D,R,4,75,195,191,88,1989-02-22,Red Deer,CAN,Alberta,0,0,0,1,0
+2012,WPG,8470614,https://assets.nhle.com/mugs/nhl/20112012/WPG/8470614.png,Mark,Stuart,D,L,5,74,215,188,98,1984-04-27,Rochester,USA,Minnesota,0,0,0,0,1
+2012,WPG,8474771,https://assets.nhle.com/mugs/nhl/20112012/WPG/8474771.png,Peter,Mannino,G,L,34,73,195,185,88,1984-02-17,Farmington Hills,USA,Michigan,0,0,1,0,1
+2012,WPG,8462152,https://assets.nhle.com/mugs/nhl/20112012/WPG/8462152.png,Chris,Mason,G,L,50,72,198,183,90,1976-04-20,Red Deer,CAN,Alberta,0,0,1,0,1
+2012,WPG,8471715,https://assets.nhle.com/mugs/nhl/20112012/WPG/8471715.png,Ondrej,Pavelec,G,L,31,75,212,191,96,1987-08-31,Kladno,CZE,"",0,0,1,0,1

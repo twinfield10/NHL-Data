@@ -1,0 +1,36 @@
+season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,sweaterNumber,heightInInches,weightInPounds,heightInCentimeters,weightInKilograms,birthDate,birthCity,birthCountry,birthStateProvince,pos_F,pos_D,pos_G,hand_R,hand_L
+2011,WSH,8459429,https://assets.nhle.com/mugs/nhl/20102011/WSH/8459429.png,Jason,Arnott,C,R,44,77,220,196,100,1974-10-11,Collingwood,CAN,Ontario,1,0,0,1,0
+2011,WSH,8469779,https://assets.nhle.com/mugs/nhl/20102011/WSH/8469779.png,Keith,Aucoin,R,L,23,68,171,173,78,1978-11-06,Waltham,USA,Massachusetts,1,0,0,0,1
+2011,WSH,8473563,https://assets.nhle.com/mugs/nhl/20102011/WSH/8473563.png,Nicklas,Backstrom,C,L,19,73,202,185,92,1987-11-23,Gavle,SWE,"",1,0,0,0,1
+2011,WSH,8474291,https://assets.nhle.com/mugs/nhl/20102011/WSH/8474291.png,Jay,Beagle,C,R,83,75,210,191,95,1985-10-16,Calgary,CAN,Alberta,1,0,0,1,0
+2011,WSH,8465059,https://assets.nhle.com/mugs/nhl/20102011/WSH/8465059.png,Matt,Bradley,R,R,10,75,200,191,91,1978-06-13,Stittsville,CAN,Ontario,1,0,0,1,0
+2011,WSH,8466251,https://assets.nhle.com/mugs/nhl/20102011/WSH/8466251.png,Jason,Chimera,L,L,25,75,215,191,98,1979-05-02,Edmonton,CAN,Alberta,1,0,0,0,1
+2011,WSH,8470611,https://assets.nhle.com/mugs/nhl/20102011/WSH/8470611.png,Eric,Fehr,C,R,16,76,209,193,95,1985-09-07,Winkler,CAN,Manitoba,1,0,0,1,0
+2011,WSH,8470039,https://assets.nhle.com/mugs/nhl/20102011/WSH/8470039.png,Tomas,Fleischmann,C,L,14,73,192,185,87,1984-05-16,Koprivnice,CZE,"",1,0,0,0,1
+2011,WSH,8471409,https://assets.nhle.com/mugs/nhl/20102011/WSH/8471409.png,Andrew,Gordon,R,R,63,72,194,183,88,1985-12-13,Porters Lake,CAN,Nova Scotia,1,0,0,1,0
+2011,WSH,8470159,https://assets.nhle.com/mugs/nhl/20102011/WSH/8470159.png,Boyd,Gordon,R,R,15,72,200,183,91,1983-10-19,Unity,CAN,Saskatchewan,1,0,0,1,0
+2011,WSH,8468611,https://assets.nhle.com/mugs/nhl/20102011/WSH/8468611.png,Matt,Hendricks,C,L,26,72,211,183,96,1981-06-17,Blaine,USA,Minnesota,1,0,0,0,1
+2011,WSH,8475149,https://assets.nhle.com/mugs/nhl/20102011/WSH/8475149.png,Marcus,Johansson,L,L,90,73,203,185,92,1990-10-06,Landskrona,SWE,"",1,0,0,0,1
+2011,WSH,8470294,https://assets.nhle.com/mugs/nhl/20102011/WSH/8470294.png,DJ,King,L,L,17,75,231,191,105,1984-06-27,Meadow Lake,CAN,Saskatchewan,1,0,0,0,1
+2011,WSH,8458590,https://assets.nhle.com/mugs/nhl/20102011/WSH/8458590.png,Mike,Knuble,R,R,22,75,229,191,104,1972-07-04,Toronto,CAN,Ontario,1,0,0,1,0
+2011,WSH,8469639,https://assets.nhle.com/mugs/nhl/20102011/WSH/8469639.png,Brooks,Laich,C,L,21,74,200,188,91,1983-06-23,Wawota,CAN,Saskatchewan,1,0,0,0,1
+2011,WSH,8471214,https://assets.nhle.com/mugs/nhl/20102011/WSH/8471214.png,Alex,Ovechkin,L,R,8,75,238,191,108,1985-09-17,Moscow,RUS,"",1,0,0,1,0
+2011,WSH,8473618,https://assets.nhle.com/mugs/nhl/20102011/WSH/8473618.png,Mathieu,Perreault,C,L,85,70,189,178,86,1988-01-05,Drummondville,CAN,Quebec,1,0,0,0,1
+2011,WSH,8470120,https://assets.nhle.com/mugs/nhl/20102011/WSH/8470120.png,Alexander,Semin,L,R,28,74,211,188,96,1984-03-03,Krasnojarsk,RUS,"",1,0,0,1,0
+2011,WSH,8469483,https://assets.nhle.com/mugs/nhl/20102011/WSH/8469483.png,David,Steckel,L,L,39,78,215,198,98,1982-03-15,Milwaukee,USA,Wisconsin,1,0,0,0,1
+2011,WSH,8464979,https://assets.nhle.com/mugs/nhl/20102011/WSH/8464979.png,Marco,Sturm,L,L,18,72,196,183,89,1978-09-08,Dingolfing,DEU,"",1,0,0,0,1
+2011,WSH,8465113,https://assets.nhle.com/mugs/nhl/20102011/WSH/8465113.png,Brian,Willsie,R,R,24,73,202,185,92,1978-03-16,Belmont,CAN,Ontario,1,0,0,1,0
+2011,WSH,8473991,https://assets.nhle.com/mugs/nhl/20102011/WSH/8473991.png,Karl,Alzner,D,L,27,75,213,191,97,1988-09-24,Burnaby,CAN,British Columbia,0,0,0,0,1
+2011,WSH,8474590,https://assets.nhle.com/mugs/nhl/20102011/WSH/8474590.png,John,Carlson,D,R,74,75,215,191,98,1990-01-10,Natick,USA,Massachusetts,0,0,0,1,0
+2011,WSH,8473913,https://assets.nhle.com/mugs/nhl/20102011/WSH/8473913.png,Sean,Collins,D,R,62,73,205,185,93,1983-10-30,Troy,USA,Michigan,0,0,0,1,0
+2011,WSH,8467365,https://assets.nhle.com/mugs/nhl/20102011/WSH/8467365.png,John,Erskine,D,L,4,76,220,193,100,1980-06-26,Kingston,CAN,Ontario,0,0,0,0,1
+2011,WSH,8468599,https://assets.nhle.com/mugs/nhl/20102011/WSH/8468599.png,Brian,Fahey,D,R,44,73,216,185,98,1981-03-02,Glenview,USA,Illinois,0,0,0,1,0
+2011,WSH,8471242,https://assets.nhle.com/mugs/nhl/20102011/WSH/8471242.png,Mike,Green,D,R,52,73,210,185,95,1985-10-12,Calgary,CAN,Alberta,0,0,0,1,0
+2011,WSH,8466158,https://assets.nhle.com/mugs/nhl/20102011/WSH/8466158.png,Scott,Hannan,D,L,23,73,215,185,98,1979-01-23,Richmond,CAN,British Columbia,0,0,0,0,1
+2011,WSH,8465012,https://assets.nhle.com/mugs/nhl/20102011/WSH/8465012.png,Tom,Poti,D,L,3,75,190,191,86,1977-03-22,Worcester,USA,Massachusetts,0,0,0,0,1
+2011,WSH,8471240,https://assets.nhle.com/mugs/nhl/20102011/WSH/8471240.png,Jeff,Schultz,D,L,55,78,225,198,102,1986-02-25,Calgary,CAN,Alberta,0,0,0,0,1
+2011,WSH,8468846,https://assets.nhle.com/mugs/nhl/20102011/WSH/8468846.png,Tyler,Sloan,D,L,89,76,214,193,97,1981-03-15,Calgary,CAN,Alberta,0,0,0,0,1
+2011,WSH,8469770,https://assets.nhle.com/mugs/nhl/20102011/WSH/8469770.png,Dennis,Wideman,D,R,6,72,202,183,92,1983-03-20,Kitchener,CAN,Ontario,0,0,0,1,0
+2011,WSH,8474651,https://assets.nhle.com/mugs/nhl/20102011/WSH/8474651.png,Braden,Holtby,G,L,70,73,215,185,98,1989-09-16,Lloydminster,CAN,Saskatchewan,0,0,1,0,1
+2011,WSH,8473607,https://assets.nhle.com/mugs/nhl/20102011/WSH/8473607.png,Michal,Neuvirth,G,L,30,73,209,185,95,1988-03-23,Ústí nad Labem,CZE,"",0,0,1,0,1
+2011,WSH,8473575,https://assets.nhle.com/mugs/nhl/20102011/WSH/8473575.png,Semyon,Varlamov,G,L,1,74,206,188,93,1988-04-27,Samara,RUS,"",0,0,1,0,1
