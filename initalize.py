@@ -1,7 +1,7 @@
 # initalload.py
 from requirements import *
 
-# Constants - Team Abbreviation#
+# Constants - Team Abbreviation
 team_abbr_dict = {
     24: 'ANA',           # Anaheim Ducks         
     53: 'ARI',           # Arizona Coyotes       
@@ -152,7 +152,7 @@ class LoadData:
 
             # Initalize Load Dates + Empty List
             start_date = df['game_date'].max()
-            end_date = yday = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
+            end_date = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
             game_dfs = []
 
             # Loop Over Dates For Game Information
@@ -230,7 +230,7 @@ class LoadData:
         df = df.sort('game_id').unique()
 
         # Save Labels and Metrics
-        szn_lab = f"{self.start_year}-{self.year}"
+        szn_lab = f"{self.start_year}{self.year}"
 
         csv_save_url = f"Schedule/csv/NHL_Schedule_{szn_lab}.csv"
         par_save_url = f"Schedule/parquet/NHL_Schedule_{szn_lab}.parquet"
@@ -687,15 +687,18 @@ class LoadData:
                 )
                 .filter(~pl.col('situationCode').is_in(['0101', '1010']))
                 .with_columns([
-                    pl.col("situationCode").str.slice(0, 1).cast(pl.Int32).alias("away_en"),
-                    pl.col("situationCode").str.slice(3, 1).cast(pl.Int32).alias("home_en"),
+                    pl.when(pl.col("situationCode").str.slice(0, 1).cast(pl.Int32) == 0).then(pl.lit(1)).otherwise(pl.lit(0)).alias("away_en"),
+                    pl.when(pl.col("situationCode").str.slice(3, 1).cast(pl.Int32) == 0).then(pl.lit(1)).otherwise(pl.lit(0)).alias("home_en"),
                     pl.col("situationCode").str.slice(1, 1).cast(pl.Int32).alias("away_skaters"),
                     pl.col("situationCode").str.slice(2, 1).cast(pl.Int32).alias("home_skaters")
                 ])
                 .with_columns([
                     (pl.concat_str([pl.col('home_skaters'), pl.lit('v'), pl.col('away_skaters')])).alias('strength_state'),
-                    (pl.concat_str([pl.col('home_skaters'), pl.lit('v'), pl.col('away_skaters')])).alias('true_strength_state')
+                    pl.when(pl.col('away_en') == 1).then(pl.lit('E')).otherwise(pl.col('away_skaters')).alias('true_away_skaters'),
+                    pl.when(pl.col('home_en') == 1).then(pl.lit('E')).otherwise(pl.col('home_skaters')).alias('true_home_skaters')
                 ])
+                .with_columns((pl.concat_str([pl.col('true_home_skaters'), pl.lit('v'), pl.col('true_away_skaters')])).alias('true_strength_state'))
+                .drop(['true_away_skaters', 'true_home_skaters'])
             )
 
             # Create x_fixed and y_fixed. These coordinates will be relative to the event team's attacking zone (i.e., x_abs is positive)
@@ -1081,6 +1084,7 @@ class LoadData:
 
         # 1) Get Game ID's From Schedule
         game_ids = pl.read_parquet(f"Schedule/parquet/NHL_Schedule_{str(season)+str(season+1)}.parquet").filter((~pl.col('game_id').is_in([2015020497])))['game_id'].unique().to_list()
+        print(game_ids[:5])
         n_games = len(game_ids)
 
         # 2) Loop For Tweaking API Data
@@ -1098,7 +1102,6 @@ class LoadData:
             shift_elap = shift_end - shift_start
             shift_len.append(shift_elap)
             average_shift_time = statistics.mean(shift_len)
-            hour_pace = ((average_shift_time*n_games)/60)
 
             if (str(i)[-3:] == "500"):
                 print(f"LOAD UPDATE: Game {i} took {round(shift_elap,2)} | Each game is taking ~{round(average_shift_time,2)} Seconds | For {n_games-500} More Games It will Take {round(((average_shift_time*(n_games-500))/60),1)} Minutes")
@@ -1134,9 +1137,6 @@ class LoadData:
         time_stamp = datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')
         print(f"Successfully Loaded And Saved {games_loaded} Games From {season_lab} Season in {season_elapsed_time} Minutes ({round(szn_gpm, 2)} GPM) | Path: {save_season_path} | Completed at {time_stamp}")
 
-        ids = data['event_player_1_id'].concat(data['event_player_2_id']).unique()
-
-        return ids
 
     def add_missing_roster(self, roster_obj, id_obj):
         # Filter PBP IDs Not in Roster
