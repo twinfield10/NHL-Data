@@ -111,316 +111,8 @@ raw_schema = {
     'playerId': 'str'    
 }
 
-
-class LoadData:
-    """ Used to Load Games and Play By Play For Each Game"""
-    def __init__(self, year):
-        self.year = year+1
-        self.start_year = year
-
-    def load_schedule(self):
-        """ Loads a single season schedule. Will loop for each season in load document"""
-        # Load From Parquet
-        df = (
-        pl.read_parquet(f"{fastR_base}{self.year}.parquet")
-        .drop(['season', 'game_date'])
-        .with_columns([
-            pl.col('game_id').cast(pl.Int32),
-            pl.col('season_full').cast(pl.Int32).alias('season'),
-            pl.col('away_team_id').cast(pl.Utf8),
-            pl.col('home_team_id').cast(pl.Utf8),
-            pl.col("game_date_time").dt.convert_time_zone('America/New_York').dt.strftime(time_fmt).alias('start_time_ET'),
-            pl.col("game_date_time").dt.convert_time_zone('America/New_York').dt.strftime(day_fmt).alias('game_date'),
-            pl.when(pl.col('status_detailed_state') == 'Final').then(pl.lit('OK')).otherwise(pl.col('status_detailed_state')).alias('game_schedule_state')
-        ])
-        .with_columns([
-            pl.concat_str(pl.lit(pbp_link_pre), pl.col('game_id'), pl.lit(pbp_link_suf)).alias('pbp_link'),
-            pl.concat_str(pl.lit(shift_link), pl.col('game_id')).alias('shift_link')
-        ])
-        .rename({'game_type_abbreviation': 'season_type', "game_date_time": 'start_time_utc'})
-        .join(home_teams, on='home_team_id', how='left')
-        .join(away_teams, on='away_team_id', how='left')
-        .select([
-            'game_id', 'season', 'game_date', 'start_time_ET', 'season_type', 'game_schedule_state',
-            'away_team_id', 'away_score', 'away_abbreviation', 'home_score', 'home_team_id', 'home_abbreviation',
-            'pbp_link', 'shift_link', 'start_time_utc'
-        ])
-        )
-
-        # Add Games If Year Is Current #
-        if self.year == 2024:
-
-            # Initalize Load Dates + Empty List
-            start_date = df['game_date'].max()
-            end_date = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
-            game_dfs = []
-
-            # Loop Over Dates For Game Information
-            for i in pd.date_range(start=start_date, end=end_date, freq='D'):
-                i_str = i.strftime('%Y-%m-%d')
-                sched_link = "https://api-web.nhle.com/v1/schedule/"+i_str
-                response = requests.get(sched_link).json().get('gameWeek')[0].get('games')
-                
-                for i, value in enumerate(response):
-                    if (value.get('gameType') in [2,3]) & (value.get('gameScheduleState') == 'OK') & (value.get('gameState') == 'OFF'):
-                        data = pl.DataFrame({
-                            'game_id': value.get('id'),
-                            'season': value.get('season'),
-                            'game_type_code': value.get('gameType'),
-                            'venue_name': value.get('venue').get('default'),
-                            'neutral_site': value.get('neutralSite'),
-                            'start_time_utc': value.get('startTimeUTC'),
-                            'east_offset': value.get('easternUTCOffset'),
-                            'local_offset': value.get('venueUTCOffset'),
-                            'local_timezone': value.get('venueTimezone'),
-                            'game_state': value.get('gameState'),
-                            'game_schedule_state': value.get('gameScheduleState'),
-                            'away_team_id': value.get('awayTeam').get('id'),
-                            'away_abbreviation': value.get('awayTeam').get('abbrev'),
-                            'away_team_place': value.get('awayTeam').get('placeName').get('default'),
-                            'away_logo': value.get('awayTeam').get('logo'),
-                            'away_logo_dark': value.get('awayTeam').get('darkLogo'),
-                            'away_score': value.get('awayTeam').get('score'),
-                            'home_team_id': value.get('homeTeam').get('id'),
-                            'home_abbreviation': value.get('homeTeam').get('abbrev'),
-                            'home_team_place': value.get('homeTeam').get('placeName').get('default'),
-                            'home_logo': value.get('homeTeam').get('logo'),
-                            'home_logo_dark': value.get('homeTeam').get('darkLogo'),
-                            'home_score': value.get('homeTeam').get('score'),
-                            'period': value.get('periodDescriptor').get('number'),
-                            'period_type': value.get('periodDescriptor').get('periodType'),
-                            'last_period_type': value.get('gameOutcome').get('lastPeriodType'),
-                            'gamecenter_link': value.get('gameCenterLink')
-                        })
-                    if not data.is_empty():
-                        result_df = (
-                            data
-                            .with_columns([
-                                pl.col('game_id').cast(pl.Int32),
-                                pl.col('season').cast(pl.Int32),
-                                pl.col('away_score').cast(pl.Int32),
-                                pl.col('home_score').cast(pl.Int32),
-                                pl.when(pl.col('game_type_code') == 2).then(pl.lit('R'))
-                                  .when(pl.col('game_type_code') == 3).then(pl.lit('P'))
-                                  .alias('season_type'),
-                                pl.col("start_time_utc").str.to_datetime("%Y-%m-%dT%H:%M:%SZ").dt.replace_time_zone('UTC'),
-                                pl.col('away_team_id').cast(pl.Utf8),
-                                pl.col('home_team_id').cast(pl.Utf8)
-                            ])
-                            .with_columns([
-                                pl.col("start_time_utc").dt.convert_time_zone('America/New_York').dt.strftime(time_fmt).alias('start_time_ET'),
-                                pl.col("start_time_utc").dt.convert_time_zone('America/New_York').dt.strftime(day_fmt).alias('game_date'),
-                                pl.concat_str(pl.lit(pbp_link_pre), pl.col('game_id'), pl.lit(pbp_link_suf)).alias('pbp_link'),
-                                pl.concat_str(pl.lit(shift_link), pl.col('game_id')).alias('shift_link')
-                            ])
-                            .select([
-                                'game_id', 'season', 'game_date', 'start_time_ET', 'season_type', 'game_schedule_state',
-                                'away_team_id', 'away_score', 'away_abbreviation', 'home_score', 'home_team_id', 'home_abbreviation',
-                                'pbp_link', 'shift_link', 'start_time_utc'
-                            ])
-                            .sort('game_id', 'season', 'start_time_ET')
-                        )
-
-                        game_dfs.append(result_df)
-
-                for j in game_dfs:
-                    df = df.vstack(j)
-
-        # Sort and Remove Dupes
-        df = df.sort('game_id').unique()
-
-        # Save Labels and Metrics
-        szn_lab = f"{self.start_year}{self.year}"
-
-        csv_save_url = f"Schedule/csv/NHL_Schedule_{szn_lab}.csv"
-        par_save_url = f"Schedule/parquet/NHL_Schedule_{szn_lab}.parquet"
-
-        df.write_csv(csv_save_url)
-        df.write_parquet(par_save_url)
-
-        print(f"{self.start_year}-{self.year} NHL Season Schedule Saved | Path: {csv_save_url}")
-
-    def load_roster(self):
-        """This function will aim to load all rosters from past seasons"""
-        # Constants:
-        bad_link = [
-            'https://api-web.nhle.com/v1/roster/ATL/20112012',
-            'https://api-web.nhle.com/v1/roster/ATL/20122013',
-            'https://api-web.nhle.com/v1/roster/ATL/20132014',
-            'https://api-web.nhle.com/v1/roster/ATL/20142015',
-            'https://api-web.nhle.com/v1/roster/ATL/20152016',
-            'https://api-web.nhle.com/v1/roster/ATL/20162017',
-            'https://api-web.nhle.com/v1/roster/ATL/20172018',
-            'https://api-web.nhle.com/v1/roster/ATL/20182019',
-            'https://api-web.nhle.com/v1/roster/ATL/20192020',
-            'https://api-web.nhle.com/v1/roster/ATL/20202021',
-            'https://api-web.nhle.com/v1/roster/ATL/20212022',
-            'https://api-web.nhle.com/v1/roster/ATL/20222023',
-            'https://api-web.nhle.com/v1/roster/ATL/20232024',
-            'https://api-web.nhle.com/v1/roster/ANA/20132014',
-            'https://api-web.nhle.com/v1/roster/ANA/20142015',
-            'https://api-web.nhle.com/v1/roster/ANA/20152016',
-            'https://api-web.nhle.com/v1/roster/ANA/20162017',
-            'https://api-web.nhle.com/v1/roster/ANA/20172018',
-            'https://api-web.nhle.com/v1/roster/ANA/20182019',
-            'https://api-web.nhle.com/v1/roster/ANA/20192020',
-            'https://api-web.nhle.com/v1/roster/ANA/20202021',
-            'https://api-web.nhle.com/v1/roster/ANA/20212022',
-            'https://api-web.nhle.com/v1/roster/ANA/20222023',
-            'https://api-web.nhle.com/v1/roster/ANA/20232024',
-            'https://api-web.nhle.com/v1/roster/ARI/20092010',
-            'https://api-web.nhle.com/v1/roster/ARI/20102011',
-            'https://api-web.nhle.com/v1/roster/ARI/20112012',
-            'https://api-web.nhle.com/v1/roster/ARI/20122013',
-            'https://api-web.nhle.com/v1/roster/ARI/20132014',
-            'https://api-web.nhle.com/v1/roster/PHX/20142015',
-            'https://api-web.nhle.com/v1/roster/PHX/20152016',
-            'https://api-web.nhle.com/v1/roster/PHX/20162017',
-            'https://api-web.nhle.com/v1/roster/PHX/20172018',
-            'https://api-web.nhle.com/v1/roster/PHX/20182019',
-            'https://api-web.nhle.com/v1/roster/PHX/20192020',
-            'https://api-web.nhle.com/v1/roster/PHX/20202021',
-            'https://api-web.nhle.com/v1/roster/PHX/20212022',
-            'https://api-web.nhle.com/v1/roster/PHX/20222023',
-            'https://api-web.nhle.com/v1/roster/PHX/20232024',
-            'https://api-web.nhle.com/v1/roster/SEA/20092010',
-            'https://api-web.nhle.com/v1/roster/SEA/20102011',
-            'https://api-web.nhle.com/v1/roster/SEA/20112012',
-            'https://api-web.nhle.com/v1/roster/SEA/20122013',
-            'https://api-web.nhle.com/v1/roster/SEA/20132014',
-            'https://api-web.nhle.com/v1/roster/SEA/20142015',
-            'https://api-web.nhle.com/v1/roster/SEA/20152016',
-            'https://api-web.nhle.com/v1/roster/SEA/20162017',
-            'https://api-web.nhle.com/v1/roster/SEA/20172018',
-            'https://api-web.nhle.com/v1/roster/SEA/20182019',
-            'https://api-web.nhle.com/v1/roster/SEA/20192020',
-            'https://api-web.nhle.com/v1/roster/SEA/20202021',
-            'https://api-web.nhle.com/v1/roster/VGK/20092010',
-            'https://api-web.nhle.com/v1/roster/VGK/20102011',
-            'https://api-web.nhle.com/v1/roster/VGK/20112012',
-            'https://api-web.nhle.com/v1/roster/VGK/20122013',
-            'https://api-web.nhle.com/v1/roster/VGK/20132014',
-            'https://api-web.nhle.com/v1/roster/VGK/20142015',
-            'https://api-web.nhle.com/v1/roster/VGK/20152016',
-            'https://api-web.nhle.com/v1/roster/VGK/20162017',
-            'https://api-web.nhle.com/v1/roster/WPG/20092010',
-            'https://api-web.nhle.com/v1/roster/WPG/20102011'
-            ]
-
-        start_time = time.time()
-
-        # Team Abbr And Season
-        tms_list = list(team_abbr_dict.values())
-        szn_lab  = (str(self.start_year)+str(self.year))
-        link_list = [f"https://api-web.nhle.com/v1/roster/{team_abbr}/{szn_lab}" for team_abbr in tms_list]
-
-        ## Begin Roster Loading
-        for link in link_list:
-            response = requests.get(link)
-            szn_lab = link[-4:]
-            team_lab = link[35:38]
-            if response.status_code == 200:
-                data = response.json()
-                flat_data = {
-                    'season': [],
-                    'team': [],
-                    'position': [],
-                    'player_id': [],
-                    'headshot': [],
-                    'firstName': [],
-                    'lastName': [],
-                    'positionCode': [],
-                    'shootsCatches': [],
-                    'sweaterNumber': [],
-                    'heightInInches': [],
-                    'weightInPounds': [],
-                    'heightInCentimeters': [],
-                    'weightInKilograms': [],
-                    'birthDate': [],
-                    'birthCity': [],
-                    'birthCountry': [],
-                    'birthStateProvince': []
-                }
-
-                for position, players in data.items():
-                    for player in players:
-                        flat_data['season'].append(szn_lab)
-                        flat_data['team'].append(team_lab)
-                        flat_data['position'].append(position)
-                        flat_data['player_id'].append(player['id'])
-                        flat_data['headshot'].append(player['headshot'])
-                        flat_data['firstName'].append(player['firstName']['default'])
-                        flat_data['lastName'].append(player['lastName']['default'])
-                        flat_data['positionCode'].append(player['positionCode'])
-                        flat_data['shootsCatches'].append(player['shootsCatches'])
-                        flat_data['sweaterNumber'].append(player.get('sweaterNumber', 100))
-                        flat_data['heightInInches'].append(player['heightInInches'])
-                        flat_data['weightInPounds'].append(player['weightInPounds'])
-                        flat_data['heightInCentimeters'].append(player['heightInCentimeters'])
-                        flat_data['weightInKilograms'].append(player['weightInKilograms'])
-                        flat_data['birthDate'].append(player['birthDate'])
-                        flat_data['birthCity'].append(player['birthCity']['default'])
-                        flat_data['birthCountry'].append(player['birthCountry'])
-                        flat_data['birthStateProvince'].append(player.get('birthStateProvince', {}).get('default', ''))
-                df = pl.DataFrame(flat_data)
-                df = (
-                    df
-                    .with_columns([
-                        pl.col('player_id').cast(pl.Utf8),
-                        pl.col('season').cast(pl.Int64),
-                        pl.when(pl.col('position') == 'forwards').then(pl.lit(1)).otherwise(pl.lit(0)).alias('pos_F'),
-                        pl.when(pl.col('position') == 'defensmen').then(pl.lit(1)).otherwise(pl.lit(0)).alias('pos_D'),
-                        pl.when(pl.col('position') == 'goalies').then(pl.lit(1)).otherwise(pl.lit(0)).alias('pos_G'),
-                        pl.when(pl.col('shootsCatches') == 'R').then(pl.lit(1)).otherwise(pl.lit(0)).alias('hand_R'),
-                        pl.when(pl.col('shootsCatches') == 'L').then(pl.lit(1)).otherwise(pl.lit(0)).alias('hand_L')
-                    ])
-                    .drop('position')
-                )
-
-                # Save Full
-                df.write_csv(f'Rosters/csv/full/NHL_Roster_Full_{f"{self.start_year}{self.year}"}.csv')
-                df.write_parquet(f'Rosters/parquet/full/NHL_Roster_Full_{f"{self.start_year}{self.year}"}.parquet')
-
-                # Create Slim
-                slim_df = (
-                    df
-                    .select([
-                        pl.col('player_id').cast(pl.Utf8),
-                        pl.col('firstName'),
-                        pl.col('lastName'),
-                        pl.col('pos_F').cast(pl.Int32),
-                        pl.col('pos_D').cast(pl.Int32),
-                        pl.col('pos_G').cast(pl.Int32),
-                        pl.col('hand_R').cast(pl.Int32),
-                        pl.col('hand_L').cast(pl.Int32)])
-                    .unique()
-                )
-
-                # Save Slim
-                slim_df.write_csv(f'Rosters/csv/slim/NHL_Roster_Slim_{f"{self.start_year}{self.year}"}.csv')
-                slim_df.write_parquet(f'Rosters/parquet/slim/NHL_Roster_Slim_{f"{self.start_year}{self.year}"}.parquet')
-
-            elif(link in bad_link):
-                pass
-            else:
-                # If the request was not successful, print the status code and any error message
-                print(f"Error Bad Link: {link}")
-        
-        # Metrics
-        end_time = time.time()
-        elap_time = round((end_time - start_time), 2)
-        print(f"{f'{self.start_year}{self.year}'} NHL Roster Data Loaded in {elap_time} Seconds")
-
-        return slim_df
-
-        #print(f"Total Rows in Rosters Data Frame: {final_df.height}")
-        #print(f"Total PlayerIDs Rosters Data Frame: {len(final_df['player_id'].unique())}")
-        #print(" ")
-        #print(f"Total Rows in Slim Rosters Data Frame: {slim_df.height}")
-        #print(f"Total PlayerIDs Slim Rosters Data Frame: {len(slim_df['player_id'].unique())}")
-
-    def load_pbp(self, roster_obj):
-        def ping_nhl_api(i):
+# PBP Helper Functions #
+def ping_nhl_api(i):
             """This function will get the raw data from the NHL API.
                 It will then save two files:
 
@@ -486,7 +178,7 @@ class LoadData:
             return_df = game_data.join(plays_raw, on=pl.col("key"), how="inner").drop("key")
 
             return return_df
-        def align_and_cast_columns(data, sch):
+def align_and_cast_columns(data, sch):
             # Identify missing and extra columns
             extra_cols_int = set(data.columns) - set(sch.keys())
             data = data.drop(extra_cols_int)
@@ -795,7 +487,7 @@ class LoadData:
             )
 
             return data      
-        def append_shift_data(data, roster_data = roster_obj):
+def append_shift_data(data, roster_data):
             """ This function will load shift data allowing the user to see which players are on the ice at a given time in each game"""
             # Load Game ID and Home/Away Ids
             i = data['game_id'][0]
@@ -1072,6 +764,334 @@ class LoadData:
 
             return result_df
         
+
+# Create Load Class
+class LoadData:
+    """ Used to Load Games and Play By Play For Each Game"""
+    def __init__(self, year):
+        self.year = year+1
+        self.start_year = year
+
+    def load_schedule(self):
+        """ Loads a single season schedule. Will loop for each season in load document"""
+        start_time = time.time()
+        # Load From Parquet
+        df = (
+        pl.read_parquet(f"{fastR_base}{self.year}.parquet")
+        .drop(['season', 'game_date'])
+        .with_columns([
+            pl.col('game_id').cast(pl.Int32),
+            pl.col('season_full').cast(pl.Int32).alias('season'),
+            pl.col('away_team_id').cast(pl.Utf8),
+            pl.col('home_team_id').cast(pl.Utf8),
+            pl.col("game_date_time").dt.convert_time_zone('America/New_York').dt.strftime(time_fmt).alias('start_time_ET'),
+            pl.col("game_date_time").dt.convert_time_zone('America/New_York').dt.strftime(day_fmt).alias('game_date'),
+            pl.when(pl.col('status_detailed_state') == 'Final').then(pl.lit('OK')).otherwise(pl.col('status_detailed_state')).alias('game_schedule_state')
+        ])
+        .with_columns([
+            pl.concat_str(pl.lit(pbp_link_pre), pl.col('game_id'), pl.lit(pbp_link_suf)).alias('pbp_link'),
+            pl.concat_str(pl.lit(shift_link), pl.col('game_id')).alias('shift_link')
+        ])
+        .rename({'game_type_abbreviation': 'season_type', "game_date_time": 'start_time_utc'})
+        .join(home_teams, on='home_team_id', how='left')
+        .join(away_teams, on='away_team_id', how='left')
+        .select([
+            'game_id', 'season', 'game_date', 'start_time_ET', 'season_type', 'game_schedule_state',
+            'away_team_id', 'away_score', 'away_abbreviation', 'home_score', 'home_team_id', 'home_abbreviation',
+            'pbp_link', 'shift_link', 'start_time_utc'
+        ])
+        )
+
+        # Add Games If Year Is Current #
+        if self.year == 2024:
+
+            # Initalize Load Dates + Empty List
+            start_date = df['game_date'].max()
+            end_date = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
+            game_dfs = []
+
+            # Loop Over Dates For Game Information
+            for i in pd.date_range(start=start_date, end=end_date, freq='D'):
+                i_str = i.strftime('%Y-%m-%d')
+                sched_link = "https://api-web.nhle.com/v1/schedule/"+i_str
+                response = requests.get(sched_link).json().get('gameWeek')[0].get('games')
+                
+                for i, value in enumerate(response):
+                    if (value.get('gameType') in [2,3]) & (value.get('gameScheduleState') == 'OK') & (value.get('gameState') == 'OFF'):
+                        data = pl.DataFrame({
+                            'game_id': value.get('id'),
+                            'season': value.get('season'),
+                            'game_type_code': value.get('gameType'),
+                            'venue_name': value.get('venue').get('default'),
+                            'neutral_site': value.get('neutralSite'),
+                            'start_time_utc': value.get('startTimeUTC'),
+                            'east_offset': value.get('easternUTCOffset'),
+                            'local_offset': value.get('venueUTCOffset'),
+                            'local_timezone': value.get('venueTimezone'),
+                            'game_state': value.get('gameState'),
+                            'game_schedule_state': value.get('gameScheduleState'),
+                            'away_team_id': value.get('awayTeam').get('id'),
+                            'away_abbreviation': value.get('awayTeam').get('abbrev'),
+                            'away_team_place': value.get('awayTeam').get('placeName').get('default'),
+                            'away_logo': value.get('awayTeam').get('logo'),
+                            'away_logo_dark': value.get('awayTeam').get('darkLogo'),
+                            'away_score': value.get('awayTeam').get('score'),
+                            'home_team_id': value.get('homeTeam').get('id'),
+                            'home_abbreviation': value.get('homeTeam').get('abbrev'),
+                            'home_team_place': value.get('homeTeam').get('placeName').get('default'),
+                            'home_logo': value.get('homeTeam').get('logo'),
+                            'home_logo_dark': value.get('homeTeam').get('darkLogo'),
+                            'home_score': value.get('homeTeam').get('score'),
+                            'period': value.get('periodDescriptor').get('number'),
+                            'period_type': value.get('periodDescriptor').get('periodType'),
+                            'last_period_type': value.get('gameOutcome').get('lastPeriodType'),
+                            'gamecenter_link': value.get('gameCenterLink')
+                        })
+                    if not data.is_empty():
+                        result_df = (
+                            data
+                            .with_columns([
+                                pl.col('game_id').cast(pl.Int32),
+                                pl.col('season').cast(pl.Int32),
+                                pl.col('away_score').cast(pl.Int32),
+                                pl.col('home_score').cast(pl.Int32),
+                                pl.when(pl.col('game_type_code') == 2).then(pl.lit('R'))
+                                  .when(pl.col('game_type_code') == 3).then(pl.lit('P'))
+                                  .alias('season_type'),
+                                pl.col("start_time_utc").str.to_datetime("%Y-%m-%dT%H:%M:%SZ").dt.replace_time_zone('UTC'),
+                                pl.col('away_team_id').cast(pl.Utf8),
+                                pl.col('home_team_id').cast(pl.Utf8)
+                            ])
+                            .with_columns([
+                                pl.col("start_time_utc").dt.convert_time_zone('America/New_York').dt.strftime(time_fmt).alias('start_time_ET'),
+                                pl.col("start_time_utc").dt.convert_time_zone('America/New_York').dt.strftime(day_fmt).alias('game_date'),
+                                pl.concat_str(pl.lit(pbp_link_pre), pl.col('game_id'), pl.lit(pbp_link_suf)).alias('pbp_link'),
+                                pl.concat_str(pl.lit(shift_link), pl.col('game_id')).alias('shift_link')
+                            ])
+                            .select([
+                                'game_id', 'season', 'game_date', 'start_time_ET', 'season_type', 'game_schedule_state',
+                                'away_team_id', 'away_score', 'away_abbreviation', 'home_score', 'home_team_id', 'home_abbreviation',
+                                'pbp_link', 'shift_link', 'start_time_utc'
+                            ])
+                            .sort('game_id', 'season', 'start_time_ET')
+                        )
+
+                        game_dfs.append(result_df)
+
+                for j in game_dfs:
+                    df = df.vstack(j)
+
+        # Sort and Remove Dupes
+        df = df.sort('game_id').unique()
+
+        # Save Labels and Metrics
+        szn_lab = f"{self.start_year}{self.year}"
+
+        csv_save_url = f"Schedule/csv/NHL_Schedule_{szn_lab}.csv"
+        par_save_url = f"Schedule/parquet/NHL_Schedule_{szn_lab}.parquet"
+
+        df.write_csv(csv_save_url)
+        df.write_parquet(par_save_url)
+
+        # Metrics
+        end_time = time.time()
+        elap_time = round((end_time - start_time), 2)
+        print(f"{f'{self.start_year}-{self.year}'} NHL Schedule Data Loaded in {elap_time} Seconds | Path: {par_save_url}")
+
+    def load_roster(self):
+        """This function will aim to load all rosters from past seasons"""
+        # Constants:
+        bad_link = [
+            'https://api-web.nhle.com/v1/roster/ATL/20112012',
+            'https://api-web.nhle.com/v1/roster/ATL/20122013',
+            'https://api-web.nhle.com/v1/roster/ATL/20132014',
+            'https://api-web.nhle.com/v1/roster/ATL/20142015',
+            'https://api-web.nhle.com/v1/roster/ATL/20152016',
+            'https://api-web.nhle.com/v1/roster/ATL/20162017',
+            'https://api-web.nhle.com/v1/roster/ATL/20172018',
+            'https://api-web.nhle.com/v1/roster/ATL/20182019',
+            'https://api-web.nhle.com/v1/roster/ATL/20192020',
+            'https://api-web.nhle.com/v1/roster/ATL/20202021',
+            'https://api-web.nhle.com/v1/roster/ATL/20212022',
+            'https://api-web.nhle.com/v1/roster/ATL/20222023',
+            'https://api-web.nhle.com/v1/roster/ATL/20232024',
+            'https://api-web.nhle.com/v1/roster/ANA/20132014',
+            'https://api-web.nhle.com/v1/roster/ANA/20142015',
+            'https://api-web.nhle.com/v1/roster/ANA/20152016',
+            'https://api-web.nhle.com/v1/roster/ANA/20162017',
+            'https://api-web.nhle.com/v1/roster/ANA/20172018',
+            'https://api-web.nhle.com/v1/roster/ANA/20182019',
+            'https://api-web.nhle.com/v1/roster/ANA/20192020',
+            'https://api-web.nhle.com/v1/roster/ANA/20202021',
+            'https://api-web.nhle.com/v1/roster/ANA/20212022',
+            'https://api-web.nhle.com/v1/roster/ANA/20222023',
+            'https://api-web.nhle.com/v1/roster/ANA/20232024',
+            'https://api-web.nhle.com/v1/roster/ARI/20092010',
+            'https://api-web.nhle.com/v1/roster/ARI/20102011',
+            'https://api-web.nhle.com/v1/roster/ARI/20112012',
+            'https://api-web.nhle.com/v1/roster/ARI/20122013',
+            'https://api-web.nhle.com/v1/roster/ARI/20132014',
+            'https://api-web.nhle.com/v1/roster/PHX/20142015',
+            'https://api-web.nhle.com/v1/roster/PHX/20152016',
+            'https://api-web.nhle.com/v1/roster/PHX/20162017',
+            'https://api-web.nhle.com/v1/roster/PHX/20172018',
+            'https://api-web.nhle.com/v1/roster/PHX/20182019',
+            'https://api-web.nhle.com/v1/roster/PHX/20192020',
+            'https://api-web.nhle.com/v1/roster/PHX/20202021',
+            'https://api-web.nhle.com/v1/roster/PHX/20212022',
+            'https://api-web.nhle.com/v1/roster/PHX/20222023',
+            'https://api-web.nhle.com/v1/roster/PHX/20232024',
+            'https://api-web.nhle.com/v1/roster/SEA/20092010',
+            'https://api-web.nhle.com/v1/roster/SEA/20102011',
+            'https://api-web.nhle.com/v1/roster/SEA/20112012',
+            'https://api-web.nhle.com/v1/roster/SEA/20122013',
+            'https://api-web.nhle.com/v1/roster/SEA/20132014',
+            'https://api-web.nhle.com/v1/roster/SEA/20142015',
+            'https://api-web.nhle.com/v1/roster/SEA/20152016',
+            'https://api-web.nhle.com/v1/roster/SEA/20162017',
+            'https://api-web.nhle.com/v1/roster/SEA/20172018',
+            'https://api-web.nhle.com/v1/roster/SEA/20182019',
+            'https://api-web.nhle.com/v1/roster/SEA/20192020',
+            'https://api-web.nhle.com/v1/roster/SEA/20202021',
+            'https://api-web.nhle.com/v1/roster/VGK/20092010',
+            'https://api-web.nhle.com/v1/roster/VGK/20102011',
+            'https://api-web.nhle.com/v1/roster/VGK/20112012',
+            'https://api-web.nhle.com/v1/roster/VGK/20122013',
+            'https://api-web.nhle.com/v1/roster/VGK/20132014',
+            'https://api-web.nhle.com/v1/roster/VGK/20142015',
+            'https://api-web.nhle.com/v1/roster/VGK/20152016',
+            'https://api-web.nhle.com/v1/roster/VGK/20162017',
+            'https://api-web.nhle.com/v1/roster/WPG/20092010',
+            'https://api-web.nhle.com/v1/roster/WPG/20102011'
+            ]
+
+        start_time = time.time()
+
+        # Team Abbr And Season
+        tms_list = list(team_abbr_dict.values())
+        szn_lab  = (str(self.start_year)+str(self.year))
+        link_list = [f"https://api-web.nhle.com/v1/roster/{team_abbr}/{szn_lab}" for team_abbr in tms_list]
+
+        # Initalize List
+        full_df_list = []
+        slim_df_list = []
+
+        ## Begin Roster Loading
+        for link in link_list:
+            response = requests.get(link)
+            szn_lab = link[-4:]
+            team_lab = link[35:38]
+            if response.status_code == 200:
+                data = response.json()
+                flat_data = {
+                    'season': [],
+                    'team': [],
+                    'position': [],
+                    'player_id': [],
+                    'headshot': [],
+                    'firstName': [],
+                    'lastName': [],
+                    'positionCode': [],
+                    'shootsCatches': [],
+                    'sweaterNumber': [],
+                    'heightInInches': [],
+                    'weightInPounds': [],
+                    'heightInCentimeters': [],
+                    'weightInKilograms': [],
+                    'birthDate': [],
+                    'birthCity': [],
+                    'birthCountry': [],
+                    'birthStateProvince': []
+                }
+
+                for position, players in data.items():
+                    for player in players:
+                        flat_data['season'].append(szn_lab)
+                        flat_data['team'].append(team_lab)
+                        flat_data['position'].append(position)
+                        flat_data['player_id'].append(player['id'])
+                        flat_data['headshot'].append(player['headshot'])
+                        flat_data['firstName'].append(player['firstName']['default'])
+                        flat_data['lastName'].append(player['lastName']['default'])
+                        flat_data['positionCode'].append(player['positionCode'])
+                        flat_data['shootsCatches'].append(player['shootsCatches'])
+                        flat_data['sweaterNumber'].append(player.get('sweaterNumber', 100))
+                        flat_data['heightInInches'].append(player['heightInInches'])
+                        flat_data['weightInPounds'].append(player['weightInPounds'])
+                        flat_data['heightInCentimeters'].append(player['heightInCentimeters'])
+                        flat_data['weightInKilograms'].append(player['weightInKilograms'])
+                        flat_data['birthDate'].append(player['birthDate'])
+                        flat_data['birthCity'].append(player['birthCity']['default'])
+                        flat_data['birthCountry'].append(player['birthCountry'])
+                        flat_data['birthStateProvince'].append(player.get('birthStateProvince', {}).get('default', ''))
+                df = pl.DataFrame(flat_data)
+                df = (
+                    df
+                    .with_columns([
+                        pl.col('player_id').cast(pl.Utf8),
+                        pl.col('season').cast(pl.Int64),
+                        pl.when(pl.col('position') == 'forwards').then(pl.lit(1)).otherwise(pl.lit(0)).alias('pos_F'),
+                        pl.when(pl.col('position') == 'defensmen').then(pl.lit(1)).otherwise(pl.lit(0)).alias('pos_D'),
+                        pl.when(pl.col('position') == 'goalies').then(pl.lit(1)).otherwise(pl.lit(0)).alias('pos_G'),
+                        pl.when(pl.col('shootsCatches') == 'R').then(pl.lit(1)).otherwise(pl.lit(0)).alias('hand_R'),
+                        pl.when(pl.col('shootsCatches') == 'L').then(pl.lit(1)).otherwise(pl.lit(0)).alias('hand_L')
+                    ])
+                    .drop('position')
+                )
+
+                # Append Full DF To List For Compilation
+                full_df_list.append(df)
+
+                # Create Slim
+                slim_df = (
+                    df
+                    .select([
+                        pl.col('player_id').cast(pl.Utf8),
+                        pl.col('firstName'),
+                        pl.col('lastName'),
+                        pl.col('pos_F').cast(pl.Int32),
+                        pl.col('pos_D').cast(pl.Int32),
+                        pl.col('pos_G').cast(pl.Int32),
+                        pl.col('hand_R').cast(pl.Int32),
+                        pl.col('hand_L').cast(pl.Int32)])
+                    .unique()
+                )
+
+                # Append Full DF To List For Compilation
+                slim_df_list.append(slim_df)
+
+            elif(link in bad_link):
+                pass
+            else:
+                # If the request was not successful, print the status code and any error message
+                print(f"Error Bad Link: {link}")
+        
+        # Compile DF Lists
+        full_df = full_df_list[0]
+        for df in full_df_list[1:]:
+            full_df = full_df.extend(df)
+
+        slim_df = slim_df_list[0]
+        for df in slim_df_list[1:]:
+            slim_df = slim_df.extend(df)
+        
+        
+        # Save Full
+        full_df.write_csv(f'Rosters/csv/full/NHL_Roster_Full_{f"{self.start_year}{self.year}"}.csv')
+        full_df.write_parquet(f'Rosters/parquet/full/NHL_Roster_Full_{f"{self.start_year}{self.year}"}.parquet')
+
+        # Save Slim
+        slim_df.write_csv(f'Rosters/csv/slim/NHL_Roster_Slim_{f"{self.start_year}{self.year}"}.csv')
+        slim_df.write_parquet(f'Rosters/parquet/slim/NHL_Roster_Slim_{f"{self.start_year}{self.year}"}.parquet')
+        
+        # Metrics
+        end_time = time.time()
+        elap_time = round((end_time - start_time), 2)
+        print(f"{f'{self.start_year}-{self.year}'} NHL Schedule Data Loaded in {elap_time} Seconds | Path: Rosters/parquet/slim/NHL_Roster_Slim_{self.start_year}{self.year}.parquet")
+
+        return slim_df
+
+    def load_pbp(self, roster_obj):
         season = self.start_year
 
         # Initialize Variables
@@ -1091,7 +1111,7 @@ class LoadData:
         for i in game_ids:
             shift_start = time.time()
             try:
-                df_list.append(append_shift_data(align_and_cast_columns(data = ping_nhl_api(i = i), sch = raw_schema)))
+                df_list.append(append_shift_data(align_and_cast_columns(data = ping_nhl_api(i = i), sch = raw_schema), roster_data = roster_obj))
             except ValueError as e:
                 bad_ids.append(i)
                 print(f"Error In Loading NHL API for GameID: {i} | {e}")
@@ -1137,7 +1157,6 @@ class LoadData:
         time_stamp = datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')
         print(f"Successfully Loaded And Saved {games_loaded} Games From {season_lab} Season in {season_elapsed_time} Minutes ({round(szn_gpm, 2)} GPM) | Path: {save_season_path} | Completed at {time_stamp}")
 
-
     def add_missing_roster(self, roster_obj, id_obj):
         # Filter PBP IDs Not in Roster
         missing_ids = id_obj.filter(~pl.col('event_player_1_id').is_in(roster_obj['player_id'])).unique().to_list()
@@ -1152,6 +1171,196 @@ class LoadData:
 class Update:
     def __init__(self, year = 2023):
         self.year = year+1
-        self.start_year - year
+        self.start_year = year
     
-    #def update_schedule():
+    def update_schedule(self):
+        start_time = time.time()
+
+        # Load Existing Schedule
+        df = pl.read_parquet(f"Schedule/parquet/NHL_Schedule_{self.year}{self.start_year}.parquet")
+
+        # Initalize Update Dates + Empty List
+        start_date = df['game_date'].max()
+        end_date = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
+        game_dfs = []
+        game_ids_new = []
+
+        # Loop Over Dates For Game Information
+        for i in pd.date_range(start=start_date, end=end_date, freq='D'):
+            i_str = i.strftime('%Y-%m-%d')
+            sched_link = "https://api-web.nhle.com/v1/schedule/"+i_str
+            response = requests.get(sched_link).json().get('gameWeek')[0].get('games')
+
+            for i, value in enumerate(response):
+                if (value.get('gameType') in [2,3]) & (value.get('gameScheduleState') == 'OK') & (value.get('gameState') == 'OFF'):
+                    data = pl.DataFrame({
+                        'game_id': value.get('id'),
+                        'season': value.get('season'),
+                        'game_type_code': value.get('gameType'),
+                        'venue_name': value.get('venue').get('default'),
+                        'neutral_site': value.get('neutralSite'),
+                        'start_time_utc': value.get('startTimeUTC'),
+                        'east_offset': value.get('easternUTCOffset'),
+                        'local_offset': value.get('venueUTCOffset'),
+                        'local_timezone': value.get('venueTimezone'),
+                        'game_state': value.get('gameState'),
+                        'game_schedule_state': value.get('gameScheduleState'),
+                        'away_team_id': value.get('awayTeam').get('id'),
+                        'away_abbreviation': value.get('awayTeam').get('abbrev'),
+                        'away_team_place': value.get('awayTeam').get('placeName').get('default'),
+                        'away_logo': value.get('awayTeam').get('logo'),
+                        'away_logo_dark': value.get('awayTeam').get('darkLogo'),
+                        'away_score': value.get('awayTeam').get('score'),
+                        'home_team_id': value.get('homeTeam').get('id'),
+                        'home_abbreviation': value.get('homeTeam').get('abbrev'),
+                        'home_team_place': value.get('homeTeam').get('placeName').get('default'),
+                        'home_logo': value.get('homeTeam').get('logo'),
+                        'home_logo_dark': value.get('homeTeam').get('darkLogo'),
+                        'home_score': value.get('homeTeam').get('score'),
+                        'period': value.get('periodDescriptor').get('number'),
+                        'period_type': value.get('periodDescriptor').get('periodType'),
+                        'last_period_type': value.get('gameOutcome').get('lastPeriodType'),
+                        'gamecenter_link': value.get('gameCenterLink')
+                    })
+                if not data.is_empty():
+                    result_df = (
+                        data
+                        .with_columns([
+                            pl.col('game_id').cast(pl.Int32),
+                            pl.col('season').cast(pl.Int32),
+                            pl.col('away_score').cast(pl.Int32),
+                            pl.col('home_score').cast(pl.Int32),
+                            pl.when(pl.col('game_type_code') == 2).then(pl.lit('R'))
+                              .when(pl.col('game_type_code') == 3).then(pl.lit('P'))
+                              .alias('season_type'),
+                            pl.col("start_time_utc").str.to_datetime("%Y-%m-%dT%H:%M:%SZ").dt.replace_time_zone('UTC'),
+                            pl.col('away_team_id').cast(pl.Utf8),
+                            pl.col('home_team_id').cast(pl.Utf8)
+                        ])
+                        .with_columns([
+                            pl.col("start_time_utc").dt.convert_time_zone('America/New_York').dt.strftime(time_fmt).alias('start_time_ET'),
+                            pl.col("start_time_utc").dt.convert_time_zone('America/New_York').dt.strftime(day_fmt).alias('game_date'),
+                            pl.concat_str(pl.lit(pbp_link_pre), pl.col('game_id'), pl.lit(pbp_link_suf)).alias('pbp_link'),
+                            pl.concat_str(pl.lit(shift_link), pl.col('game_id')).alias('shift_link')
+                        ])
+                        .select([
+                            'game_id', 'season', 'game_date', 'start_time_ET', 'season_type', 'game_schedule_state',
+                            'away_team_id', 'away_score', 'away_abbreviation', 'home_score', 'home_team_id', 'home_abbreviation',
+                            'pbp_link', 'shift_link', 'start_time_utc'
+                        ])
+                        .sort('game_id', 'season', 'start_time_ET')
+                    )
+
+                    game_dfs.append(result_df)
+                    game_ids_new.append(result_df['game_id'].unique())
+
+        for j in game_dfs:
+            df = df.vstack(j)
+
+        # Sort and Remove Dupes
+        df = df.sort('game_id').unique()
+
+        # Save Labels and Metrics
+        szn_lab = f"{self.start_year}{self.year}"
+
+        csv_save_url = f"Schedule/csv/NHL_Schedule_{szn_lab}.csv"
+        par_save_url = f"Schedule/parquet/NHL_Schedule_{szn_lab}.parquet"
+
+        df.write_csv(csv_save_url)
+        df.write_parquet(par_save_url)
+
+        # Metrics
+        end_time = time.time()
+        elap_time = round((end_time - start_time), 2)
+        print(f"{f'{self.start_year}-{self.year}'} NHL Schedule Data Loaded in {elap_time} Seconds | Path: {par_save_url}")
+
+        # Return New IDs
+        return game_ids_new
+
+    def update_roster(self, yr):
+        path = 'Rosters/parquet/all/NHL_Roster_AllSeasons_Slim.parquet'
+        existing_df = pl.read_parquet(path)
+        new_roster = LoadData(year=yr).load_roster()
+
+        final_df = existing_df.extend(new_roster).unique()
+
+        # Save
+        final_df.write_parquet(path)
+        
+    def update_pbp(self, new_ids, roster_obj):
+        "This function will update the current season PBP with games occuring between the last load and yesterday's date"
+        start_time = time.time()
+        # Initialize Existing Data Frame + Stats
+        df_list = []
+        df_list.append(pl.read_parquet(f'PBP/parquet/API_RAW_PBP_Data_{self.start_year}{self.year}.parquet'))
+        exist_games = len(df_list[0]['game_id'].unique())
+        exist_rows = df_list[0].height
+
+        # Initialize Load Dates
+        last_load = (datetime.strptime(df_list[0]['game_date'].max(), "%Y-%m-%d") + timedelta(days = 1)).strftime('%Y%m%d')
+
+        print(f"Existing DataFrame has {exist_rows} from {exist_games} Games | Last Updated {last_load}")
+
+        season = self.start_year
+
+        # Initialize Variables
+        start_time = time.time()
+        print(f"Now Loading Play By Play Data From {season}-{season+1} NHL Season")
+
+        bad_ids = []
+        shift_len = []
+
+        # 1) Get Game ID's From Schedule
+        game_ids = new_ids
+        print(game_ids[:5])
+        n_games = len(game_ids)
+
+        # 2) Loop For Tweaking API Data
+        for i in game_ids:
+            shift_start = time.time()
+            try:
+                df_list.append(append_shift_data(align_and_cast_columns(data = ping_nhl_api(i = i), sch = raw_schema), roster_data=roster_obj))
+            except ValueError as e:
+                bad_ids.append(i)
+                print(f"Error In Loading NHL API for GameID: {i} | {e}")
+                continue
+                
+            # Print Intermitent Update
+            shift_end = time.time()
+            shift_elap = shift_end - shift_start
+            shift_len.append(shift_elap)
+            average_shift_time = statistics.mean(shift_len)
+
+            if (str(i)[-3:] == "500"):
+                print(f"LOAD UPDATE: Game {i} took {round(shift_elap,2)} | Each game is taking ~{round(average_shift_time,2)} Seconds | For {n_games-500} More Games It will Take {round(((average_shift_time*(n_games-500))/60),1)} Minutes")
+            if (str(i)[-3:] == "000"):
+                print(f"LOAD UPDATE: Game {i} took {round(shift_elap,2)} | Each game is taking ~{round(average_shift_time,2)} Seconds | For {n_games-1000} More Games It will Take {round(((average_shift_time*(n_games-1000))/60),1)} Minutes")
+
+        # 3) Combine DataFrames Into One
+        data = df_list[0]
+        for df in df_list[1:]:
+            try:
+                data = data.vstack(df)
+            except ValueError as e:
+                print(f"Incomplete Data For Game ID: {df['game_id'][0]}")
+                print(f"Error: {e}")
+                continue
+                
+        data = data.sort('game_id', 'period', 'event_idx')
+
+        # 4) Save File After VStack
+        save_season_path = f"PBP/parquet/API_RAW_PBP_Data_{season}{season+1}.parquet"
+        data.write_parquet(
+            save_season_path,
+            use_pyarrow=True
+        )
+
+        # 5) Print Load Metrics
+        season_lab = f"{season}-{season+1}"
+        end_time = time.time()
+        season_elapsed_time = round((end_time - start_time)/60,2)
+        bad_games = len(bad_ids)
+        games_loaded = len(df_list[1:]) - bad_games
+        szn_gpm = ((games_loaded)/(end_time - start_time)*60)
+        time_stamp = datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')
+        print(f"Successfully Loaded And Saved {games_loaded} Games From {season_lab} Season in {season_elapsed_time} Minutes ({round(szn_gpm, 2)} GPM) | Path: {save_season_path} | Completed at {time_stamp}")
