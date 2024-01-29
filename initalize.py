@@ -1177,7 +1177,7 @@ class Update:
         start_time = time.time()
 
         # Load Existing Schedule
-        df = pl.read_parquet(f"Schedule/parquet/NHL_Schedule_{self.year}{self.start_year}.parquet")
+        df = pl.read_parquet(f"Schedule/parquet/NHL_Schedule_{self.start_year}{self.year}.parquet")
 
         # Initalize Update Dates + Empty List
         start_date = df['game_date'].max()

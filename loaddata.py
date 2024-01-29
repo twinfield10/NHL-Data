@@ -9,7 +9,7 @@ end = 2024 # 2024 is latest
 # *Want to load schedule and rosters so I can compile rosters before using in shift data*
 
 load_start = time.time()
-for k in [year for year in list(range(start, end)) if year != 2012]:
+for k in range(start, end):
 
     loader = LoadData(year=k)
 
@@ -17,6 +17,8 @@ for k in [year for year in list(range(start, end)) if year != 2012]:
     print(" ")
     print("="*30, f"Begin Loading {k}-{k+1} Schedule And Roster Data", "="*30)
     print(" ")
+
+    # Load Schedule #
     loader.load_schedule()
 
     # Load Rosters #
@@ -27,7 +29,7 @@ for k in [year for year in list(range(start, end)) if year != 2012]:
 def compile_rosters(type):
     print(f"Now Compiling {type} Rosters From All NHL Seasons")
     df_list = []
-    for i in [year for year in list(range(start, end)) if year != 2012]:
+    for i in range(start, end):
         season_roster_path = f"Rosters/parquet/{type.lower()}/NHL_Roster_{type}_{i}{i+1}.parquet"
         df_list.append(pl.read_parquet(season_roster_path))
 
@@ -50,7 +52,9 @@ for j in ['Slim', 'Full']:
 slim_rosters = pl.read_parquet("Rosters/parquet/all/NHL_Roster_AllSeasons_slim.parquet")
 
 # Load Play By Play #
-for k in [year for year in list(range(2010, 2024)) if year != 2012]:
+if start < 2010:
+    start = 2010
+for k in range(start, end):
     
     loader = LoadData(year=k)
 
