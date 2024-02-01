@@ -1258,7 +1258,7 @@ class Update:
             df = df.vstack(j)
 
         # Sort and Remove Dupes
-        df = df.sort('game_id').unique()
+        df = df.sort('game_date').unique()
 
         # Save Labels and Metrics
         szn_lab = f"{self.start_year}{self.year}"
@@ -1274,32 +1274,32 @@ class Update:
         elap_time = round((end_time - start_time), 2)
         print(f"{f'{self.start_year}-{self.year}'} NHL Schedule Data Loaded in {elap_time} Seconds | Path: {par_save_url}")
 
-        # Return New IDs
-        return game_ids_new
 
-    def update_roster(self, yr):
+    def update_roster(self):
         path = 'Rosters/parquet/all/NHL_Roster_AllSeasons_Slim.parquet'
         existing_df = pl.read_parquet(path)
-        new_roster = LoadData(year=yr).load_roster()
+        new_roster = LoadData(year=self.start_year).load_roster()
 
         final_df = existing_df.extend(new_roster).unique()
 
         # Save
         final_df.write_parquet(path)
+
+        return final_df
         
-    def update_pbp(self, new_ids, roster_obj):
+    def update_pbp(self, roster_obj):
         "This function will update the current season PBP with games occuring between the last load and yesterday's date"
         start_time = time.time()
         # Initialize Existing Data Frame + Stats
         df_list = []
         df_list.append(pl.read_parquet(f'PBP/parquet/API_RAW_PBP_Data_{self.start_year}{self.year}.parquet'))
-        exist_games = len(df_list[0]['game_id'].unique())
+        exist_games = df_list[0]['game_id'].unique()
         exist_rows = df_list[0].height
 
         # Initialize Load Dates
         last_load = (datetime.strptime(df_list[0]['game_date'].max(), "%Y-%m-%d") + timedelta(days = 1)).strftime('%Y%m%d')
 
-        print(f"Existing DataFrame has {exist_rows} from {exist_games} Games | Last Updated {last_load}")
+        print(f"Existing DataFrame has {exist_rows} from {len(exist_games)} Games | Last Updated {last_load}")
 
         season = self.start_year
 
@@ -1311,56 +1311,61 @@ class Update:
         shift_len = []
 
         # 1) Get Game ID's From Schedule
-        game_ids = new_ids
+        game_ids = pl.read_parquet(f'Schedule/parquet/NHL_Schedule_{self.start_year}{self.year}.parquet').select('game_id').filter(~pl.col('game_id').is_in(exist_games)).unique()['game_id'].to_list()
         print(game_ids[:5])
         n_games = len(game_ids)
 
         # 2) Loop For Tweaking API Data
-        for i in game_ids:
-            shift_start = time.time()
-            try:
-                df_list.append(append_shift_data(align_and_cast_columns(data = ping_nhl_api(i = i), sch = raw_schema), roster_data=roster_obj))
-            except ValueError as e:
-                bad_ids.append(i)
-                print(f"Error In Loading NHL API for GameID: {i} | {e}")
-                continue
-                
-            # Print Intermitent Update
-            shift_end = time.time()
-            shift_elap = shift_end - shift_start
-            shift_len.append(shift_elap)
-            average_shift_time = statistics.mean(shift_len)
+        if n_games >= 1:
+            for i in game_ids:
+                shift_start = time.time()
+                try:
+                    df_list.append(append_shift_data(align_and_cast_columns(data = ping_nhl_api(i = i), sch = raw_schema), roster_data=roster_obj))
+                except ValueError as e:
+                    bad_ids.append(i)
+                    print(f"Error In Loading NHL API for GameID: {i} | {e}")
+                    continue
 
-            if (str(i)[-3:] == "500"):
-                print(f"LOAD UPDATE: Game {i} took {round(shift_elap,2)} | Each game is taking ~{round(average_shift_time,2)} Seconds | For {n_games-500} More Games It will Take {round(((average_shift_time*(n_games-500))/60),1)} Minutes")
-            if (str(i)[-3:] == "000"):
-                print(f"LOAD UPDATE: Game {i} took {round(shift_elap,2)} | Each game is taking ~{round(average_shift_time,2)} Seconds | For {n_games-1000} More Games It will Take {round(((average_shift_time*(n_games-1000))/60),1)} Minutes")
+                # Print Intermitent Update
+                shift_end = time.time()
+                shift_elap = shift_end - shift_start
+                shift_len.append(shift_elap)
+                average_shift_time = statistics.mean(shift_len)
 
-        # 3) Combine DataFrames Into One
-        data = df_list[0]
-        for df in df_list[1:]:
-            try:
-                data = data.vstack(df)
-            except ValueError as e:
-                print(f"Incomplete Data For Game ID: {df['game_id'][0]}")
-                print(f"Error: {e}")
-                continue
-                
-        data = data.sort('game_id', 'period', 'event_idx')
+                if (str(i)[-3:] == "500"):
+                    print(f"LOAD UPDATE: Game {i} took {round(shift_elap,2)} | Each game is taking ~{round(average_shift_time,2)} Seconds | For {n_games-500} More Games It will Take {round(((average_shift_time*(n_games-500))/60),1)} Minutes")
+                if (str(i)[-3:] == "000"):
+                    print(f"LOAD UPDATE: Game {i} took {round(shift_elap,2)} | Each game is taking ~{round(average_shift_time,2)} Seconds | For {n_games-1000} More Games It will Take {round(((average_shift_time*(n_games-1000))/60),1)} Minutes")
 
-        # 4) Save File After VStack
-        save_season_path = f"PBP/parquet/API_RAW_PBP_Data_{season}{season+1}.parquet"
-        data.write_parquet(
-            save_season_path,
-            use_pyarrow=True
-        )
+            # 3) Combine DataFrames Into One
+            data = df_list[0]
+            for df in df_list[1:]:
+                try:
+                    data = data.vstack(df)
+                except ValueError as e:
+                    print(f"Incomplete Data For Game ID: {df['game_id'][0]}")
+                    print(f"Error: {e}")
+                    continue
 
-        # 5) Print Load Metrics
-        season_lab = f"{season}-{season+1}"
-        end_time = time.time()
-        season_elapsed_time = round((end_time - start_time)/60,2)
-        bad_games = len(bad_ids)
-        games_loaded = len(df_list[1:]) - bad_games
-        szn_gpm = ((games_loaded)/(end_time - start_time)*60)
-        time_stamp = datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')
-        print(f"Successfully Loaded And Saved {games_loaded} Games From {season_lab} Season in {season_elapsed_time} Minutes ({round(szn_gpm, 2)} GPM) | Path: {save_season_path} | Completed at {time_stamp}")
+            data = data.sort('game_id', 'period', 'event_idx')
+
+            # 4) Save File After VStack
+            save_season_path = f"PBP/parquet/API_RAW_PBP_Data_{season}{season+1}.parquet"
+            data.write_parquet(
+                save_season_path,
+                use_pyarrow=True
+            )
+
+            # 5) Print Load Metrics
+            season_lab = f"{season}-{season+1}"
+            end_time = time.time()
+            season_elapsed_time = round((end_time - start_time)/60,2)
+            bad_games = len(bad_ids)
+            games_loaded = len(df_list[1:]) - bad_games
+            szn_gpm = ((games_loaded)/(end_time - start_time)*60)
+            time_stamp = datetime.fromtimestamp(end_time).strftime('%Y-%m-%d %H:%M:%S')
+
+            print(f"Successfully Loaded And Saved {games_loaded} Games From {season_lab} Season in {season_elapsed_time} Minutes ({round(szn_gpm, 2)} GPM) | Path: {save_season_path} | Completed at {time_stamp}")
+
+        else:
+            print("No Games To Update")

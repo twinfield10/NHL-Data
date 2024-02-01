@@ -9,6 +9,6 @@ update_start = time.time()
 updater = Update(year=update_year)
 
 updater.update_schedule()
-updater.update_roster()
-updater.update_pbp()
+roster_data = updater.update_roster()
+updater.update_pbp(roster_obj = roster_data)
 
