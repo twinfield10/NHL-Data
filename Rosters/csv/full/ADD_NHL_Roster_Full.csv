@@ -1,43 +1,42 @@
-season,team,player_id,headshot,firstName,lastName,shootsCatches,sweaterNumber,heightInInches,weightInPounds,heightInCentimeters,weightInKilograms,birthDate,birthCity,birthCountry,birthStateProvince,pos_F,pos_D,pos_G,hand_R,hand_L
-2024,CGY,8482470,https://assets.nhle.com/mugs/nhl/20232024/CGY/8482470.png,Ilya,Solovyov,L,98,75,208,191,94,2000-07-20,Mogilev,BLR,"",0,1,0,0,1
-2024,BOS,8481556,https://assets.nhle.com/mugs/nhl/20232024/BOS/8481556.png,John,Beecher,L,19,75,216,191,98,2001-04-05,Elmira,USA,New York,1,0,0,0,1
-2024,CAR,8484293,https://assets.nhle.com/mugs/nhl/20232024/CAR/8484293.png,Yaniv,Perets,L,60,73,181,185,82,2000-03-04,Dollard-des-Ormeaux,CAN,Quebec,0,0,1,0,1
-2024,FLA,8484304,https://assets.nhle.com/mugs/nhl/20232024/FLA/8484304.png,Uvis,Balinskis,L,26,72,196,183,89,1996-08-01,Ventspils,LAT,"",0,1,0,0,1
-2024,COL,8484258,https://assets.nhle.com/mugs/nhl/20232024/COL/8484258.png,Sam,Malinski,R,70,71,190,180,86,1998-07-27,Lakeville,USA,Minnesota,0,1,0,1,0
-2024,MTL,8482749,https://assets.nhle.com/mugs/nhl/20232024/MTL/8482749.png,Joshua,Roy,L,89,72,192,183,87,2003-08-06,Saint-Georges-De-Beauce,CAN,Quebec,1,0,0,0,1
-2024,PHI,8482126,https://assets.nhle.com/mugs/nhl/20232024/PHI/8482126.png,Emil,Andrae,L,36,69,189,175,86,2002-02-23,Vastervik,SWE,"",0,1,0,0,1
-2024,SEA,8482751,https://assets.nhle.com/mugs/nhl/20232024/SEA/8482751.png,Ryan,Winterton,R,26,74,175,188,79,2003-09-04,Markham,CAN,Ontario,1,0,0,1,0
-2024,COL,8484255,https://assets.nhle.com/mugs/nhl/20232024/COL/8484255.png,Jason,Polin,R,41,72,198,183,90,1999-06-17,Holt,USA,Michigan,1,0,0,1,0
-2024,WSH,8479522,https://assets.nhle.com/mugs/nhl/20232024/WSH/8479522.png,Hardy,Haman Aktell,L,4,75,198,191,90,1998-07-04,Kage,SWE,"",0,1,0,0,1
-2024,FLA,8482088,https://assets.nhle.com/mugs/nhl/20232024/FLA/8482088.png,Justin,Sourdif,R,24,71,180,180,82,2002-03-24,Richmond,CAN,British Columbia,1,0,0,1,0
-2024,TBL,8482201,https://assets.nhle.com/mugs/nhl/20232024/TBL/8482201.png,Gage,Goncalves,L,93,71,188,180,85,2001-01-16,Mission,CAN,British Columbia,1,0,0,0,1
-2024,OTT,8484314,https://assets.nhle.com/mugs/nhl/20232024/OTT/8484314.png,Jiri,Smejkal,L,13,76,209,193,95,1996-11-05,České Budějovice,CZE,"",1,0,0,0,1
-2024,BUF,8482765,https://assets.nhle.com/mugs/nhl/20232024/BUF/8482765.png,Isak,Rosen,L,63,72,173,183,78,2003-03-15,Solna,SWE,"",1,0,0,0,1
-2024,BOS,8483567,https://assets.nhle.com/mugs/nhl/20232024/BOS/8483567.png,Georgii,Merkulov,L,42,71,176,180,80,2000-10-10,Ryazan,RUS,"",1,0,0,0,1
-2024,OTT,8482162,https://assets.nhle.com/mugs/nhl/20232024/OTT/8482162.png,Roby,Jarventie,L,52,74,184,188,83,2002-08-08,Tampere,FIN,"",1,0,0,0,1
-2024,WSH,8483491,https://assets.nhle.com/mugs/nhl/20232024/WSH/8483491.png,Ivan,Miroshnichenko,R,63,73,185,185,84,2004-02-04,Ussuriysk,RUS,"",1,0,0,1,0
-2024,NJD,8481578,https://assets.nhle.com/mugs/nhl/20232024/NJD/8481578.png,Graeme,Clarke,R,95,72,175,183,79,2001-04-24,Waconia,USA,Minnesota,1,0,0,1,0
-2024,EDM,8481534,https://assets.nhle.com/mugs/nhl/20232024/EDM/8481534.png,Raphael,Lavoie,R,62,76,215,193,98,2000-09-25,Chambly,CAN,Quebec,1,0,0,1,0
-2024,SJS,8480992,https://assets.nhle.com/mugs/nhl/20232024/SJS/8480992.png,Magnus,Chrona,L,30,76,194,193,88,2000-08-28,Skelleftea,SWE,"",0,0,1,0,1
-2024,ANA,8483482,https://assets.nhle.com/mugs/nhl/20232024/ANA/8483482.png,Tristan,Luneau,R,67,73,195,185,88,2004-01-12,Victoriaville,CAN,Quebec,0,1,0,1,0
-2024,VGK,8482141,https://assets.nhle.com/mugs/nhl/20232024/VGK/8482141.png,Lukas,Cormier,L,40,71,185,180,84,2002-03-27,Sainte-Marie-de-Kent,CAN,New Brunswick,0,1,0,0,1
-2024,BUF,8483468,https://assets.nhle.com/mugs/nhl/20232024/BUF/8483468.png,Jiri,Kulich,L,20,73,186,185,84,2004-04-14,Kadan,CZE,"",1,0,0,0,1
-2024,NJD,8478956,https://assets.nhle.com/mugs/nhl/20232024/NJD/8478956.png,Samuel,Laberge,L,79,74,206,188,93,1997-04-10,Chateauguay,CAN,Quebec,1,0,0,0,1
-2024,TBL,8482144,https://assets.nhle.com/mugs/nhl/20232024/TBL/8482144.png,Jack,Thompson,R,28,73,189,185,86,2002-03-19,Courtice,CAN,Ontario,0,1,0,1,0
-2024,TBL,8477035,https://assets.nhle.com/mugs/nhl/20232024/TBL/8477035.png,Matt,Tomkins,L,90,76,191,193,87,1994-06-19,Edmonton,CAN,Alberta,0,0,1,0,1
-2024,PIT,8483401,https://assets.nhle.com/mugs/nhl/20232024/PIT/8483401.png,Marc,Johnstone,R,9,72,181,183,82,1996-06-19,Cranford,USA,New Jersey,1,0,0,1,0
-2024,WSH,8482411,https://assets.nhle.com/mugs/nhl/20232024/WSH/8482411.png,Hunter,Shepard,L,31,72,215,183,98,1995-11-07,Cohasset,USA,Minnesota,0,0,1,0,1
-2024,TBL,8483398,https://assets.nhle.com/mugs/nhl/20232024/TBL/8483398.png,Declan,Carlile,L,67,73,185,185,84,2000-05-18,Hartland,USA,Michigan,0,1,0,0,1
-2024,NYR,8482747,https://assets.nhle.com/mugs/nhl/20232024/NYR/8482747.png,Brennan,Othmann,L,78,72,186,183,84,2003-01-05,Pickering,CAN,Ontario,1,0,0,0,1
-2024,MIN,8482094,https://assets.nhle.com/mugs/nhl/20232024/MIN/8482094.png,Daemon,Hunt,L,48,73,201,185,91,2002-05-15,Brandon,CAN,Manitoba,0,1,0,0,1
-2024,OTT,8484321,https://assets.nhle.com/mugs/nhl/20232024/OTT/8484321.png,Nikolas,Matinpalo,R,33,75,207,191,94,1998-10-05,Espoo,FIN,"",0,1,0,1,0
-2024,NSH,8481743,https://assets.nhle.com/mugs/nhl/20232024/NSH/8481743.png,Marc,Del Gaizo,L,7,71,188,180,85,1999-10-11,Basking Ridge,USA,New Jersey,0,1,0,0,1
-2024,NYR,8481726,https://assets.nhle.com/mugs/nhl/20232024/NYR/8481726.png,Adam,Edstrom,L,84,79,234,201,106,2000-10-12,Karlstad,SWE,"",1,0,0,0,1
-2024,BUF,8483512,https://assets.nhle.com/mugs/nhl/20232024/BUF/8483512.png,Matt,Savoie,R,93,69,179,175,81,2004-01-01,St. Albert,CAN,Alberta,1,0,0,1,0
-2024,BOS,8482511,https://assets.nhle.com/mugs/nhl/20232024/BOS/8482511.png,Mason,Lohrei,L,6,77,211,196,96,2001-01-17,Baton Rouge,USA,Louisiana,0,1,0,0,1
-2024,MTL,8482476,https://assets.nhle.com/mugs/nhl/20232024/MTL/8482476.png,Emil,Heineman,L,51,72,202,183,92,2001-11-16,Leksand,SWE,"",1,0,0,0,1
-2024,CAR,8482102,https://assets.nhle.com/mugs/nhl/20232024/CAR/8482102.png,Vasily,Ponomarev,L,92,70,180,178,82,2002-03-13,Moscow,RUS,"",1,0,0,0,1
-2024,COL,8484259,https://assets.nhle.com/mugs/nhl/20232024/COL/8484259.png,Ondrej,Pavel,L,26,74,205,188,93,2000-08-29,Praha,CZE,"",1,0,0,0,1
-2024,CGY,8482165,https://assets.nhle.com/mugs/nhl/20232024/CGY/8482165.png,Yan,Kuznetsov,L,37,76,209,193,95,2002-03-09,Murmansk,RUS,"",0,1,0,0,1
-2024,TOR,8483489,https://assets.nhle.com/mugs/nhl/20232024/TOR/8483489.png,Fraser,Minten,L,39,74,192,188,87,2004-07-05,Vancouver,CAN,British Columbia,1,0,0,0,1
-2024,OTT,8481065,https://assets.nhle.com/mugs/nhl/20232024/OTT/8481065.png,Angus,Crookshank,L,59,70,181,178,82,1999-10-02,North Vancouver,CAN,British Columbia,1,0,0,0,1
+season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,sweaterNumber,heightInInches,weightInPounds,heightInCentimeters,weightInKilograms,birthDate,birthCity,birthCountry,birthStateProvince,pos_F,pos_D,pos_G,hand_R,hand_L
+2024,MTL,8482476,https://assets.nhle.com/mugs/nhl/20232024/MTL/8482476.png,Emil,Heineman,L,L,51,72,202,183,92,2001-11-16,Leksand,SWE,"",1,0,0,0,1
+2024,NSH,8481743,https://assets.nhle.com/mugs/nhl/20232024/NSH/8481743.png,Marc,Del Gaizo,D,L,7,71,188,180,85,1999-10-11,Basking Ridge,USA,New Jersey,0,1,0,0,1
+2024,MIN,8482094,https://assets.nhle.com/mugs/nhl/20232024/MIN/8482094.png,Daemon,Hunt,D,L,48,73,201,185,91,2002-05-15,Brandon,CAN,Manitoba,0,1,0,0,1
+2024,TOR,8483489,https://assets.nhle.com/mugs/nhl/20232024/TOR/8483489.png,Fraser,Minten,C,L,39,74,192,188,87,2004-07-05,Vancouver,CAN,British Columbia,1,0,0,0,1
+2024,WSH,8483491,https://assets.nhle.com/mugs/nhl/20232024/WSH/8483491.png,Ivan,Miroshnichenko,L,R,63,73,185,185,84,2004-02-04,Ussuriysk,RUS,"",1,0,0,1,0
+2024,BOS,8482511,https://assets.nhle.com/mugs/nhl/20232024/BOS/8482511.png,Mason,Lohrei,D,L,6,77,211,196,96,2001-01-17,Baton Rouge,USA,Louisiana,0,1,0,0,1
+2024,TBL,8483398,https://assets.nhle.com/mugs/nhl/20232024/TBL/8483398.png,Declan,Carlile,D,L,67,73,185,185,84,2000-05-18,Hartland,USA,Michigan,0,1,0,0,1
+2024,OTT,8482162,https://assets.nhle.com/mugs/nhl/20232024/OTT/8482162.png,Roby,Jarventie,L,L,52,74,184,188,83,2002-08-08,Tampere,FIN,"",1,0,0,0,1
+2024,EDM,8481534,https://assets.nhle.com/mugs/nhl/20232024/EDM/8481534.png,Raphael,Lavoie,C,R,62,76,215,193,98,2000-09-25,Chambly,CAN,Quebec,1,0,0,1,0
+2024,CGY,8482470,https://assets.nhle.com/mugs/nhl/20232024/CGY/8482470.png,Ilya,Solovyov,D,L,98,75,208,191,94,2000-07-20,Mogilev,BLR,"",0,1,0,0,1
+2024,PIT,8483401,https://assets.nhle.com/mugs/nhl/20232024/PIT/8483401.png,Marc,Johnstone,R,R,9,72,181,183,82,1996-06-19,Cranford,USA,New Jersey,1,0,0,1,0
+2024,ANA,8483482,https://assets.nhle.com/mugs/nhl/20232024/ANA/8483482.png,Tristan,Luneau,D,R,67,73,195,185,88,2004-01-12,Victoriaville,CAN,Quebec,0,1,0,1,0
+2024,COL,8484255,https://assets.nhle.com/mugs/nhl/20232024/COL/8484255.png,Jason,Polin,R,R,41,72,198,183,90,1999-06-17,Holt,USA,Michigan,1,0,0,1,0
+2024,WSH,8482411,https://assets.nhle.com/mugs/nhl/20232024/WSH/8482411.png,Hunter,Shepard,G,L,31,72,215,183,98,1995-11-07,Cohasset,USA,Minnesota,0,0,1,0,1
+2024,WSH,8479522,https://assets.nhle.com/mugs/nhl/20232024/WSH/8479522.png,Hardy,Haman Aktell,D,L,4,75,198,191,90,1998-07-04,Kage,SWE,"",0,1,0,0,1
+2024,BUF,8483468,https://assets.nhle.com/mugs/nhl/20232024/BUF/8483468.png,Jiri,Kulich,C,L,20,73,186,185,84,2004-04-14,Kadan,CZE,"",1,0,0,0,1
+2024,TBL,8482201,https://assets.nhle.com/mugs/nhl/20232024/TBL/8482201.png,Gage,Goncalves,C,L,93,71,188,180,85,2001-01-16,Mission,CAN,British Columbia,1,0,0,0,1
+2024,NYR,8482747,https://assets.nhle.com/mugs/nhl/20232024/NYR/8482747.png,Brennan,Othmann,L,L,78,72,186,183,84,2003-01-05,Pickering,CAN,Ontario,1,0,0,0,1
+2024,TBL,8477035,https://assets.nhle.com/mugs/nhl/20232024/TBL/8477035.png,Matt,Tomkins,G,L,90,76,191,193,87,1994-06-19,Edmonton,CAN,Alberta,0,0,1,0,1
+2024,FLA,8484304,https://assets.nhle.com/mugs/nhl/20232024/FLA/8484304.png,Uvis,Balinskis,D,L,26,72,196,183,89,1996-08-01,Ventspils,LAT,"",0,1,0,0,1
+2024,NYR,8481726,https://assets.nhle.com/mugs/nhl/20232024/NYR/8481726.png,Adam,Edstrom,C,L,84,79,234,201,106,2000-10-12,Karlstad,SWE,"",1,0,0,0,1
+2024,TBL,8482144,https://assets.nhle.com/mugs/nhl/20232024/TBL/8482144.png,Jack,Thompson,D,R,28,73,189,185,86,2002-03-19,Courtice,CAN,Ontario,0,1,0,1,0
+2024,FLA,8482088,https://assets.nhle.com/mugs/nhl/20232024/FLA/8482088.png,Justin,Sourdif,R,R,24,71,180,180,82,2002-03-24,Richmond,CAN,British Columbia,1,0,0,1,0
+2024,OTT,8484321,https://assets.nhle.com/mugs/nhl/20232024/OTT/8484321.png,Nikolas,Matinpalo,D,R,33,75,207,191,94,1998-10-05,Espoo,FIN,"",0,1,0,1,0
+2024,VGK,8482141,https://assets.nhle.com/mugs/nhl/20232024/VGK/8482141.png,Lukas,Cormier,D,L,40,71,185,180,84,2002-03-27,Sainte-Marie-de-Kent,CAN,New Brunswick,0,1,0,0,1
+2024,OTT,8481065,https://assets.nhle.com/mugs/nhl/20232024/OTT/8481065.png,Angus,Crookshank,L,L,59,70,181,178,82,1999-10-02,North Vancouver,CAN,British Columbia,1,0,0,0,1
+2024,SEA,8482751,https://assets.nhle.com/mugs/nhl/20232024/SEA/8482751.png,Ryan,Winterton,C,R,26,74,175,188,79,2003-09-04,Markham,CAN,Ontario,1,0,0,1,0
+2024,MTL,8482749,https://assets.nhle.com/mugs/nhl/20232024/MTL/8482749.png,Joshua,Roy,R,L,89,72,192,183,87,2003-08-06,Saint-Georges-De-Beauce,CAN,Quebec,1,0,0,0,1
+2024,BOS,8483567,https://assets.nhle.com/mugs/nhl/20232024/BOS/8483567.png,Georgii,Merkulov,C,L,42,71,176,180,80,2000-10-10,Ryazan,RUS,"",1,0,0,0,1
+2024,CGY,8482165,https://assets.nhle.com/mugs/nhl/20232024/CGY/8482165.png,Yan,Kuznetsov,D,L,37,76,209,193,95,2002-03-09,Murmansk,RUS,"",0,1,0,0,1
+2024,SJS,8480992,https://assets.nhle.com/mugs/nhl/20232024/SJS/8480992.png,Magnus,Chrona,G,L,30,76,194,193,88,2000-08-28,Skelleftea,SWE,"",0,0,1,0,1
+2024,PHI,8482126,https://assets.nhle.com/mugs/nhl/20232024/PHI/8482126.png,Emil,Andrae,D,L,36,69,189,175,86,2002-02-23,Vastervik,SWE,"",0,1,0,0,1
+2024,BOS,8481556,https://assets.nhle.com/mugs/nhl/20232024/BOS/8481556.png,John,Beecher,C,L,19,75,216,191,98,2001-04-05,Elmira,USA,New York,1,0,0,0,1
+2024,BUF,8483512,https://assets.nhle.com/mugs/nhl/20232024/BUF/8483512.png,Matt,Savoie,C,R,93,69,179,175,81,2004-01-01,St. Albert,CAN,Alberta,1,0,0,1,0
+2024,CAR,8482102,https://assets.nhle.com/mugs/nhl/20232024/CAR/8482102.png,Vasily,Ponomarev,C,L,92,70,180,178,82,2002-03-13,Moscow,RUS,"",1,0,0,0,1
+2024,OTT,8484314,https://assets.nhle.com/mugs/nhl/20232024/OTT/8484314.png,Jiri,Smejkal,L,L,13,76,209,193,95,1996-11-05,České Budějovice,CZE,"",1,0,0,0,1
+2024,NJD,8481578,https://assets.nhle.com/mugs/nhl/20232024/NJD/8481578.png,Graeme,Clarke,R,R,95,72,175,183,79,2001-04-24,Waconia,USA,Minnesota,1,0,0,1,0
+2024,COL,8484259,https://assets.nhle.com/mugs/nhl/20232024/COL/8484259.png,Ondrej,Pavel,C,L,26,74,205,188,93,2000-08-29,Praha,CZE,"",1,0,0,0,1
+2024,NJD,8478956,https://assets.nhle.com/mugs/nhl/20232024/NJD/8478956.png,Samuel,Laberge,L,L,79,74,206,188,93,1997-04-10,Chateauguay,CAN,Quebec,1,0,0,0,1
+2024,BUF,8482765,https://assets.nhle.com/mugs/nhl/20232024/BUF/8482765.png,Isak,Rosen,R,L,63,72,173,183,78,2003-03-15,Solna,SWE,"",1,0,0,0,1
+2024,CAR,8484293,https://assets.nhle.com/mugs/nhl/20232024/CAR/8484293.png,Yaniv,Perets,G,L,60,73,181,185,82,2000-03-04,Dollard-des-Ormeaux,CAN,Quebec,0,0,1,0,1

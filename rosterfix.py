@@ -33,6 +33,7 @@ for i in player_ids:
             'firstName': [],
             'lastName': [],
             'position': [],
+            'positionCode': [],
             'shootsCatches': [],
             'sweaterNumber': [],
             'heightInInches': [],
@@ -52,6 +53,7 @@ for i in player_ids:
         flat_data['firstName'].append(data['firstName']['default'])
         flat_data['lastName'].append(data['lastName']['default'])
         flat_data['position'].append(data['position'])
+        flat_data['positionCode'].append(data['position'])
         flat_data['shootsCatches'].append(data['shootsCatches'])
         flat_data['sweaterNumber'].append(data.get('sweaterNumber', 100))
         flat_data['heightInInches'].append(data['heightInInches'])
@@ -75,7 +77,7 @@ for i in player_ids:
                 pl.when(pl.col('shootsCatches') == 'R').then(pl.lit(1)).otherwise(pl.lit(0)).alias('hand_R'),
                 pl.when(pl.col('shootsCatches') == 'L').then(pl.lit(1)).otherwise(pl.lit(0)).alias('hand_L')
             ])
-            .drop('position')
+            .drop(['position'])
         )
         full_df_list.append(df)
 
@@ -117,5 +119,22 @@ full_df.write_parquet(f'Rosters/parquet/full/ADD_NHL_Roster_Full.parquet')
 slim_df.write_csv(f'Rosters/csv/slim/ADD_NHL_Roster_Slim.csv')
 slim_df.write_parquet(f'Rosters/parquet/slim/ADD_NHL_Roster_Slim.parquet')
 
-print(slim_df.height)
 print(slim_df)
+# Collapse Rosters To Create Large Roster File
+def compile_rosters(type):
+    print(f"Now Compiling {type} Rosters From All NHL Seasons")
+    season_roster_path = f"Rosters/parquet/all/NHL_Roster_AllSeasons_{type}.parquet"
+    df = pl.read_parquet(season_roster_path)
+
+    new = pl.read_parquet(f"Rosters/parquet/{type.lower()}/ADD_NHL_Roster_{type}.parquet")
+    df = df.extend(new).unique()
+    
+    # Save
+    save_path = f"Rosters/parquet/all/NHL_Roster_AllSeasons_{type}.parquet"
+    df.write_parquet(save_path)
+    print(f"All NHL Rosters Loaded | Path: {save_path}")
+
+print(" ")
+print("="*34, "Begin Compiling Roster Files", "="*34)
+for j in ['Slim', 'Full']:
+    compile_rosters(j)

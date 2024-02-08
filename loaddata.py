@@ -2,7 +2,7 @@
 from initalize import *
 
 # Load Years
-start = 2023 # 2009 is earliest
+start = 2009 # 2009 is earliest
 end = 2024 # 2024 is latest
 
 # Set Up Loop For Loading Inital Data (Rosters and Schedule #
@@ -29,14 +29,17 @@ for k in range(start, end):
 def compile_rosters(type):
     print(f"Now Compiling {type} Rosters From All NHL Seasons")
     df_list = []
-    for i in range(start, end):
+    for i in range(2009, 2024):
         season_roster_path = f"Rosters/parquet/{type.lower()}/NHL_Roster_{type}_{i}{i+1}.parquet"
         df_list.append(pl.read_parquet(season_roster_path))
+
+    df_list.append(pl.read_parquet(f"Rosters/parquet/{type.lower()}/ADD_NHL_Roster_{type}.parquet"))
 
     # Combine
     result = df_list[0]
     for df in df_list[1:]:
         result = result.extend(df)
+    result = result.unique()
     
     # Save
     save_path = f"Rosters/parquet/all/NHL_Roster_AllSeasons_{type}.parquet"
@@ -49,11 +52,7 @@ for j in ['Slim', 'Full']:
     compile_rosters(j)
 
 # Load Slim Rosters
-slim_rosters = (
-    pl.read_parquet("Rosters/parquet/all/NHL_Roster_AllSeasons_slim.parquet")
-    .extend(pl.read_parquet("Rosters/parquet/slim/ADD_NHL_Roster_Slim.parquet"))
-    .unique()
-)
+slim_rosters = pl.read_parquet("Rosters/parquet/all/NHL_Roster_AllSeasons_slim.parquet")
 
 # Load Play By Play #
 if start < 2010:
