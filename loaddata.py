@@ -2,7 +2,7 @@
 from initalize import *
 
 # Load Years
-start = 2009 # 2009 is earliest
+start = 2023 # 2009 is earliest
 end = 2024 # 2024 is latest
 
 # Set Up Loop For Loading Inital Data (Rosters and Schedule #
@@ -49,7 +49,11 @@ for j in ['Slim', 'Full']:
     compile_rosters(j)
 
 # Load Slim Rosters
-slim_rosters = pl.read_parquet("Rosters/parquet/all/NHL_Roster_AllSeasons_slim.parquet")
+slim_rosters = (
+    pl.read_parquet("Rosters/parquet/all/NHL_Roster_AllSeasons_slim.parquet")
+    .extend(pl.read_parquet("Rosters/parquet/slim/ADD_NHL_Roster_Slim.parquet"))
+    .unique()
+)
 
 # Load Play By Play #
 if start < 2010:

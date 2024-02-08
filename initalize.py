@@ -763,7 +763,7 @@ def append_shift_data(data, roster_data):
 
 
             return result_df
-        
+
 
 # Create Load Class
 class LoadData:
@@ -1167,7 +1167,7 @@ class LoadData:
 
 
         
-
+# Create Update Class
 class Update:
     def __init__(self, year = 2023):
         self.year = year+1
@@ -1274,13 +1274,13 @@ class Update:
         elap_time = round((end_time - start_time), 2)
         print(f"{f'{self.start_year}-{self.year}'} NHL Schedule Data Loaded in {elap_time} Seconds | Path: {par_save_url}")
 
-
     def update_roster(self):
         path = 'Rosters/parquet/all/NHL_Roster_AllSeasons_Slim.parquet'
         existing_df = pl.read_parquet(path)
         new_roster = LoadData(year=self.start_year).load_roster()
 
         final_df = existing_df.extend(new_roster).unique()
+        final_df = final_df.extend(pl.read_parquet('Rosters/parquet/slim/ADD_NHL_Roster_Slim.parquet')).unique()
 
         # Save
         final_df.write_parquet(path)
