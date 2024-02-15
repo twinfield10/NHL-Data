@@ -103,7 +103,7 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,CGY,8478421,https://assets.nhle.com/mugs/nhl/20232024/CGY/8478421.png,A.J.,Greer,L,L,18,75,209,191,95,1996-12-14,Joliette,CAN,Quebec,1,0,0,0,1
 2024,CGY,8476456,https://assets.nhle.com/mugs/nhl/20232024/CGY/8476456.png,Jonathan,Huberdeau,C,L,10,73,200,185,91,1993-06-04,Saint-Jerome,CAN,Quebec,1,0,0,0,1
 2024,CGY,8475172,https://assets.nhle.com/mugs/nhl/20232024/CGY/8475172.png,Nazem,Kadri,C,L,91,72,185,183,84,1990-10-06,London,CAN,Ontario,1,0,0,0,1
-2024,CGY,8483808,https://assets.nhle.com/mugs/nhl/20232024/CGY/8483808.png,Andrei,Kuzmenko,L,R,100,71,194,180,88,1996-02-04,Yakutsk,RUS,"",1,0,0,1,0
+2024,CGY,8483808,https://assets.nhle.com/mugs/nhl/20232024/CGY/8483808.png,Andrei,Kuzmenko,L,R,96,71,194,180,88,1996-02-04,Yakutsk,RUS,"",1,0,0,1,0
 2024,CGY,8478233,https://assets.nhle.com/mugs/nhl/20232024/CGY/8478233.png,Andrew,Mangiapane,L,L,88,70,184,178,83,1996-04-04,Toronto,CAN,Ontario,1,0,0,0,1
 2024,CGY,8481592,https://assets.nhle.com/mugs/nhl/20232024/CGY/8481592.png,Jakob,Pelletier,L,L,22,69,170,175,77,2001-03-07,Québec,CAN,Quebec,1,0,0,0,1
 2024,CGY,8481028,https://assets.nhle.com/mugs/nhl/20232024/CGY/8481028.png,Martin,Pospisil,C,L,76,74,173,188,78,1999-11-19,Zvolen,SVK,"",1,0,0,0,1
@@ -116,11 +116,12 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,CGY,8478396,https://assets.nhle.com/mugs/nhl/20232024/CGY/8478396.png,Noah,Hanifin,D,L,55,75,207,191,94,1997-01-25,Boston,USA,Massachusetts,0,0,0,0,1
 2024,CGY,8478430,https://assets.nhle.com/mugs/nhl/20232024/CGY/8478430.png,Oliver,Kylington,D,L,58,72,183,183,83,1997-05-19,Stockholm,SWE,"",0,0,0,0,1
 2024,CGY,8477851,https://assets.nhle.com/mugs/nhl/20232024/CGY/8477851.png,Jordan,Oesterle,D,L,82,72,187,183,85,1992-06-25,Dearborn Heights,USA,Michigan,0,0,0,0,1
-2024,CGY,8481167,https://assets.nhle.com/mugs/nhl/20232024/CGY/8481167.png,Brayden,Pachal,D,R,100,74,202,188,92,1999-08-23,Estevan,CAN,Saskatchewan,0,0,0,1,0
+2024,CGY,8481167,https://assets.nhle.com/mugs/nhl/20232024/CGY/8481167.png,Brayden,Pachal,D,R,94,74,202,188,92,1999-08-23,Estevan,CAN,Saskatchewan,0,0,0,1,0
 2024,CGY,8475690,https://assets.nhle.com/mugs/nhl/20232024/CGY/8475690.png,Chris,Tanev,D,R,8,74,193,188,88,1989-12-20,Toronto,CAN,Ontario,0,0,0,1,0
 2024,CGY,8477346,https://assets.nhle.com/mugs/nhl/20232024/CGY/8477346.png,MacKenzie,Weegar,D,R,52,72,206,183,93,1994-01-07,Ottawa,CAN,Ontario,0,0,0,1,0
 2024,CGY,8474593,https://assets.nhle.com/mugs/nhl/20232024/CGY/8474593.png,Jacob,Markstrom,G,L,25,78,207,198,94,1990-01-31,Gavle,SWE,"",0,0,1,0,1
 2024,CGY,8478435,https://assets.nhle.com/mugs/nhl/20232024/CGY/8478435.png,Dan,Vladar,G,L,80,77,209,196,95,1997-08-20,Prague,CZE,"",0,0,1,0,1
+2024,CGY,8481692,https://assets.nhle.com/mugs/nhl/20232024/CGY/8481692.png,Dustin,Wolf,G,L,32,72,166,183,75,2001-04-16,Gilroy,USA,California,0,0,1,0,1
 2024,CAR,8478427,https://assets.nhle.com/mugs/nhl/20232024/CAR/8478427.png,Sebastian,Aho,C,L,20,72,176,183,80,1997-07-26,Rauma,FIN,"",1,0,0,0,1
 2024,CAR,8478047,https://assets.nhle.com/mugs/nhl/20232024/CAR/8478047.png,Michael,Bunting,L,L,58,72,192,183,87,1995-09-17,Scarborough,CAN,Ontario,1,0,0,0,1
 2024,CAR,8480835,https://assets.nhle.com/mugs/nhl/20232024/CAR/8480835.png,Jack,Drury,C,L,18,71,174,180,79,2000-02-03,New York,USA,New York,1,0,0,0,1
@@ -160,6 +161,7 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,CHI,8474870,https://assets.nhle.com/mugs/nhl/20232024/CHI/8474870.png,Tyler,Johnson,C,R,90,68,185,173,84,1990-07-29,Spokane,USA,Washington,1,0,0,1,0
 2024,CHI,8479383,https://assets.nhle.com/mugs/nhl/20232024/CHI/8479383.png,Boris,Katchouk,L,L,14,74,206,188,93,1998-06-18,Vancouver,CAN,British Columbia,1,0,0,0,1
 2024,CHI,8480798,https://assets.nhle.com/mugs/nhl/20232024/CHI/8480798.png,Philipp,Kurashev,C,L,23,72,190,183,86,1999-10-12,Munsingen,CHE,"",1,0,0,0,1
+2024,CHI,8478224,https://assets.nhle.com/mugs/nhl/20232024/CHI/8478224.png,Luke,Philp,C,R,39,70,181,178,82,1995-11-06,Canmore,CAN,Alberta,1,0,0,1,0
 2024,CHI,8479514,https://assets.nhle.com/mugs/nhl/20232024/CHI/8479514.png,Rem,Pitlick,C,L,20,71,186,180,84,1997-04-02,Ottawa,CAN,Ontario,1,0,0,0,1
 2024,CHI,8479390,https://assets.nhle.com/mugs/nhl/20232024/CHI/8479390.png,Taylor,Raddysh,R,R,11,75,198,191,90,1998-02-18,Caledon,CAN,Ontario,1,0,0,1,0
 2024,CHI,8482117,https://assets.nhle.com/mugs/nhl/20232024/CHI/8482117.png,Lukas,Reichel,L,L,27,72,170,183,77,2002-05-17,Nürnberg,DEU,"",1,0,0,0,1
@@ -193,7 +195,6 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,COL,8478452,https://assets.nhle.com/mugs/nhl/20232024/COL/8478452.png,Caleb,Jones,D,L,82,73,194,185,88,1997-06-06,Arlington,USA,Texas,0,0,0,0,1
 2024,COL,8477073,https://assets.nhle.com/mugs/nhl/20232024/COL/8477073.png,Kurtis,MacDermid,D,L,56,77,233,196,106,1994-03-25,Quebec City,CAN,Quebec,0,0,0,0,1
 2024,COL,8480069,https://assets.nhle.com/mugs/nhl/20232024/COL/8480069.png,Cale,Makar,D,R,8,72,187,183,85,1998-10-30,Calgary,CAN,Alberta,0,0,0,1,0
-2024,COL,8484258,https://assets.nhle.com/mugs/nhl/20232024/COL/8484258.png,Sam,Malinski,D,R,70,71,190,180,86,1998-07-27,Lakeville,USA,Minnesota,0,0,0,1,0
 2024,COL,8476312,https://assets.nhle.com/mugs/nhl/20232024/COL/8476312.png,Josh,Manson,D,R,42,75,218,191,99,1991-10-07,Hinsdale,USA,Illinois,0,0,0,1,0
 2024,COL,8478038,https://assets.nhle.com/mugs/nhl/20232024/COL/8478038.png,Devon,Toews,D,L,7,73,191,185,87,1994-02-21,Abbotsford,CAN,British Columbia,0,0,0,0,1
 2024,COL,8481020,https://assets.nhle.com/mugs/nhl/20232024/COL/8481020.png,Justus,Annunen,G,L,60,76,210,193,95,2000-03-11,Kempele,FIN,"",0,0,1,0,1
@@ -268,7 +269,6 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,DET,8473503,https://assets.nhle.com/mugs/nhl/20232024/DET/8473503.png,James,Reimer,G,L,47,74,200,188,91,1988-03-15,Morweena,CAN,Manitoba,0,0,1,0,1
 2024,EDM,8477015,https://assets.nhle.com/mugs/nhl/20232024/EDM/8477015.png,Connor,Brown,R,R,28,72,184,183,83,1994-01-14,Toronto,CAN,Ontario,1,0,0,1,0
 2024,EDM,8477934,https://assets.nhle.com/mugs/nhl/20232024/EDM/8477934.png,Leon,Draisaitl,C,L,29,74,209,188,95,1995-10-27,Cologne,DEU,"",1,0,0,0,1
-2024,EDM,8477454,https://assets.nhle.com/mugs/nhl/20232024/EDM/8477454.png,Adam,Erne,L,L,21,73,215,185,98,1995-04-20,New Haven,USA,Connecticut,1,0,0,0,1
 2024,EDM,8477998,https://assets.nhle.com/mugs/nhl/20232024/EDM/8477998.png,Warren,Foegele,L,L,37,74,204,188,93,1996-04-01,Markham,CAN,Ontario,1,0,0,0,1
 2024,EDM,8474040,https://assets.nhle.com/mugs/nhl/20232024/EDM/8474040.png,Sam,Gagner,C,R,89,71,200,180,91,1989-08-10,London,CAN,Ontario,1,0,0,1,0
 2024,EDM,8482077,https://assets.nhle.com/mugs/nhl/20232024/EDM/8482077.png,Dylan,Holloway,L,L,55,73,206,185,93,2001-09-23,Calgary,CAN,Alberta,1,0,0,0,1
@@ -337,7 +337,6 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,LAK,8477831,https://assets.nhle.com/mugs/nhl/20232024/LAK/8477831.png,Pheonix,Copley,G,L,29,76,205,193,93,1992-01-18,North Pole,USA,Alaska,0,0,1,0,1
 2024,LAK,8479496,https://assets.nhle.com/mugs/nhl/20232024/LAK/8479496.png,David,Rittich,G,L,31,76,205,193,93,1992-08-19,Jihlava,CZE,"",0,0,1,0,1
 2024,LAK,8475660,https://assets.nhle.com/mugs/nhl/20232024/LAK/8475660.png,Cam,Talbot,G,L,39,76,200,193,91,1987-07-05,Caledonia,CAN,Ontario,0,0,1,0,1
-2024,MIN,8481550,https://assets.nhle.com/mugs/nhl/20232024/MIN/8481550.png,Adam,Beckman,L,L,11,74,182,188,83,2001-05-10,Saskatoon,CAN,Saskatchewan,1,0,0,0,1
 2024,MIN,8481557,https://assets.nhle.com/mugs/nhl/20232024/MIN/8481557.png,Matt,Boldy,L,L,12,74,201,188,91,2001-04-05,Milford,USA,Massachusetts,1,0,0,0,1
 2024,MIN,8480980,https://assets.nhle.com/mugs/nhl/20232024/MIN/8480980.png,Connor,Dewar,C,L,26,70,183,178,83,1999-06-26,The Pas,CAN,Manitoba,1,0,0,0,1
 2024,MIN,8479520,https://assets.nhle.com/mugs/nhl/20232024/MIN/8479520.png,Brandon,Duhaime,R,L,21,74,200,188,91,1997-05-22,Coral Springs,USA,Florida,1,0,0,0,1
@@ -366,7 +365,6 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,MTL,8476981,https://assets.nhle.com/mugs/nhl/20232024/MTL/8476981.png,Josh,Anderson,R,R,17,75,224,191,102,1994-05-07,Burlington,CAN,Ontario,1,0,0,1,0
 2024,MTL,8476469,https://assets.nhle.com/mugs/nhl/20232024/MTL/8476469.png,Joel,Armia,R,R,40,75,216,191,98,1993-05-31,Pori,FIN,"",1,0,0,1,0
 2024,MTL,8481540,https://assets.nhle.com/mugs/nhl/20232024/MTL/8481540.png,Cole,Caufield,R,R,22,68,175,173,79,2001-01-02,Mosinee,USA,Wisconsin,1,0,0,1,0
-2024,MTL,8483549,https://assets.nhle.com/mugs/nhl/20232024/MTL/8483549.png,Lucas,Condotta,L,L,82,73,217,185,98,1997-11-06,Georgetown,CAN,Ontario,1,0,0,0,1
 2024,MTL,8481523,https://assets.nhle.com/mugs/nhl/20232024/MTL/8481523.png,Kirby,Dach,C,R,77,76,217,193,98,2001-01-21,Fort Saskatchewan,CAN,Alberta,1,0,0,1,0
 2024,MTL,8477989,https://assets.nhle.com/mugs/nhl/20232024/MTL/8477989.png,Christian,Dvorak,C,L,28,73,192,185,87,1996-02-02,Palos,USA,Illinois,1,0,0,0,1
 2024,MTL,8478133,https://assets.nhle.com/mugs/nhl/20232024/MTL/8478133.png,Jake,Evans,C,R,71,73,187,185,85,1996-06-02,Toronto,CAN,Ontario,1,0,0,1,0
@@ -376,6 +374,7 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,MTL,8481618,https://assets.nhle.com/mugs/nhl/20232024/MTL/8481618.png,Alex,Newhook,C,L,15,71,199,180,90,2001-01-28,St. John's,CAN,Newfoundland and Labrador,1,0,0,0,1
 2024,MTL,8476871,https://assets.nhle.com/mugs/nhl/20232024/MTL/8476871.png,Tanner,Pearson,L,L,70,73,207,185,94,1992-08-10,Kitchener,CAN,Ontario,1,0,0,0,1
 2024,MTL,8479543,https://assets.nhle.com/mugs/nhl/20232024/MTL/8479543.png,Michael,Pezzetta,L,L,55,73,217,185,98,1998-03-13,Toronto,CAN,Ontario,1,0,0,0,1
+2024,MTL,8482749,https://assets.nhle.com/mugs/nhl/20232024/MTL/8482749.png,Joshua,Roy,R,L,89,72,192,183,87,2003-08-06,Saint-Georges-De-Beauce,CAN,Quebec,1,0,0,0,1
 2024,MTL,8483515,https://assets.nhle.com/mugs/nhl/20232024/MTL/8483515.png,Juraj,Slafkovsky,L,L,20,75,230,191,104,2004-03-30,Kosice,SVK,"",1,0,0,0,1
 2024,MTL,8480018,https://assets.nhle.com/mugs/nhl/20232024/MTL/8480018.png,Nick,Suzuki,C,R,14,71,212,180,96,1999-08-10,London,CAN,Ontario,1,0,0,1,0
 2024,MTL,8481058,https://assets.nhle.com/mugs/nhl/20232024/MTL/8481058.png,Jesse,Ylönen,R,R,56,73,200,185,91,1999-10-03,Scottsdale,USA,Arizona,1,0,0,1,0
@@ -389,10 +388,12 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,MTL,8474596,https://assets.nhle.com/mugs/nhl/20232024/MTL/8474596.png,Jake,Allen,G,L,34,74,197,188,89,1990-08-07,Fredericton,CAN,New Brunswick,0,0,1,0,1
 2024,MTL,8478470,https://assets.nhle.com/mugs/nhl/20232024/MTL/8478470.png,Sam,Montembeault,G,L,35,75,222,191,101,1996-10-30,Becancour,CAN,Quebec,0,0,1,0,1
 2024,MTL,8480051,https://assets.nhle.com/mugs/nhl/20232024/MTL/8480051.png,Cayden,Primeau,G,L,30,75,207,191,94,1999-08-11,Farmington Hills,USA,Michigan,0,0,1,0,1
+2024,NSH,8481585,https://assets.nhle.com/mugs/nhl/20232024/NSH/8481585.png,Egor,Afanasyev,L,L,70,76,211,193,96,2001-01-23,Tver,RUS,"",1,0,0,0,1
 2024,NSH,8482146,https://assets.nhle.com/mugs/nhl/20232024/NSH/8482146.png,Luke,Evangelista,R,R,77,72,183,183,83,2002-02-21,Toronto,CAN,Ontario,1,0,0,1,0
 2024,NSH,8476887,https://assets.nhle.com/mugs/nhl/20232024/NSH/8476887.png,Filip,Forsberg,L,R,9,73,205,185,93,1994-08-13,Ostervala,SWE,"",1,0,0,1,0
 2024,NSH,8479996,https://assets.nhle.com/mugs/nhl/20232024/NSH/8479996.png,Cody,Glass,C,R,8,75,206,191,93,1999-04-01,Winnipeg,CAN,Manitoba,1,0,0,1,0
 2024,NSH,8478495,https://assets.nhle.com/mugs/nhl/20232024/NSH/8478495.png,Denis,Gurianov,R,L,15,75,205,191,93,1997-06-07,Togliatti,RUS,"",1,0,0,0,1
+2024,NSH,8476873,https://assets.nhle.com/mugs/nhl/20232024/NSH/8476873.png,Mark,Jankowski,C,L,17,76,212,193,96,1994-09-13,Hamilton,CAN,Ontario,1,0,0,0,1
 2024,NSH,8477446,https://assets.nhle.com/mugs/nhl/20232024/NSH/8477446.png,Michael,McCarron,R,R,47,78,232,198,105,1995-03-07,Grosse Pointe,USA,Michigan,1,0,0,1,0
 2024,NSH,8478438,https://assets.nhle.com/mugs/nhl/20232024/NSH/8478438.png,Tommy,Novak,C,L,82,73,179,185,81,1997-04-28,St. Paul,USA,Minnesota,1,0,0,0,1
 2024,NSH,8474679,https://assets.nhle.com/mugs/nhl/20232024/NSH/8474679.png,Gustav,Nyquist,C,L,14,71,180,180,82,1989-09-01,Halmstad,SWE,"",1,0,0,0,1
@@ -400,7 +401,6 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,NSH,8480748,https://assets.nhle.com/mugs/nhl/20232024/NSH/8480748.png,Kiefer,Sherwood,L,R,44,72,194,183,88,1995-03-31,Columbus,USA,Ohio,1,0,0,1,0
 2024,NSH,8476925,https://assets.nhle.com/mugs/nhl/20232024/NSH/8476925.png,Colton,Sissons,C,R,10,73,200,185,91,1993-11-05,North Vancouver,CAN,British Columbia,1,0,0,1,0
 2024,NSH,8482062,https://assets.nhle.com/mugs/nhl/20232024/NSH/8482062.png,Cole,Smith,L,L,36,75,195,191,88,1995-10-28,Brainerd,USA,Minnesota,1,0,0,0,1
-2024,NSH,8481577,https://assets.nhle.com/mugs/nhl/20232024/NSH/8481577.png,Philip,Tomasino,C,R,26,72,179,183,81,2001-07-28,Mississauga,CAN,Ontario,1,0,0,1,0
 2024,NSH,8478508,https://assets.nhle.com/mugs/nhl/20232024/NSH/8478508.png,Yakov,Trenin,C,L,13,74,201,188,91,1997-01-13,Chelyabinsk,RUS,"",1,0,0,0,1
 2024,NSH,8475197,https://assets.nhle.com/mugs/nhl/20232024/NSH/8475197.png,Tyson,Barrie,D,R,22,71,197,180,89,1991-07-26,Victoria,CAN,British Columbia,0,0,0,1,0
 2024,NSH,8478851,https://assets.nhle.com/mugs/nhl/20232024/NSH/8478851.png,Alexandre,Carrier,D,R,45,71,174,180,79,1996-10-08,Quebec City,CAN,Quebec,0,0,0,1,0
@@ -424,11 +424,9 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,NJD,8476292,https://assets.nhle.com/mugs/nhl/20232024/NJD/8476292.png,Ondrej,Palat,L,L,18,72,194,183,88,1991-03-28,Frydek-Mistek,CZE,"",1,0,0,0,1
 2024,NJD,8476919,https://assets.nhle.com/mugs/nhl/20232024/NJD/8476919.png,Chris,Tierney,C,L,11,73,191,185,87,1994-07-01,Keswick,CAN,Ontario,1,0,0,0,1
 2024,NJD,8475726,https://assets.nhle.com/mugs/nhl/20232024/NJD/8475726.png,Tyler,Toffoli,C,R,73,72,203,183,92,1992-04-24,Scarborough,CAN,Ontario,1,0,0,1,0
-2024,NJD,8478051,https://assets.nhle.com/mugs/nhl/20232024/NJD/8478051.png,Max,Willman,C,L,46,72,184,183,83,1995-02-13,Barnstable,USA,Massachusetts,1,0,0,0,1
 2024,NJD,8480860,https://assets.nhle.com/mugs/nhl/20232024/NJD/8480860.png,Kevin,Bahl,D,L,88,78,230,198,104,2000-06-27,New Westminster,CAN,British Columbia,0,0,0,0,1
 2024,NJD,8480084,https://assets.nhle.com/mugs/nhl/20232024/NJD/8480084.png,Nick,DeSimone,D,R,57,74,185,188,84,1994-11-21,East Amherst,USA,New York,0,0,0,1,0
 2024,NJD,8476462,https://assets.nhle.com/mugs/nhl/20232024/NJD/8476462.png,Dougie,Hamilton,D,R,7,78,230,198,104,1993-06-17,Toronto,CAN,Ontario,0,0,0,1,0
-2024,NJD,8481701,https://assets.nhle.com/mugs/nhl/20232024/NJD/8481701.png,Santeri,Hatakka,D,L,82,73,191,185,87,2001-01-15,Riihimaki,FIN,"",0,0,0,0,1
 2024,NJD,8482684,https://assets.nhle.com/mugs/nhl/20232024/NJD/8482684.png,Luke,Hughes,D,L,43,74,184,188,83,2003-09-09,Manchester,USA,New Hampshire,0,0,0,0,1
 2024,NJD,8478507,https://assets.nhle.com/mugs/nhl/20232024/NJD/8478507.png,John,Marino,D,R,6,73,181,185,82,1997-05-21,North Easton,USA,Massachusetts,0,0,0,1,0
 2024,NJD,8476525,https://assets.nhle.com/mugs/nhl/20232024/NJD/8476525.png,Colin,Miller,D,R,24,73,200,185,91,1992-10-29,Sault Ste. Marie,CAN,Ontario,0,0,0,1,0
@@ -436,6 +434,7 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,NJD,8478399,https://assets.nhle.com/mugs/nhl/20232024/NJD/8478399.png,Jonas,Siegenthaler,D,L,71,74,218,188,99,1997-05-06,Zurich,CHE,"",0,0,0,0,1
 2024,NJD,8474090,https://assets.nhle.com/mugs/nhl/20232024/NJD/8474090.png,Brendan,Smith,D,L,2,74,200,188,91,1989-02-08,Mimico,CAN,Ontario,0,0,0,0,1
 2024,NJD,8482076,https://assets.nhle.com/mugs/nhl/20232024/NJD/8482076.png,Nico,Daws,G,L,50,76,205,193,93,2000-12-22,Munich,DEU,"",0,0,1,0,1
+2024,NJD,8481033,https://assets.nhle.com/mugs/nhl/20232024/NJD/8481033.png,Akira,Schmid,G,L,40,77,205,196,93,2000-05-12,Bern,CHE,"",0,0,1,0,1
 2024,NJD,8477970,https://assets.nhle.com/mugs/nhl/20232024/NJD/8477970.png,Vitek,Vanecek,G,L,41,74,184,188,83,1996-01-09,Havlickuv Brod,CZE,"",0,0,1,0,1
 2024,NYI,8478445,https://assets.nhle.com/mugs/nhl/20232024/NYI/8478445.png,Mathew,Barzal,C,R,13,73,190,185,86,1997-05-26,Coquitlam,CAN,British Columbia,1,0,0,1,0
 2024,NYI,8475231,https://assets.nhle.com/mugs/nhl/20232024/NYI/8475231.png,Casey,Cizikas,C,L,53,71,194,180,88,1991-02-27,Toronto,CAN,Ontario,1,0,0,0,1
@@ -461,16 +460,16 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,NYI,8481014,https://assets.nhle.com/mugs/nhl/20232024/NYI/8481014.png,Alexander,Romanov,D,L,28,73,215,185,98,2000-01-06,Moscow,RUS,"",0,0,0,0,1
 2024,NYI,8478009,https://assets.nhle.com/mugs/nhl/20232024/NYI/8478009.png,Ilya,Sorokin,G,L,30,75,195,191,88,1995-08-04,Mezhdurechensk,RUS,"",0,0,1,0,1
 2024,NYI,8473575,https://assets.nhle.com/mugs/nhl/20232024/NYI/8473575.png,Semyon,Varlamov,G,L,40,74,205,188,93,1988-04-27,Samara,RUS,"",0,0,1,0,1
+2024,NYR,8475968,https://assets.nhle.com/mugs/nhl/20232024/NYR/8475968.png,Alex,Belzile,R,R,60,72,195,183,88,1991-08-31,St-Eloi,CAN,Quebec,1,0,0,1,0
 2024,NYR,8477380,https://assets.nhle.com/mugs/nhl/20232024/NYR/8477380.png,Jonny,Brodzinski,C,R,22,72,204,183,93,1993-06-19,Ham Lake,USA,Minnesota,1,0,0,1,0
 2024,NYR,8480078,https://assets.nhle.com/mugs/nhl/20232024/NYR/8480078.png,Filip,Chytil,C,L,72,74,208,188,94,1999-09-05,Kromeriz,CZE,"",1,0,0,0,1
 2024,NYR,8482157,https://assets.nhle.com/mugs/nhl/20232024/NYR/8482157.png,Will,Cuylle,L,L,50,75,210,191,95,2002-02-05,Toronto,CAN,Ontario,1,0,0,0,1
+2024,NYR,8481726,https://assets.nhle.com/mugs/nhl/20232024/NYR/8481726.png,Adam,Edstrom,C,L,84,79,234,201,106,2000-10-12,Karlstad,SWE,"",1,0,0,0,1
 2024,NYR,8476624,https://assets.nhle.com/mugs/nhl/20232024/NYR/8476624.png,Barclay,Goodrow,C,L,21,74,209,188,95,1993-02-26,Toronto,CAN,Ontario,1,0,0,0,1
 2024,NYR,8481554,https://assets.nhle.com/mugs/nhl/20232024/NYR/8481554.png,Kaapo,Kakko,R,L,24,74,205,188,93,2001-02-13,Turku,FIN,"",1,0,0,0,1
 2024,NYR,8475184,https://assets.nhle.com/mugs/nhl/20232024/NYR/8475184.png,Chris,Kreider,L,L,20,75,233,191,106,1991-04-30,Boxford,USA,Massachusetts,1,0,0,0,1
 2024,NYR,8482109,https://assets.nhle.com/mugs/nhl/20232024/NYR/8482109.png,Alexis,Lafrenière,L,L,13,73,194,185,88,2001-10-11,St-Eustache,CAN,Quebec,1,0,0,0,1
-2024,NYR,8479991,https://assets.nhle.com/mugs/nhl/20232024/NYR/8479991.png,Jake,Leschyshyn,C,L,15,71,198,180,90,1999-03-10,Raleigh,USA,North Carolina,1,0,0,0,1
 2024,NYR,8478550,https://assets.nhle.com/mugs/nhl/20232024/NYR/8478550.png,Artemi,Panarin,L,R,10,72,175,183,79,1991-10-30,Korkino,RUS,"",1,0,0,1,0
-2024,NYR,8475752,https://assets.nhle.com/mugs/nhl/20232024/NYR/8475752.png,Tyler,Pitlick,C,R,71,74,199,188,90,1991-11-01,Minneapolis,USA,Minnesota,1,0,0,1,0
 2024,NYR,8476389,https://assets.nhle.com/mugs/nhl/20232024/NYR/8476389.png,Vincent,Trocheck,C,R,16,71,187,180,85,1993-07-11,Pittsburgh,USA,Pennsylvania,1,0,0,1,0
 2024,NYR,8476918,https://assets.nhle.com/mugs/nhl/20232024/NYR/8476918.png,Jimmy,Vesey,L,L,26,74,200,188,91,1993-05-26,Boston,USA,Massachusetts,1,0,0,0,1
 2024,NYR,8471218,https://assets.nhle.com/mugs/nhl/20232024/NYR/8471218.png,Blake,Wheeler,R,R,17,77,222,196,101,1986-08-31,Plymouth,USA,Minnesota,1,0,0,1,0
@@ -491,7 +490,6 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,OTT,8480355,https://assets.nhle.com/mugs/nhl/20232024/OTT/8480355.png,Mark,Kastelic,C,R,12,76,226,193,103,1999-03-11,Phoenix,USA,Arizona,1,0,0,1,0
 2024,OTT,8480448,https://assets.nhle.com/mugs/nhl/20232024/OTT/8480448.png,Parker,Kelly,L,L,27,73,185,185,84,1999-05-14,Camrose,CAN,Alberta,1,0,0,0,1
 2024,OTT,8477330,https://assets.nhle.com/mugs/nhl/20232024/OTT/8477330.png,Dominik,Kubalik,L,L,81,74,192,188,87,1995-08-21,Plzen,CZE,"",1,0,0,0,1
-2024,OTT,8479772,https://assets.nhle.com/mugs/nhl/20232024/OTT/8479772.png,Zack,MacEwen,R,R,17,76,240,193,109,1996-07-08,Charlottetown,CAN,Prince Edward Island,1,0,0,1,0
 2024,OTT,8480064,https://assets.nhle.com/mugs/nhl/20232024/OTT/8480064.png,Josh,Norris,C,L,9,74,195,188,88,1999-05-05,Oxford,USA,Michigan,1,0,0,0,1
 2024,OTT,8481596,https://assets.nhle.com/mugs/nhl/20232024/OTT/8481596.png,Shane,Pinto,C,R,57,75,201,191,91,2000-11-12,Franklin Square,USA,New York,1,0,0,1,0
 2024,OTT,8482116,https://assets.nhle.com/mugs/nhl/20232024/OTT/8482116.png,Tim,Stützle,C,L,18,72,197,183,89,2002-01-15,Viersen,DEU,"",1,0,0,0,1
@@ -501,12 +499,12 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,OTT,8480073,https://assets.nhle.com/mugs/nhl/20232024/OTT/8480073.png,Erik,Brannstrom,D,L,26,70,185,178,84,1999-09-02,Eksjo,SWE,"",0,0,0,0,1
 2024,OTT,8478469,https://assets.nhle.com/mugs/nhl/20232024/OTT/8478469.png,Thomas,Chabot,D,L,72,74,203,188,92,1997-01-30,Sainte-Marie,CAN,Quebec,0,0,0,0,1
 2024,OTT,8479345,https://assets.nhle.com/mugs/nhl/20232024/OTT/8479345.png,Jakob,Chychrun,D,L,6,74,205,188,93,1998-03-31,Boca Raton,USA,Florida,0,0,0,0,1
+2024,OTT,8481679,https://assets.nhle.com/mugs/nhl/20232024/OTT/8481679.png,Maxence,Guenette,D,R,50,73,181,185,82,2001-04-28,L'Ancienne-Lorette,CAN,Quebec,0,0,0,1,0
 2024,OTT,8474612,https://assets.nhle.com/mugs/nhl/20232024/OTT/8474612.png,Travis,Hamonic,D,R,23,73,200,185,91,1990-08-16,St. Malo,CAN,Manitoba,0,0,0,1,0
 2024,OTT,8482105,https://assets.nhle.com/mugs/nhl/20232024/OTT/8482105.png,Jake,Sanderson,D,L,85,74,203,188,92,2002-07-08,Whitefish,USA,Montana,0,0,0,0,1
 2024,OTT,8482245,https://assets.nhle.com/mugs/nhl/20232024/OTT/8482245.png,Artem,Zub,D,R,2,75,204,191,93,1995-10-03,Khabarovsk,RUS,"",0,0,0,1,0
 2024,OTT,8476341,https://assets.nhle.com/mugs/nhl/20232024/OTT/8476341.png,Anton,Forsberg,G,L,31,75,195,191,88,1992-11-27,Härnösand,SWE,"",0,0,1,0,1
 2024,OTT,8476914,https://assets.nhle.com/mugs/nhl/20232024/OTT/8476914.png,Joonas,Korpisalo,G,L,70,75,189,191,86,1994-04-28,Pori,FIN,"",0,0,1,0,1
-2024,OTT,8480867,https://assets.nhle.com/mugs/nhl/20232024/OTT/8480867.png,Kevin,Mandolese,G,L,30,76,180,193,82,2000-08-22,Blainville,CAN,Quebec,0,0,1,0,1
 2024,PHI,8474715,https://assets.nhle.com/mugs/nhl/20232024/PHI/8474715.png,Cam,Atkinson,R,R,89,68,175,173,79,1989-06-05,Riverside,USA,Connecticut,1,0,0,1,0
 2024,PHI,8480220,https://assets.nhle.com/mugs/nhl/20232024/PHI/8480220.png,Noah,Cates,L,L,27,74,194,188,88,1999-02-05,Stillwater,USA,Minnesota,1,0,0,0,1
 2024,PHI,8476461,https://assets.nhle.com/mugs/nhl/20232024/PHI/8476461.png,Sean,Couturier,C,L,14,76,210,193,95,1992-12-07,Phoenix,USA,Arizona,1,0,0,0,1
@@ -665,6 +663,7 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,TOR,8477939,https://assets.nhle.com/mugs/nhl/20232024/TOR/8477939.png,William,Nylander,R,R,88,72,202,183,92,1996-05-01,Calgary,CAN,Alberta,1,0,0,1,0
 2024,TOR,8471817,https://assets.nhle.com/mugs/nhl/20232024/TOR/8471817.png,Ryan,Reaves,R,R,75,74,226,188,103,1987-01-20,Winnipeg,CAN,Manitoba,1,0,0,1,0
 2024,TOR,8481582,https://assets.nhle.com/mugs/nhl/20232024/TOR/8481582.png,Nicholas,Robertson,L,L,89,69,178,175,81,2001-09-11,Pasadena,USA,California,1,0,0,0,1
+2024,TOR,8482634,https://assets.nhle.com/mugs/nhl/20232024/TOR/8482634.png,Alex,Steeves,C,L,46,72,196,183,89,1999-12-10,Saint Paul,USA,Minnesota,1,0,0,0,1
 2024,TOR,8475166,https://assets.nhle.com/mugs/nhl/20232024/TOR/8475166.png,John,Tavares,C,L,91,73,211,185,96,1990-09-20,Mississauga,CAN,Ontario,1,0,0,0,1
 2024,TOR,8481122,https://assets.nhle.com/mugs/nhl/20232024/TOR/8481122.png,Simon,Benoit,D,L,2,76,205,193,93,1998-09-19,Laval,CAN,Quebec,0,0,0,0,1
 2024,TOR,8474673,https://assets.nhle.com/mugs/nhl/20232024/TOR/8474673.png,TJ,Brodie,D,L,78,74,187,188,85,1990-06-07,Chatham,CAN,Ontario,0,0,0,0,1
@@ -676,6 +675,7 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,TOR,8474162,https://assets.nhle.com/mugs/nhl/20232024/TOR/8474162.png,Jake,Muzzin,D,L,8,75,227,191,103,1989-02-21,Woodstock,CAN,Ontario,0,0,0,0,1
 2024,TOR,8476853,https://assets.nhle.com/mugs/nhl/20232024/TOR/8476853.png,Morgan,Rielly,D,L,44,73,225,185,102,1994-03-09,Vancouver,CAN,British Columbia,0,0,0,0,1
 2024,TOR,8479982,https://assets.nhle.com/mugs/nhl/20232024/TOR/8479982.png,Conor,Timmins,D,R,25,74,206,188,93,1998-09-18,St. Catharines,CAN,Ontario,0,0,0,1,0
+2024,TOR,8483710,https://assets.nhle.com/mugs/nhl/20232024/TOR/8483710.png,Dennis,Hildeby,G,L,41,79,222,201,101,2001-08-19,Jarfalla,SWE,"",0,0,1,0,1
 2024,TOR,8474889,https://assets.nhle.com/mugs/nhl/20232024/TOR/8474889.png,Martin,Jones,G,L,31,77,203,196,92,1990-01-10,North Vancouver,CAN,British Columbia,0,0,1,0,1
 2024,TOR,8478492,https://assets.nhle.com/mugs/nhl/20232024/TOR/8478492.png,Ilya,Samsonov,G,L,35,75,217,191,98,1997-02-22,Magnitogorsk,RUS,"",0,0,1,0,1
 2024,TOR,8479361,https://assets.nhle.com/mugs/nhl/20232024/TOR/8479361.png,Joseph,Woll,G,L,60,75,202,191,92,1998-07-12,Dardenne Prairie,USA,Missouri,0,0,1,0,1
@@ -701,16 +701,17 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,VAN,8474574,https://assets.nhle.com/mugs/nhl/20232024/VAN/8474574.png,Tyler,Myers,D,R,57,80,229,203,104,1990-02-01,Houston,USA,Texas,0,0,0,1,0
 2024,VAN,8477359,https://assets.nhle.com/mugs/nhl/20232024/VAN/8477359.png,Tucker,Poolman,D,R,5,74,199,188,90,1993-06-08,Dubuque,USA,Iowa,0,0,0,1,0
 2024,VAN,8477369,https://assets.nhle.com/mugs/nhl/20232024/VAN/8477369.png,Carson,Soucy,D,L,7,77,208,196,94,1994-07-27,Viking,CAN,Alberta,0,0,0,0,1
+2024,VAN,8480808,https://assets.nhle.com/mugs/nhl/20232024/VAN/8480808.png,Jett,Woo,D,R,44,72,205,183,93,2000-07-27,Winnipeg,CAN,Manitoba,0,0,0,1,0
 2024,VAN,8477507,https://assets.nhle.com/mugs/nhl/20232024/VAN/8477507.png,Nikita,Zadorov,D,L,91,78,248,198,112,1995-04-16,Moscow,RUS,"",0,0,0,0,1
 2024,VAN,8477967,https://assets.nhle.com/mugs/nhl/20232024/VAN/8477967.png,Thatcher,Demko,G,L,35,76,192,193,87,1995-12-08,San Diego,USA,California,0,0,1,0,1
 2024,VAN,8479193,https://assets.nhle.com/mugs/nhl/20232024/VAN/8479193.png,Casey,DeSmith,G,L,29,72,181,183,82,1991-08-13,Rochester,USA,New Hampshire,0,0,1,0,1
 2024,VGK,8478020,https://assets.nhle.com/mugs/nhl/20232024/VGK/8478020.png,Michael,Amadio,R,R,22,73,200,185,91,1996-05-13,Sault Ste. Marie,CAN,Ontario,1,0,0,1,0
 2024,VGK,8477964,https://assets.nhle.com/mugs/nhl/20232024/VGK/8477964.png,Ivan,Barbashev,C,L,49,72,198,183,90,1995-12-14,Moscow,RUS,"",1,0,0,0,1
-2024,VGK,8482153,https://assets.nhle.com/mugs/nhl/20232024/VGK/8482153.png,Brendan,Brisson,C,L,19,72,191,183,87,2001-10-22,Los Angeles,USA,California,1,0,0,0,1
 2024,VGK,8477478,https://assets.nhle.com/mugs/nhl/20232024/VGK/8477478.png,William,Carrier,L,L,28,74,220,188,100,1994-12-20,LaSalle,CAN,Quebec,1,0,0,0,1
 2024,VGK,8481032,https://assets.nhle.com/mugs/nhl/20232024/VGK/8481032.png,Paul,Cotter,C,L,43,74,213,188,97,1999-11-16,Canton,USA,Michigan,1,0,0,0,1
 2024,VGK,8481604,https://assets.nhle.com/mugs/nhl/20232024/VGK/8481604.png,Pavel,Dorofeyev,L,L,16,73,194,185,88,2000-10-26,Nizhny Tagil,RUS,"",1,0,0,0,1
 2024,VGK,8478403,https://assets.nhle.com/mugs/nhl/20232024/VGK/8478403.png,Jack,Eichel,C,R,9,74,203,188,92,1996-10-28,North Chelmsford,USA,Massachusetts,1,0,0,1,0
+2024,VGK,8475278,https://assets.nhle.com/mugs/nhl/20232024/VGK/8475278.png,Byron,Froese,C,R,51,72,195,183,88,1991-03-12,Winkler,CAN,Manitoba,1,0,0,1,0
 2024,VGK,8479353,https://assets.nhle.com/mugs/nhl/20232024/VGK/8479353.png,Brett,Howden,C,L,21,74,200,188,91,1998-03-29,Calgary,CAN,Alberta,1,0,0,0,1
 2024,VGK,8476448,https://assets.nhle.com/mugs/nhl/20232024/VGK/8476448.png,William,Karlsson,C,L,71,72,190,183,86,1993-01-08,Marsta,SWE,"",1,0,0,0,1
 2024,VGK,8478434,https://assets.nhle.com/mugs/nhl/20232024/VGK/8478434.png,Keegan,Kolesar,R,R,55,74,216,188,98,1997-04-08,Brandon,CAN,Manitoba,1,0,0,1,0
@@ -722,7 +723,6 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,VGK,8481600,https://assets.nhle.com/mugs/nhl/20232024/VGK/8481600.png,Tobias,Bjornfot,D,L,26,73,200,185,91,2001-04-06,Upplands Vasby,SWE,"",0,0,0,0,1
 2024,VGK,8479980,https://assets.nhle.com/mugs/nhl/20232024/VGK/8479980.png,Nicolas,Hague,D,L,14,78,240,198,109,1998-12-05,Kitchener,CAN,Ontario,0,0,0,0,1
 2024,VGK,8477018,https://assets.nhle.com/mugs/nhl/20232024/VGK/8477018.png,Ben,Hutton,D,L,17,75,201,191,91,1993-04-20,Brockville,CAN,Ontario,0,0,0,0,1
-2024,VGK,8481527,https://assets.nhle.com/mugs/nhl/20232024/VGK/8481527.png,Kaedan,Korczak,D,R,6,75,201,191,91,2001-01-29,Yorkton,CAN,Saskatchewan,0,0,0,1,0
 2024,VGK,8474166,https://assets.nhle.com/mugs/nhl/20232024/VGK/8474166.png,Alec,Martinez,D,L,23,73,210,185,95,1987-07-26,Rochester Hills,USA,Michigan,0,0,0,0,1
 2024,VGK,8475188,https://assets.nhle.com/mugs/nhl/20232024/VGK/8475188.png,Brayden,McNabb,D,L,3,76,215,193,98,1991-01-21,Davidson,CAN,Saskatchewan,0,0,0,0,1
 2024,VGK,8482624,https://assets.nhle.com/mugs/nhl/20232024/VGK/8482624.png,Daniil,Miromanov,D,R,62,76,207,193,94,1997-07-11,Moscow,RUS,"",0,0,0,1,0
@@ -769,7 +769,6 @@ season,team,player_id,headshot,firstName,lastName,positionCode,shootsCatches,swe
 2024,WPG,8475799,https://assets.nhle.com/mugs/nhl/20232024/WPG/8475799.png,Nino,Niederreiter,R,L,62,74,218,188,99,1992-09-08,Chur,CHE,"",1,0,0,0,1
 2024,WPG,8482149,https://assets.nhle.com/mugs/nhl/20232024/WPG/8482149.png,Cole,Perfetti,C,L,91,71,185,180,84,2002-01-01,Whitby,CAN,Ontario,1,0,0,0,1
 2024,WPG,8476460,https://assets.nhle.com/mugs/nhl/20232024/WPG/8476460.png,Mark,Scheifele,C,R,55,75,207,191,94,1993-03-15,Kitchener,CAN,Ontario,1,0,0,1,0
-2024,WPG,8476952,https://assets.nhle.com/mugs/nhl/20232024/WPG/8476952.png,Dominic,Toninato,C,L,21,74,201,188,91,1994-03-09,Duluth,USA,Minnesota,1,0,0,0,1
 2024,WPG,8480014,https://assets.nhle.com/mugs/nhl/20232024/WPG/8480014.png,Gabriel,Vilardi,C,R,13,75,216,191,98,1999-08-16,Kingston,CAN,Ontario,1,0,0,1,0
 2024,WPG,8476331,https://assets.nhle.com/mugs/nhl/20232024/WPG/8476331.png,Dylan,DeMelo,D,R,2,73,194,185,88,1993-05-01,London,CAN,Ontario,0,0,0,1,0
 2024,WPG,8475455,https://assets.nhle.com/mugs/nhl/20232024/WPG/8475455.png,Brenden,Dillon,D,L,5,76,225,193,102,1990-11-13,New Westminster,CAN,British Columbia,0,0,0,0,1
