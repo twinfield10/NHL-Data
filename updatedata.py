@@ -2,7 +2,7 @@
 
 from initalize import *
 
-update_year = 2023
+update_year = 2024
 
 update_start = time.time()
 

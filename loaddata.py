@@ -3,7 +3,7 @@ from initalize import *
 
 # Load Years
 start = 2009 # 2009 is earliest
-end = 2024 # 2024 is latest
+end = 2025 # 2025 is latest
 
 # Set Up Loop For Loading Inital Data (Rosters and Schedule #
 # *Want to load schedule and rosters so I can compile rosters before using in shift data*
@@ -29,7 +29,7 @@ for k in range(start, end):
 def compile_rosters(type):
     print(f"Now Compiling {type} Rosters From All NHL Seasons")
     df_list = []
-    for i in range(2009, 2024):
+    for i in range(2009, 2025):
         season_roster_path = f"Rosters/parquet/{type.lower()}/NHL_Roster_{type}_{i}{i+1}.parquet"
         df_list.append(pl.read_parquet(season_roster_path))
 
@@ -48,6 +48,7 @@ def compile_rosters(type):
 
 print(" ")
 print("="*34, "Begin Compiling Roster Files", "="*34)
+
 for j in ['Slim', 'Full']:
     compile_rosters(j)
 

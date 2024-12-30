@@ -1087,7 +1087,7 @@ class LoadData:
         # Metrics
         end_time = time.time()
         elap_time = round((end_time - start_time), 2)
-        print(f"{f'{self.start_year}-{self.year}'} NHL Schedule Data Loaded in {elap_time} Seconds | Path: Rosters/parquet/slim/NHL_Roster_Slim_{self.start_year}{self.year}.parquet")
+        print(f"{f'{self.start_year}-{self.year}'} NHL Roster Data Loaded in {elap_time} Seconds | Path: Rosters/parquet/slim/NHL_Roster_Slim_{self.start_year}{self.year}.parquet")
 
         return slim_df
 

@@ -2,7 +2,7 @@ from requirements import *
 
 #### CONSTANTS + FUNCTIONS ####
 st_yr = 2010
-end_yr = 2024
+end_yr = 2025
 
 # Event Type Constant ###
 xG_Events = ['GOAL', 'SHOT', 'MISSED_SHOT', 'BLOCKED_SHOT', 'FACEOFF', 'TAKEAWAY', 'GIVEAWAY', 'HIT']

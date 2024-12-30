@@ -15,7 +15,7 @@ def get_pids(yr):
     # Display the result
     return non_matching_values
 
-player_ids = get_pids(2023)
+player_ids = get_pids(2024)
 
 full_df_list = []
 slim_df_list = []
