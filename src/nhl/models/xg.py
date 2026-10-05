@@ -47,6 +47,38 @@ BASE_PARAMS: dict[str, Any] = {
 MAX_ROUNDS = 5000
 EARLY_STOP = 100
 
+#: Which strength groups each model covers, per architecture. A model covering more than
+#: one group also gets the STATE_FEATURES flags. "pooled" won the 2026-10-05 comparison
+#: (same data/split/tuning): it beat four separate models in every state, most in SH
+#: (log loss -4.7%) and EN (-4.1%), which borrow shot-quality structure from EV.
+ARCHITECTURES: dict[str, dict[str, list[str]]] = {
+    "split": {g: [g] for g in STRENGTH_GROUPS},
+    "pooled": {"ALL": list(STRENGTH_GROUPS)},
+    "hybrid": {"EV": ["EV"], "PP": ["PP"], "SHEN": ["SH", "EN"]},
+    "ev_st": {"EV": ["EV"], "ST": ["PP", "SH", "EN"]},
+}
+STATE_FEATURES = ["is_pp", "is_sh", "is_en"]
+
+
+def feature_set(name: str) -> list[str]:
+    """Feature columns of a named feature set (``v1``, ``v2``) from :mod:`nhl.features.shots`."""
+    from nhl.features import shots as shot_features
+
+    sets = getattr(shot_features, "FEATURE_SETS", {"v1": FEATURES})
+    if name not in sets:
+        raise ValueError(f"unknown feature set {name!r}; have {sorted(sets)}")
+    return list(sets[name])
+
+
+def model_features(base: list[str], covers: list[str]) -> list[str]:
+    """Features a model sees: the base set, plus state flags when it pools strength groups."""
+    return [*base, *STATE_FEATURES] if len(covers) > 1 else list(base)
+
+
+def _with_states(df: pl.DataFrame) -> pl.DataFrame:
+    g = pl.col("strength_group")
+    return df.with_columns(*((g == s).cast(pl.Float32).alias(f"is_{s.lower()}") for s in ("PP", "SH", "EN")))
+
 
 @dataclass
 class SeasonSplit:
@@ -78,17 +110,29 @@ class GroupResult:
     production: xgb.Booster | None = None
     n_train: int = 0
     trials: list[dict[str, Any]] = field(default_factory=list)
+    covers: list[str] = field(default_factory=list)
+    features: list[str] = field(default_factory=list)
 
 
-def load_shots(store: Store, seasons: list[int]) -> pl.DataFrame:
-    """Concatenate shot feature tables for the given season start years."""
-    frames = [store.read_parquet_required(keys.shots(config.season_id(y))) for y in seasons]
+def load_shots(store: Store, seasons: list[int], rink_adjusted: bool = False) -> pl.DataFrame:
+    """Concatenate shot feature tables for the given season start years.
+
+    Args:
+        store: S3 store.
+        seasons: Season start years.
+        rink_adjusted: Read the arena scorer-bias-adjusted tables (``nhl rink-adjust``).
+    """
+    key = keys.shots_rink_adjusted if rink_adjusted else keys.shots
+    frames = [store.read_parquet_required(key(config.season_id(y))) for y in seasons]
     return pl.concat(frames, how="vertical_relaxed")
 
 
-def _dmatrix(df: pl.DataFrame) -> xgb.DMatrix:
+def _dmatrix(df: pl.DataFrame, features: list[str] | None = None) -> xgb.DMatrix:
+    features = features or FEATURES
+    if any(f in STATE_FEATURES for f in features):
+        df = _with_states(df)
     return xgb.DMatrix(
-        df.select(FEATURES).to_numpy(), label=df["is_goal"].to_numpy(), feature_names=FEATURES, missing=np.nan
+        df.select(features).to_numpy(), label=df["is_goal"].to_numpy(), feature_names=features, missing=np.nan
     )
 
 
@@ -120,8 +164,8 @@ def season_weights(seasons: np.ndarray, anchor: int, half_life: float, symmetric
     return np.power(0.5, gap / half_life)
 
 
-def _dmatrix_w(df: pl.DataFrame, weights: np.ndarray | None) -> xgb.DMatrix:
-    d = _dmatrix(df)
+def _dmatrix_w(df: pl.DataFrame, weights: np.ndarray | None, features: list[str] | None = None) -> xgb.DMatrix:
+    d = _dmatrix(df, features)
     if weights is not None:
         d.set_weight(weights)
     return d
@@ -153,6 +197,8 @@ def tune_group(
     split: SeasonSplit,
     n_trials: int,
     timeout: int,
+    covers: list[str] | None = None,
+    features: list[str] | None = None,
 ) -> GroupResult:
     """Tune, test and refit one strength group.
 
@@ -173,9 +219,11 @@ def tune_group(
         ``half_life``; ``rounds_per_weight`` (stored in ``best_iteration`` metadata) lets
         later fits scale boosting rounds to their weighted sample size.
     """
-    data = shots.filter(pl.col("strength_group") == group)
+    covers = covers or [group]
+    features = features or model_features(FEATURES, covers)
+    data = shots.filter(pl.col("strength_group").is_in(covers))
     train, valid, test = _seasons(data, split.train), _seasons(data, split.valid), _seasons(data, split.test)
-    dtrain, dvalid, dtest = _dmatrix(train), _dmatrix(valid), _dmatrix(test)
+    dtrain, dvalid, dtest = _dmatrix(train, features), _dmatrix(valid, features), _dmatrix(test, features)
     train_seasons = train["season"].to_numpy()
     anchor = config.season_id(max(split.train))
     logger.info("%s: train %d / valid %d / test %d shots", group, train.height, valid.height, test.height)
@@ -190,7 +238,7 @@ def tune_group(
             "reg_lambda": trial.suggest_float("reg_lambda", 1e-2, 50, log=True),
             "reg_alpha": trial.suggest_float("reg_alpha", 1e-3, 10, log=True),
             "gamma": trial.suggest_float("gamma", 1e-3, 5, log=True),
-            "half_life": trial.suggest_float("half_life", 0.75, 8.0, log=True),
+            "half_life": trial.suggest_float("half_life", 0.15, 8.0, log=True),
         }
         dtrain.set_weight(season_weights(train_seasons, anchor, params["half_life"]))
         booster = _fit(params, dtrain, dvalid, MAX_ROUNDS)
@@ -201,6 +249,8 @@ def tune_group(
     # Sensible defaults first, so even a tiny budget yields a reasonable model.
     study.enqueue_trial({"learning_rate": 0.05, "max_depth": 5, "min_child_weight": 20, "subsample": 0.8,
                          "colsample_bytree": 0.8, "reg_lambda": 1.0, "reg_alpha": 0.01, "gamma": 0.01, "half_life": 1.5})
+    study.enqueue_trial({"learning_rate": 0.05, "max_depth": 5, "min_child_weight": 20, "subsample": 0.8,
+                         "colsample_bytree": 0.8, "reg_lambda": 1.0, "reg_alpha": 0.01, "gamma": 0.01, "half_life": 0.4})
     study.optimize(objective, n_trials=n_trials, timeout=timeout, show_progress_bar=False)
     best = study.best_trial
     params = dict(best.params)
@@ -213,7 +263,15 @@ def tune_group(
     dtrain.set_weight(w_train)
     model = _fit(params, dtrain, dvalid, MAX_ROUNDS)
     valid_m = evaluate(valid["is_goal"].to_numpy(), _predict(model, dvalid))
-    test_m = evaluate(test["is_goal"].to_numpy(), _predict(model, dtest))
+    test_pred = _predict(model, dtest)
+    test_m = evaluate(test["is_goal"].to_numpy(), test_pred)
+    if len(covers) > 1:
+        # A pooled model is judged state by state too (EV above all), not just in aggregate.
+        test_m["by_state"] = {
+            state: evaluate(test["is_goal"].to_numpy()[mask], test_pred[mask])
+            for state in covers
+            if (mask := (test["strength_group"] == state).to_numpy()).any()
+        }
 
     # Production: every complete season, weights anchored on the latest; boosting rounds
     # scaled by the weighted sample size so the rounds-to-data ratio matches tuning.
@@ -222,7 +280,7 @@ def tune_group(
     full = _seasons(data, split.all)
     w_full = season_weights(full["season"].to_numpy(), config.season_id(max(split.all)), params["half_life"])
     rounds = max(1, round(rounds_per_weight * w_full.sum()))
-    production = _fit(_booster_params(params), _dmatrix_w(full, w_full), None, rounds)
+    production = _fit(_booster_params(params), _dmatrix_w(full, w_full, features), None, rounds)
 
     return GroupResult(
         group=group,
@@ -233,6 +291,8 @@ def tune_group(
         production=production,
         n_train=full.height,
         trials=[{"value": t.value, **t.params} for t in study.trials if t.value is not None],
+        covers=covers,
+        features=features,
     )
 
 
@@ -241,7 +301,14 @@ def _booster_params(params: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in params.items() if k not in ("half_life", "rounds_per_weight")}
 
 
-def out_of_fold(group: str, shots: pl.DataFrame, seasons: list[int], params: dict[str, Any]) -> pl.DataFrame:
+def out_of_fold(
+    group: str,
+    shots: pl.DataFrame,
+    seasons: list[int],
+    params: dict[str, Any],
+    covers: list[str] | None = None,
+    features: list[str] | None = None,
+) -> pl.DataFrame:
     """xG for historical shots from models that never saw that season.
 
     One fold per season: each season is scored by a model trained on every *other*
@@ -257,7 +324,9 @@ def out_of_fold(group: str, shots: pl.DataFrame, seasons: list[int], params: dic
     Returns:
         ``game_id, event_idx, xg`` for every shot in the group and seasons.
     """
-    data = _seasons(shots.filter(pl.col("strength_group") == group), seasons)
+    covers = covers or [group]
+    features = features or model_features(FEATURES, covers)
+    data = _seasons(shots.filter(pl.col("strength_group").is_in(covers)), seasons)
     out = []
     for held in sorted(seasons):
         tr = _seasons(data, [y for y in seasons if y != held])
@@ -266,8 +335,8 @@ def out_of_fold(group: str, shots: pl.DataFrame, seasons: list[int], params: dic
             continue
         w = season_weights(tr["season"].to_numpy(), config.season_id(held), params["half_life"], symmetric=True)
         rounds = max(1, round(params["rounds_per_weight"] * w.sum()))
-        booster = _fit(_booster_params(params), _dmatrix_w(tr, w), None, rounds)
-        out.append(te.select("game_id", "event_idx").with_columns(pl.Series("xg", booster.predict(_dmatrix(te)))))
+        booster = _fit(_booster_params(params), _dmatrix_w(tr, w, features), None, rounds)
+        out.append(te.select("game_id", "event_idx").with_columns(pl.Series("xg", booster.predict(_dmatrix(te, features)))))
         logger.info("%s: out-of-fold %s scored (%d shots, %d rounds)", group, config.season_id(held), te.height, rounds)
     return pl.concat(out)
 
@@ -279,8 +348,17 @@ def _git_sha() -> str | None:
         return None
 
 
-def save_models(store: Store, version: str, results: list[GroupResult], split: SeasonSplit) -> str:
-    """Write boosters, metadata and evaluation to ``models/xg/{version}/`` and mark it LATEST.
+def save_models(
+    store: Store,
+    version: str,
+    results: list[GroupResult],
+    split: SeasonSplit,
+    promote: bool = False,
+    architecture: str = "split",
+    feature_set_name: str = "v1",
+    rink_adjusted: bool = False,
+) -> str:
+    """Write boosters, metadata and evaluation to ``models/xg/{version}/``; mark it LATEST only if ``promote``.
 
     Returns:
         The S3 prefix written.
@@ -296,10 +374,15 @@ def save_models(store: Store, version: str, results: list[GroupResult], split: S
         "created_at": datetime.now(timezone.utc).isoformat(),
         "git_sha": _git_sha(),
         "xgboost": xgb.__version__,
-        "features": FEATURES,
+        "architecture": architecture,
+        "feature_set": feature_set_name,
+        "rink_adjusted": rink_adjusted,
+        "features": sorted({f for r in results for f in r.features}),
         "split": split.to_dict(),
         "groups": {
             r.group: {
+                "covers": r.covers,
+                "features": r.features,
                 "params": {**BASE_PARAMS, **r.params},  # includes half_life, rounds_per_weight
                 "best_iteration_on_train": r.best_iteration,
                 "production_rounds": r.production.num_boosted_rounds(),
@@ -312,7 +395,8 @@ def save_models(store: Store, version: str, results: list[GroupResult], split: S
     }
     store.put_bytes(prefix + "metadata.json", json.dumps(metadata, indent=2).encode(), "application/json")
     store.put_bytes(prefix + "tuning_trials.json", json.dumps({r.group: r.trials for r in results}).encode(), "application/json")
-    store.put_bytes(keys.XG_LATEST, version.encode(), "text/plain")
+    if promote:
+        store.put_bytes(keys.XG_LATEST, version.encode(), "text/plain")
     return prefix
 
 
@@ -337,23 +421,40 @@ def load_models(store: Store, version: str | None = None) -> tuple[dict[str, xgb
     return models, meta
 
 
-def predict_xg(shots: pl.DataFrame, models: dict[str, xgb.Booster]) -> pl.DataFrame:
-    """Score shots with the production models.
+def predict_xg(shots: pl.DataFrame, models: dict[str, xgb.Booster], meta: dict[str, Any] | None = None) -> pl.DataFrame:
+    """Score shots with production models, routing each shot to the model covering its state.
+
+    Args:
+        shots: Shot feature rows.
+        models: Boosters from :func:`load_models`.
+        meta: That version's metadata. Supplies each model's ``covers`` and ``features``;
+            without it (or for pre-architecture versions) each model covers the group it
+            is named after and uses the v1 features.
 
     Returns:
         ``game_id, event_idx, xg``.
     """
+    groups = (meta or {}).get("groups", {})
+    default_features = (meta or {}).get("features", FEATURES)
     out = []
-    for group, booster in models.items():
-        part = shots.filter(pl.col("strength_group") == group)
+    for name, booster in models.items():
+        info = groups.get(name, {})
+        covers = info.get("covers") or [name]
+        features = info.get("features") or default_features
+        part = shots.filter(pl.col("strength_group").is_in(covers))
         if part.height:
-            out.append(part.select("game_id", "event_idx").with_columns(pl.Series("xg", booster.predict(_dmatrix(part)))))
+            out.append(part.select("game_id", "event_idx").with_columns(pl.Series("xg", booster.predict(_dmatrix(part, features)))))
     return pl.concat(out)
 
 
 def report(results: list[GroupResult]) -> str:
-    """Human-readable test-set summary for all groups."""
-    return "\n\n".join(format_report(f"[{r.group} | test]", r.test_metrics) for r in results)
+    """Human-readable test-set summary for all models, with per-state lines for pooled ones."""
+    blocks = []
+    for r in results:
+        blocks.append(format_report(f"[{r.group} | test]", r.test_metrics))
+        for state, m in r.test_metrics.get("by_state", {}).items():
+            blocks.append(format_report(f"  [{r.group} -> {state} | test]", m).split("\n")[0])
+    return "\n\n".join(blocks)
 
 
 __all__ = [

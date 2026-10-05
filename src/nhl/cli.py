@@ -72,12 +72,43 @@ def cmd_features(args: argparse.Namespace) -> None:
     from nhl.storage import keys
     from nhl.storage.s3 import Store
 
+    import polars as pl
+
     store = Store()
     players = store.read_parquet_required(keys.PLAYERS)
     for year in config.parse_seasons(args.seasons):
         sid = config.season_id(year)
-        shots = build_shot_features(store.read_parquet_required(keys.events(sid)), players)
+        # Fatigue norms (a player's typical shift length) look back 20 games, so the prior
+        # season's shifts are included to make early-season values point-in-time correct.
+        shift_frames = [store.get_parquet(keys.shifts(config.season_id(y))) for y in (year - 1, year)]
+        shift_frames = [f for f in shift_frames if f is not None]
+        shifts = pl.concat(shift_frames, how="vertical_relaxed") if shift_frames else None
+        shots = build_shot_features(store.read_parquet_required(keys.events(sid)), players, shifts)
         store.put_parquet(keys.shots(sid), shots)
+
+
+def cmd_rink_adjust(args: argparse.Namespace) -> None:
+    """Estimate arena scorer-bias maps and write adjusted shot tables."""
+    import polars as pl
+
+    from nhl.features import rink
+    from nhl.storage import keys
+    from nhl.storage.s3 import Store
+
+    store = Store()
+    years = config.parse_seasons(args.seasons)
+    shots = pl.concat([store.read_parquet_required(keys.shots(config.season_id(y))) for y in years], how="vertical_relaxed")
+    venues = store.read_parquet_required(keys.GAME_VENUES)
+    if args.apply_only:
+        # Nightly path: apply the stored maps; re-estimating from one season would overwrite them.
+        maps = store.read_parquet_required(keys.RINK_MAPS)
+    else:
+        maps = rink.estimate_maps(shots, venues)
+        store.put_parquet(keys.RINK_MAPS, maps)
+        print(rink.validation_report(shots, venues, rink.apply_maps(shots, venues, maps, include_tracking_era=True)))
+    adjusted = rink.apply_maps(shots, venues, maps)
+    for (season,), part in adjusted.partition_by("season", as_dict=True).items():
+        store.put_parquet(keys.shots_rink_adjusted(int(season)), part.drop("arena_id"))
 
 
 def cmd_train_xg(args: argparse.Namespace) -> None:
@@ -93,19 +124,27 @@ def cmd_train_xg(args: argparse.Namespace) -> None:
     split = xg.SeasonSplit(
         train=config.parse_seasons(args.train), valid=config.parse_seasons(args.valid), test=config.parse_seasons(args.test)
     )
-    shots = xg.load_shots(store, split.all)
-    groups = args.groups.split(",") if args.groups else list(STRENGTH_GROUPS)
+    shots = xg.load_shots(store, split.all, rink_adjusted=args.rink_adjusted)
+    base_features = xg.feature_set(args.feature_set)
+    architecture = xg.ARCHITECTURES[args.architecture]
+    names = args.groups.split(",") if args.groups else list(architecture)
     results = []
-    for group in groups:
-        budget = args.timeout if group == "EV" else max(60, args.timeout // 3)
-        results.append(xg.tune_group(group, shots, split, n_trials=args.trials, timeout=budget))
+    for name in names:
+        covers = architecture[name]
+        budget = args.timeout if "EV" in covers else max(60, args.timeout // 3)
+        results.append(xg.tune_group(name, shots, split, n_trials=args.trials, timeout=budget, covers=covers,
+                                     features=xg.model_features(base_features, covers)))
     version = args.version or datetime.now().strftime("v%Y%m%d-%H%M")
-    prefix = xg.save_models(store, version, results, split)
+    prefix = xg.save_models(store, version, results, split, promote=args.promote, architecture=args.architecture,
+                            feature_set_name=args.feature_set, rink_adjusted=args.rink_adjusted)
     print(xg.report(results))
     print(f"\nsaved models -> {store.uri(prefix)}")
 
+    if not args.promote:
+        print("not promoted: LATEST and stored predictions are unchanged (re-run with --promote to adopt)")
+        return
     if not args.skip_oof:
-        oof = [xg.out_of_fold(r.group, shots, split.all, r.params) for r in results]
+        oof = [xg.out_of_fold(r.group, shots, split.all, r.params, covers=r.covers, features=r.features) for r in results]
         _write_predictions(store, shots, pl.concat(oof), version)
 
 
@@ -129,8 +168,8 @@ def cmd_score_xg(args: argparse.Namespace) -> None:
 
     store = Store()
     models, meta = xg.load_models(store, args.version)
-    shots = xg.load_shots(store, config.parse_seasons(args.seasons))
-    _write_predictions(store, shots, xg.predict_xg(shots, models), meta["version"])
+    shots = xg.load_shots(store, config.parse_seasons(args.seasons), rink_adjusted=meta.get("rink_adjusted", False))
+    _write_predictions(store, shots, xg.predict_xg(shots, models, meta), meta["version"])
 
 
 def cmd_update(args: argparse.Namespace) -> None:
@@ -140,6 +179,7 @@ def cmd_update(args: argparse.Namespace) -> None:
     cmd_ingest(argparse.Namespace(seasons=year, workers=6, refetch=False, skip_catalog=True))
     cmd_build(argparse.Namespace(seasons=year, workers=8))
     cmd_features(argparse.Namespace(seasons=year))
+    cmd_rink_adjust(argparse.Namespace(seasons=year, apply_only=True))
     cmd_score_xg(argparse.Namespace(seasons=year, version=None))
 
 
@@ -255,15 +295,27 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--seasons", default=_default_seasons())
     p.set_defaults(func=cmd_features)
 
+    p = sub.add_parser("rink-adjust", help="arena scorer-bias adjustment of shot locations")
+    p.add_argument("--seasons", default=_default_seasons())
+    p.add_argument("--apply-only", action="store_true", help="apply stored maps instead of re-estimating them")
+    p.set_defaults(func=cmd_rink_adjust)
+
     p = sub.add_parser("train-xg", help="tune/evaluate/refit xG models and write historical xG")
     p.add_argument("--train", default="2010-2023", help="season start years used for fitting")
     p.add_argument("--valid", default="2024", help="seasons for early stopping + tuning")
     p.add_argument("--test", default="2025", help="untouched seasons for the final report")
-    p.add_argument("--groups", default=None, help="subset of EV,PP,SH,EN")
+    p.add_argument("--groups", default=None, help="subset of the architecture's model names")
+    p.add_argument("--architecture", default="pooled", choices=["pooled", "split", "hybrid", "ev_st"],
+                   help="which strength groups share a model (pooled won the 2026-10-05 comparison)")
+    p.add_argument("--feature-set", default="v1", help="feature set from nhl.features.shots.FEATURE_SETS")
     p.add_argument("--trials", type=int, default=40)
     p.add_argument("--timeout", type=int, default=1800, help="EV tuning seconds (others get a third)")
     p.add_argument("--version", default=None)
     p.add_argument("--skip-oof", action="store_true", help="skip out-of-fold historical predictions")
+    p.add_argument("--rink-adjusted", action="store_true",
+                   help="train on arena scorer-bias-adjusted shot locations (run `nhl rink-adjust` first)")
+    p.add_argument("--promote", action="store_true",
+                   help="make this version LATEST and rewrite stored xG predictions (default: evaluate only)")
     p.set_defaults(func=cmd_train_xg)
 
     p = sub.add_parser("score-xg", help="score seasons with the production xG model")

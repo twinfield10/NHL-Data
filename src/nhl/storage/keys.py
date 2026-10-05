@@ -61,6 +61,14 @@ def shots(season: int) -> str:
     return f"processed/shots/{season}.parquet"
 
 
+def shots_rink_adjusted(season: int) -> str:
+    """Shot features with arena scorer-bias-adjusted locations (see nhl.features.rink)."""
+    return f"processed/shots_rink/{season}.parquet"
+
+
+RINK_MAPS = "processed/rink_maps.parquet"
+
+
 def xg_model_prefix(version: str) -> str:
     """Prefix for one trained xG model version."""
     return f"models/xg/{version}/"
@@ -157,3 +165,8 @@ def edge(kind: str, season: int) -> str:
 def transactions(season: int) -> str:
     """Roster transactions (call-ups, waivers, trades, signings)."""
     return f"external/transactions/{season}.parquet"
+
+
+def shifts(season: int) -> str:
+    """Merged player shifts per game (start/end seconds into the period), from shift charts."""
+    return f"processed/shifts/{season}.parquet"
