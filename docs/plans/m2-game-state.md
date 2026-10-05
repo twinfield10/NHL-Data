@@ -1,7 +1,10 @@
 # Plan: M2 — game-state data model (stints, lineups, goalie starts, game logs)
 
-**Status:** planned 2026-10-05; revised 2026-10-05 after reviewing HockeyViz's Magnus 9
-models (stint columns that M3's joint context fit needs, coaches, goalie freezes).
+**Status:** built 2026-10-05 (`src/nhl/gamestate/`, `nhl game-state`, `nhl validate-game-state`);
+backfilled 2010-11 to 2026-27. Results in [the validation report](../reports/m2-validation.md),
+decisions made while building in [Implementation notes](#implementation-notes-2026-10-05).
+The plan was revised the same day after reviewing HockeyViz's Magnus 9 models (stint columns
+for M3's joint context fit, coaches, goalie freezes).
 **Depends on:**
 - `processed/events`, `processed/shifts` (merged shifts, already persisted for 2010-2026);
 - `predictions/xg` (LATEST model);
@@ -83,7 +86,9 @@ Rest, home/away and coaches are joined in M3 from `schedule_context` and `coache
 are constant per team-game, so they aren't copied onto every stint.
 
 **Validation:**
-- Durations sum to game length (±1%) in ≥99.5% of games.
+- Durations sum to game length (±1%) in ≥99.5% of games. *(As built, stints tile every period
+  by construction. The real check is plausible on-ice counts: ≥99.5% of each season's ice
+  time; see the implementation notes.)*
 - Stint goals equal the official score minus shootout in ≥99.5% of games.
 - Stint xG sums to the predictions table exactly.
 - `last_faceoff_s` ≤ `start_s` always. `post_penalty_5v5` is never set before the
@@ -187,3 +192,65 @@ for the M3 ratings fit.
 home/away jointly with players, zone starts, rest and coaches, as Magnus 9 does. M2 only
 stores the raw facts those terms need: score at stint start, period, home/away, the
 faceoff context and `post_penalty_5v5`.
+
+## Implementation notes (2026-10-05)
+Decisions made while building, where the plan above left room:
+
+- **Stints are also cut at every faceoff and goal.** Each stint then has exactly one score
+  state and one most-recent faceoff, which M3's per-second zone-start terms need.
+  - Strength is counted from the shift charts (skaters on ice), not from `situationCode`,
+    which only updates on events.
+  - Times are game seconds. Counts are home/away columns: `{home,away}_{cf,ff,sf,gf,xgf,pen_taken,pim,fo_won}`.
+  - About 410 stints per game. A 2024-25 season builds in about 2 s.
+- **`start_type`** is one of `faceoff_oz` / `faceoff_nz` / `faceoff_dz` (home team's view), `faceoff_unknown`
+  (no zone recorded), or `on_the_fly`.
+- **`post_penalty_5v5` requires the faceoff that starts the segment to be short-handed.**
+  Every real power play starts at a faceoff, so this rule ignores momentary 4v5s during line
+  changes. The flag still covers about 7% of 5v5 time (median 3.4 min per game), because most
+  penalties expire in play and the next whistle can be far off. Checked by hand on game 2024020500.
+- **Rosters table added** (`processed/rosters/{season}`): dressed players and their
+  position from the play-by-play `rosterSpots`. Lineups need positions, and the
+  table includes dressed players who never played (backup goalies).
+- **Lineups:** `unit_toi_share` is relative to the team's time in that state (5v5, PP or PK).
+  `confidence` = time together ÷ the smallest member's TOI in that state.
+  - 2024-25 medians: F1 0.85, D1 0.88, PP1 0.99.
+  - 4th lines are missing mostly in 11F/7D games.
+- **Goalie starts:** the freeze code is `goalie-stopped-after-sog`. The freeze rate on
+  shots on goal is 24.8% in 2024-25 (Magnus 8 reports about 25%).
+- **Game logs are long:** one row per (team or player, game, strength).
+  - Strengths: `all`, `5v5`, `EV`, `PP`, `SH`, `EN_own`, `EN_opp`. The last five partition `all`
+    (checked in tests).
+  - Box events (penalties, faceoffs, hits, blocks, giveaways/takeaways) are split by strength
+    using the same event-to-stint attribution as the stints.
+- **HTML time-on-ice fallback:**
+  - URLs need the uppercase `.HTM` extension.
+  - On 20 games (2015-16 and 2024-25, one playoff game) that also have an API chart, all
+    15,298 shifts matched exactly.
+  - It fills 58 games: the 57 in 2024-25, plus 2013020971, whose API chart holds only a
+    goal-marker row.
+  - The build falls back whenever the parsed API shifts are empty. Processed shifts carry
+    `shift_source` = `api` | `html`.
+  - Shot features for 2013-14 and 2024-25 were rebuilt, so the next xG retrain sees the new
+    shift features for those games. Their stored xG predictions are unchanged: they are
+    out-of-fold, and re-scoring with the production model would leak.
+- **Source defects found by the backfill, and their fixes:**
+  - **Foreign shifts.** The API chart for 2021020513 (NYI-WSH) also carries 704 shifts from
+    an STL-MIN game; 2024030116 carries 4. `parse_shifts` now keeps only players dressed for
+    the game, on the team they dressed for. This touched events and stints for those two
+    games only; their stored xG is unchanged.
+  - **Missing opening goalie shift** (6 team-games). The starter is now the team's first
+    goalie in net, not necessarily the one on the ice in stint 0.
+  - **`PERIOD_END` a second early.** Some events are logged at 20:00 of a period that
+    "ends" at 19:59. A period now ends at the latest of `PERIOD_END`, the last event and
+    the last shift, capped at 20:00.
+  - **Shift-chart overlaps.** Late exits briefly put 6-8 skaters on the ice. They are kept
+    and flagged: `valid_personnel` = false. They are at most 0.20% of any season's ice time
+    (worst in 2019-21).
+- **Personnel bar changed.** The bar was "≥99% plausible time in ≥99.5% of games". It is now
+  **≥99.5% of each season's ice time plausible**, which every season meets (lowest 99.80%,
+  2020-21). The per-game figure stays in the report for information: it is 94-99.9%, and
+  the shortfall is concentrated in a few broken charts, not spread across games.
+- **Validation:** sampled boxscores are cached under `raw/boxscore/`. The DailyFaceoff
+  comparison uses the last version published before puck drop. It reports nothing until
+  games played after the first capture (2026-10-05) are ingested.
+

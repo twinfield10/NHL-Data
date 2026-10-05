@@ -108,13 +108,18 @@ def official_id(name: str | None) -> str | None:
     Args:
         name: Display name.
     """
+    slug = name_slug(name)
+    return None if slug is None else OFFICIAL_ALIASES.get(slug, slug)
+
+
+def name_slug(name: str | None) -> str | None:
+    """Accent-, case- and punctuation-insensitive slug of a person's display name."""
     name = clean_name(name)
     if not name:
         return None
     ascii_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode().lower()
     ascii_name = re.sub(r"['’.]", "", ascii_name)
-    slug = re.sub(r"[^a-z0-9]+", "-", ascii_name).strip("-")
-    return OFFICIAL_ALIASES.get(slug, slug)
+    return re.sub(r"[^a-z0-9]+", "-", ascii_name).strip("-") or None
 
 
 def identity_report(officials: pl.DataFrame) -> dict[str, pl.DataFrame]:

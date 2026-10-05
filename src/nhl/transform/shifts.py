@@ -66,6 +66,9 @@ def parse_shifts(raw: dict[str, Any], roster: pl.DataFrame) -> pl.DataFrame:
         schema={"player_id": pl.Int64, "team_id": pl.Int32, "period": pl.Int8, "start": pl.Int32, "end": pl.Int32},
     ).filter(pl.col("end") > pl.col("start"))
 
+    # Keep only players dressed for this game, on the team they dressed for: at least one
+    # API chart (2021020513) also carries another game's shifts under this game id.
+    shifts = shifts.join(roster.select("player_id", "team_id"), on=["player_id", "team_id"], how="semi")
     goalies = roster.filter(pl.col("position") == "G").select("player_id", pl.lit(True).alias("is_goalie"))
     shifts = shifts.join(goalies, on="player_id", how="left").with_columns(pl.col("is_goalie").fill_null(False))
 

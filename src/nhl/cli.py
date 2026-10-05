@@ -183,8 +183,29 @@ def cmd_xg_monitor(args: argparse.Namespace) -> None:
               f"{r['goals']:>5} goals / {r['shots']:>6} shots{'  FLAG' if r['flagged'] else ''}")
 
 
+def cmd_game_state(args: argparse.Namespace) -> None:
+    """Build stints, lineups, goalie starts, coaches and game logs (M2)."""
+    from nhl.gamestate.build import build_season
+    from nhl.storage.s3 import Store
+
+    store = Store()
+    reports = [build_season(store, year, workers=args.workers) for year in config.parse_seasons(args.seasons)]
+    print("\n".join(r.summary() for r in reports))
+
+
+def cmd_validate_game_state(args: argparse.Namespace) -> None:
+    """Check the M2 tables against official scores and NHL boxscores; write the report."""
+    from pathlib import Path
+
+    from nhl.gamestate.validate import validate, write_report
+    from nhl.storage.s3 import Store
+
+    results = validate(Store(), config.parse_seasons(args.seasons), sample_games=args.sample)
+    print(write_report(results, Path(args.report)))
+
+
 def cmd_update(args: argparse.Namespace) -> None:
-    """Nightly: catalog -> ingest new games -> rebuild current season -> features -> score."""
+    """Nightly: catalog -> ingest -> rebuild current season -> features -> score -> game state."""
     year = str(args.season or _current_start_year())
     cmd_catalog(argparse.Namespace(seasons=f"{config.FIRST_SEASON}-{year}", force=False))
     cmd_ingest(argparse.Namespace(seasons=year, workers=6, refetch=False, skip_catalog=True))
@@ -193,6 +214,7 @@ def cmd_update(args: argparse.Namespace) -> None:
     cmd_rink_adjust(argparse.Namespace(seasons=year, apply_only=True))
     cmd_score_xg(argparse.Namespace(seasons=year, version=None))
     cmd_xg_monitor(argparse.Namespace(season=int(year), no_write=False))
+    cmd_game_state(argparse.Namespace(seasons=year, workers=16))
 
 
 POLL_TARGETS = ("odds", "goalies", "lines", "injuries")
@@ -345,6 +367,17 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--season", type=int, default=None, help="season start year (default: current)")
     p.add_argument("--no-write", action="store_true", help="don't snapshot the summary to S3")
     p.set_defaults(func=cmd_xg_monitor)
+
+    p = sub.add_parser("game-state", help="stints, lineups, goalie starts, coaches, game logs (M2)")
+    p.add_argument("--seasons", default=_default_seasons())
+    p.add_argument("--workers", type=int, default=16, help="parallel reads of per-game raw payloads")
+    p.set_defaults(func=cmd_game_state)
+
+    p = sub.add_parser("validate-game-state", help="validate M2 tables vs official scores and boxscores")
+    p.add_argument("--seasons", default=_default_seasons())
+    p.add_argument("--sample", type=int, default=20, help="boxscore-checked games per season (0 to skip)")
+    p.add_argument("--report", default="docs/reports/m2-validation.md")
+    p.set_defaults(func=cmd_validate_game_state)
 
     p = sub.add_parser("update", help="nightly incremental update of the current season")
     p.add_argument("--season", type=int, default=None)

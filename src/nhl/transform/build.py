@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 import polars as pl
 
 from nhl import config
+from nhl.ingest.toi_html import load_reports, to_shift_chart
 from nhl.storage import keys
 from nhl.storage.s3 import Store
 from nhl.transform.events import parse_events, roster_from_pbp
@@ -26,17 +27,31 @@ def build_game_parts(store: Store, season: int, game_id: int) -> tuple[pl.DataFr
 
     Returns:
         ``(events, shifts)``; both empty if the raw play-by-play is missing. Shifts carry
-        ``game_id`` and ``season`` and are empty when the game has no shift chart.
+        ``game_id``, ``season`` and ``shift_source`` (``api``, or ``html`` when the API
+        chart is empty and the HTML time-on-ice reports were used); they are empty when
+        neither source has the game.
     """
     pbp = store.get_json_gz(keys.raw_pbp(season, game_id))
     if pbp is None:
         return pl.DataFrame(), pl.DataFrame()
     events = parse_events(pbp)
-    raw_shifts = store.get_json_gz(keys.raw_shifts(season, game_id)) or {}
-    shifts = parse_shifts(raw_shifts, roster_from_pbp(pbp))
+    roster = roster_from_pbp(pbp)
+    shifts = parse_shifts(store.get_json_gz(keys.raw_shifts(season, game_id)) or {}, roster)
+    source = "api"
+    if shifts.is_empty():
+        # No usable API chart: fall back to the HTML time-on-ice reports when we have them.
+        reports = load_reports(store, season, game_id)
+        if reports is not None:
+            shifts, source = parse_shifts(to_shift_chart(reports, pbp), roster), "html"
     events = events.join(on_ice(events, shifts), on="event_idx", how="left")
-    shifts = shifts.with_columns(pl.lit(game_id, pl.Int64).alias("game_id"), pl.lit(season, pl.Int32).alias("season"))
-    return events, shifts.select("game_id", "season", "player_id", "team_id", "period", "start", "end", "is_goalie")
+    shifts = shifts.with_columns(
+        pl.lit(game_id, pl.Int64).alias("game_id"),
+        pl.lit(season, pl.Int32).alias("season"),
+        pl.lit(source).alias("shift_source"),
+    )
+    return events, shifts.select(
+        "game_id", "season", "player_id", "team_id", "period", "start", "end", "is_goalie", "shift_source"
+    )
 
 
 def build_game(store: Store, season: int, game_id: int) -> pl.DataFrame:

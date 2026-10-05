@@ -14,6 +14,7 @@ import polars as pl
 
 from nhl import config
 from nhl.ingest.http import NHLClient
+from nhl.ingest.toi_html import fetch_reports, raw_prefix
 from nhl.storage import keys
 from nhl.storage.s3 import Store
 
@@ -29,14 +30,15 @@ class IngestReport:
     fetched: int = 0
     skipped: int = 0
     empty_shifts: list[int] = field(default_factory=list)
+    html_fetched: list[int] = field(default_factory=list)
     failed: dict[int, str] = field(default_factory=dict)
 
     def summary(self) -> str:
         """One-line human-readable summary."""
         return (
             f"{self.season}: {self.candidates} final games | fetched {self.fetched} | "
-            f"already stored {self.skipped} | empty shift charts {len(self.empty_shifts)} | "
-            f"failed {len(self.failed)}"
+            f"already stored {self.skipped} | empty shift charts {len(self.empty_shifts)} "
+            f"(HTML fallback fetched {len(self.html_fetched)}) | failed {len(self.failed)}"
         )
 
 
@@ -55,6 +57,23 @@ def _fetch_one(store: Store, client: NHLClient, season: int, game_id: int) -> bo
     store.put_json_gz(keys.raw_pbp(season, game_id), pbp)
     store.put_json_gz(keys.raw_shifts(season, game_id), shifts)
     return not shifts.get("data")
+
+
+def _report_key(season: int) -> str:
+    return f"raw/_reports/{season}.json.gz"
+
+
+def _fill_html_shifts(store: Store, client: NHLClient, season: int, report: IngestReport) -> None:
+    """Fetch HTML time-on-ice reports for games with an empty API shift chart (once each)."""
+    have = {int(k.rsplit("/", 1)[-1].split("_")[0]) for k in store.list_keys(raw_prefix(season))}
+    for game_id in report.empty_shifts:
+        if game_id in have:
+            continue
+        try:
+            fetch_reports(store, client, season, game_id)
+            report.html_fetched.append(game_id)
+        except Exception as exc:  # noqa: BLE001 - the game simply keeps no shifts
+            logger.warning("HTML time-on-ice reports for %s unavailable: %r", game_id, exc)
 
 
 def ingest_season(
@@ -104,13 +123,17 @@ def ingest_season(
             if n % 200 == 0:
                 logger.info("%s: %d/%d fetched", season, n, len(todo))
 
-    if todo:
+    # Empty shift charts accumulate across runs, so the HTML fallback can find every one.
+    previous = store.get_json_gz(_report_key(season)) or {}
+    report.empty_shifts = sorted(set(report.empty_shifts) | set(previous.get("empty_shifts", [])))
+    _fill_html_shifts(store, client, season, report)
+    if todo or report.html_fetched:
         store.put_json_gz(
-            f"raw/_reports/{season}.json.gz",
+            _report_key(season),
             {
                 "season": season,
                 "candidates": report.candidates,
-                "empty_shifts": sorted(report.empty_shifts),
+                "empty_shifts": report.empty_shifts,
                 "failed": report.failed,
             },
         )

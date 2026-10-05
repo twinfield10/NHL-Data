@@ -29,7 +29,9 @@ nhl build  --seasons 2010-2026 # raw -> processed/events/{season}.parquet
 nhl features --seasons 2010-2026
 nhl train-xg                   # tune on 2010-22, validate on 2023-24, test on 2024-26, refit, out-of-fold xG
 nhl score-xg --seasons 2026    # score the current season with the production model
-nhl update                     # nightly: catalog -> ingest -> build -> features -> score (current season)
+nhl game-state --seasons 2010-2026   # stints, lineups, goalie starts, coaches, rosters, game logs (M2)
+nhl validate-game-state --seasons 2010-2026   # vs official scores + NHL boxscores -> docs/reports/m2-validation.md
+nhl update                     # nightly: catalog -> ingest -> build -> features -> score -> game state (current season)
 nhl poll --what odds,goalies,lines,injuries [--window 90]   # one poll of the live sources
 ```
 
@@ -92,12 +94,14 @@ src/nhl/
   ingest/http.py       NHL API client: retries, timeouts, global rate limit
   ingest/catalog.py    games, teams, player bios (bulk endpoints)
   ingest/games.py      raw per-game play-by-play + shift charts
+  ingest/toi_html.py   fallback shifts from the NHL's HTML time-on-ice reports
   transform/events.py  play-by-play -> events (score, strength, coordinates)
   transform/shifts.py  shift charts -> on-ice players and shift fatigue
   transform/build.py   per-season event table
   features/shots.py    shot-level model features (single code path for all strengths)
   models/xg.py         tuning, testing, refit, out-of-fold predictions, save/load
   models/evaluate.py   log loss, Brier, AUC, calibration
+  gamestate/           M2: stints, rosters/coaches, lineups, goalie starts, game logs, validation
 tests/                 unit tests on hand-built synthetic games
 notebooks/             exploration
 ```
@@ -111,6 +115,9 @@ notebooks/             exploration
 | All games | `api.nhle.com/stats/rest/en/game` |
 | Teams | `api.nhle.com/stats/rest/en/team` |
 | Player bios | `api.nhle.com/stats/rest/en/{skater,goalie}/bios?cayenneExp=seasonId={season}` |
+| Shift fallback | `www.nhl.com/scores/htmlreports/{season}/T{H,V}{nnnnnn}.HTM` (only when the shift chart is empty) |
+| Coaches, scratches | `api-web.nhle.com/v1/gamecenter/{game_id}/right-rail` |
+| Validation | `api-web.nhle.com/v1/gamecenter/{game_id}/boxscore` (sampled) |
 
 ## Key definitions
 
@@ -118,6 +125,8 @@ notebooks/             exploration
 - **Strength group** (shooting team's view): `EN` if the defending net is empty. Otherwise `EV`, `PP` or `SH` by comparing skater counts. An extra attacker with the shooter's own goalie pulled counts as `PP`, as in the legacy model.
 - **Model sample**: unblocked shot attempts (Fenwick), excluding shootouts and penalty shots.
 - **On-ice players**: at a line change, faceoffs are credited to players coming on and all other events to players going off.
+- **Stint**: an interval of constant on-ice personnel within a period, also cut at every faceoff and goal, so each stint has one score state and one most-recent faceoff. Strength comes from the skaters on ice (shift charts), not `situationCode`.
+- **Game-log strengths** (team's view): `5v5`, `EV`, `PP`, `SH`, `EN_own` (own net empty), `EN_opp`, and `all`. All except `5v5` and `all` partition the game.
 
 ## Changes from `legacy-v1`
 

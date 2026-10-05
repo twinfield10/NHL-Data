@@ -12,6 +12,12 @@
     processed/players.parquet
     processed/events/{season}.parquet     one row per play-by-play event, on-ice players attached
     processed/shots/{season}.parquet      unblocked shot attempts with model features
+    processed/stints/{season}.parquet     constant on-ice personnel intervals (M2)
+    processed/lineups/{season}.parquet    inferred lines, pairs, PP/PK units per team-game
+    processed/goalie_starts/{season}.parquet
+    processed/coaches/{season}.parquet    head coach + scratches per team-game
+    processed/rosters/{season}.parquet    dressed players and positions per game
+    processed/game_logs/{team|player}/{season}.parquet
     models/xg/{version}/...               boosters, metadata, evaluation
     predictions/xg/{season}.parquet       per-shot expected goals
     legacy/v1/...                         archive of the pre-rewrite repo data
@@ -170,3 +176,41 @@ def transactions(season: int) -> str:
 def shifts(season: int) -> str:
     """Merged player shifts per game (start/end seconds into the period), from shift charts."""
     return f"processed/shifts/{season}.parquet"
+
+
+# --- game state (M2) ----------------------------------------------------------------------
+
+
+def stints(season: int) -> str:
+    """Stints: maximal intervals of constant on-ice personnel (see nhl.gamestate.stints)."""
+    return f"processed/stints/{season}.parquet"
+
+
+def lineups(season: int) -> str:
+    """Inferred forward lines, D pairs and PP/PK units per team-game."""
+    return f"processed/lineups/{season}.parquet"
+
+
+def goalie_starts(season: int) -> str:
+    """Starting goalie per team-game, with workload and saves above expected."""
+    return f"processed/goalie_starts/{season}.parquet"
+
+
+def coaches(season: int) -> str:
+    """Head coach and scratches per team-game."""
+    return f"processed/coaches/{season}.parquet"
+
+
+def rosters(season: int) -> str:
+    """Dressed players and their position per game."""
+    return f"processed/rosters/{season}.parquet"
+
+
+def team_game_logs(season: int) -> str:
+    """Team-game box and on-ice counts by strength."""
+    return f"processed/game_logs/team/{season}.parquet"
+
+
+def player_game_logs(season: int) -> str:
+    """Player-game individual and on-ice counts by strength."""
+    return f"processed/game_logs/player/{season}.parquet"
