@@ -1,6 +1,7 @@
 # Plan: M3 — ratings (players, goalies, team context)
 
-**Status:** planned 2026-10-05. Phases A-F below; A first.
+**Status:** A-F built 2026-10-05. The bar passes on xG ([evaluation](../reports/m3-evaluation.md)).
+Results, tuned settings and open items are in [Results](#results-2026-10-05).
 **Depends on:** M1 xG (`predictions/xg`, shot features), M2 (`stints`, `goalie_starts`,
 `rosters`, `coaches`, `game_logs`, `schedule_context`), the player catalog (`birth_date`).
 **Feeds:** M4 simulator (scoring rates by unit, goalie adjustment, penalty rates, context),
@@ -145,3 +146,49 @@ prior mean. Referee crew effects (from `officials`) are a later refinement.
   method), or fix Magnus 9's parabola (peak 24) to start. Recommendation: start fixed,
   then estimate.
 - **Goal-based RAPM** next to xG-based. Diagnostic only, unless it helps the bar.
+
+## Results (2026-10-05)
+Every model is tuned the same point-in-time way: chain full seasons, fit the evaluation
+season through Dec 31, score the rest, 2012-2025. 2012-13 and 2020-21 started in
+January, so they are split at their median game date instead.
+
+| Phase | Result | Settings |
+|---|---|---|
+| A freeze | test freezes/expected 1.004, AUC 0.61, out-of-fold within ±2.2% every season | xG features + era flag at 2019-20 |
+| B finishing | +0.19% log loss vs neutral xG (with intercept and position effect); goalie terms +0.04% on their own | shooter decay 0.8, 1k-shot newcomer prior at −0.05; goalie decay 0.8, 10k shots at +0.025 |
+| C EV | +0.17% stint-level weighted MSE vs no player terms; aging adds a little | decay 0.7, 100k-s newcomer prior at league average, coach ridge 2e5, aging curve ×2 |
+| D ST | +0.65% (power-play skill is concentrated) | decay 0.9, 20k-s newcomer prior, no aging yet |
+| E penalties | +7.4% Poisson log likelihood vs position rates | decay 0.7, 5 h of position evidence |
+| F bar | **pass on xG.** Rest-of-season 5v5 xG differential RMSE 0.242 vs 0.258 (last season) and 0.285 (team to date); correlation 0.75 | cutoffs Nov 15 / Jan 1 / Feb 15, 2015-2025 |
+
+**Findings**
+- **xG overrates defensemen's shots.** Defensemen convert about 7% fewer goals than their
+  xG (2010-2026), so finishing has an unpenalized defenseman effect (−0.05 logits).
+  Without it, every defenseman's term carries the gap.
+- **Centering matters.** Without a zero-sum constraint on each group of talent terms,
+  the free intercept and the talent terms drift against each other. The first finishing
+  tuning showed a spurious +1.5% gain for exactly this reason.
+- **Newcomers start at league average.** Below-average newcomer priors (Magnus 9's ±10%)
+  scored worse in both the EV and the finishing tuning.
+- **EV context terms (2024-25).** Home ice is +0.12 xG/60 (about 5%). The attacking team
+  on a back-to-back is −0.08; an opponent on a back-to-back is +0.12. An offensive-zone
+  faceoff adds +5.6 xG/60 in its first second, decaying over about 10 s. Trailing teams
+  generate more.
+- **Aging:** offence rises about 0.012 xG/60 per season at 19-21, peaks at 25-26, then
+  falls 0.01-0.02 per season. Defence worsens after about 27. The curve is fitted on all
+  seasons: a league-level curve with six parameters, so the leakage is negligible.
+
+**Open items (carried to M4 unless noted)**
+- **Goals vs xG at team level.** On rest-of-season *goal* differential, team xG to date
+  correlates better (0.46) than the ratings (0.40), and a 75/25 ratings/team blend lifts
+  the ratings to 0.43 at no xG cost. Weaker coach shrinkage made both worse, so coach
+  terms are not the cause. M4 adds finishing and goaltending to the ratings anyway; test
+  there whether a shrunk team term is still needed.
+- **Line chemistry** (roadmap hypothesis): not tested yet.
+- **Goalie workload and back-to-back effects** on save skill: not modelled yet;
+  `goalie_starts` has the inputs.
+- **Goal-based RAPM**: not built (diagnostic only).
+- **ST aging**: special-teams priors aren't aged yet.
+- **Season rollover:** run `nhl build-priors` once each season is complete, so the
+  next season starts from it.
+

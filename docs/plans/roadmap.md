@@ -1,6 +1,6 @@
 # Plan: NHL game-prediction platform (roadmap)
 
-**Status:** M1 complete (2026-10-05). Data sources for M5/M6 built early. M2 built and backfilled 2010-2026 ([m2-game-state.md](m2-game-state.md), [validation](../reports/m2-validation.md)); line agreement with DailyFaceoff awaits games played after 2026-10-05. Everything else is proposed.
+**Status:** M1 complete (2026-10-05). Data sources for M5/M6 built early. M2 built and backfilled 2010-2026 ([m2-game-state.md](m2-game-state.md), [validation](../reports/m2-validation.md)); line agreement with DailyFaceoff awaits games played after 2026-10-05. M3 built ([m3-ratings.md](m3-ratings.md)): bar passed on xG. Everything else is proposed.
 M3 methods and the xG sub-models were revised 2026-10-05 after a review of HockeyViz's
 Magnus 8 xG and Magnus 9 EV/ST models (see [References](#references)).
 **Written:** 2026-10-05.

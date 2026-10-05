@@ -208,6 +208,44 @@ def cmd_score_freeze(args: argparse.Namespace) -> None:
     score_seasons(Store(), config.parse_seasons(args.seasons))
 
 
+def cmd_build_priors(args: argparse.Namespace) -> None:
+    """Chain complete seasons and store the priors entering each next season (all M3 models)."""
+    from nhl.ratings import finishing, penalties, rapm
+    from nhl.storage.s3 import Store
+
+    store, years = Store(), config.parse_seasons(args.seasons)
+    finishing.build_priors(store, years)
+    penalties.build_priors(store, years)
+    for state in ("EV", "ST"):
+        rapm.build_priors(store, years, state, curve=rapm.load_curve(store, state))
+    print(f"priors stored for {config.season_id(years[-1] + 1)} and earlier")
+
+
+def cmd_ratings(args: argparse.Namespace) -> None:
+    """Write point-in-time rating snapshots (one date, or a backfill)."""
+    from nhl.ratings import snapshots
+    from nhl.storage.s3 import Store
+
+    store = Store()
+    if args.backfill:
+        n = snapshots.backfill(store, config.parse_seasons(args.backfill), every_days=args.every)
+        print(f"{n} snapshots written")
+    else:
+        day = date.fromisoformat(args.as_of) if args.as_of else date.today()
+        print(snapshots.snapshot(store, day))
+
+
+def cmd_evaluate_ratings(args: argparse.Namespace) -> None:
+    """Rest-of-season test of EV ratings vs baselines; writes the M3 report."""
+    from pathlib import Path
+
+    from nhl.ratings.evaluate import evaluate, write_report
+    from nhl.storage.s3 import Store
+
+    results, summary = evaluate(Store(), config.parse_seasons(args.seasons))
+    print(write_report(results, summary, Path(args.report)))
+
+
 def cmd_game_state(args: argparse.Namespace) -> None:
     """Build stints, lineups, goalie starts, coaches and game logs (M2)."""
     from nhl.gamestate.build import build_season
@@ -230,7 +268,7 @@ def cmd_validate_game_state(args: argparse.Namespace) -> None:
 
 
 def cmd_update(args: argparse.Namespace) -> None:
-    """Nightly: catalog -> ingest -> rebuild current season -> features -> score -> game state."""
+    """Nightly: catalog -> ingest -> rebuild -> features -> score -> game state -> ratings snapshot."""
     year = str(args.season or _current_start_year())
     cmd_catalog(argparse.Namespace(seasons=f"{config.FIRST_SEASON}-{year}", force=False))
     cmd_ingest(argparse.Namespace(seasons=year, workers=6, refetch=False, skip_catalog=True))
@@ -241,6 +279,7 @@ def cmd_update(args: argparse.Namespace) -> None:
     cmd_xg_monitor(argparse.Namespace(season=int(year), no_write=False))
     cmd_score_freeze(argparse.Namespace(seasons=year))
     cmd_game_state(argparse.Namespace(seasons=year, workers=16))
+    cmd_ratings(argparse.Namespace(backfill=None, as_of=None, every=7))
 
 
 POLL_TARGETS = ("odds", "goalies", "lines", "injuries")
@@ -405,6 +444,22 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("score-freeze", help="score seasons with the production frozen-puck model")
     p.add_argument("--seasons", default=str(_current_start_year()))
     p.set_defaults(func=cmd_score_freeze)
+
+    p = sub.add_parser("build-priors", help="season-start priors for every M3 rating model")
+    p.add_argument("--seasons", default=f"{config.FIRST_SEASON}-{_current_start_year() - 1}",
+                   help="complete seasons to chain (priors are written for the season after each)")
+    p.set_defaults(func=cmd_build_priors)
+
+    p = sub.add_parser("ratings", help="point-in-time rating snapshots -> ratings/{date}/")
+    p.add_argument("--as-of", default=None, help="YYYY-MM-DD (default today)")
+    p.add_argument("--backfill", default=None, help='seasons, e.g. "2015-2025"')
+    p.add_argument("--every", type=int, default=7, help="days between backfill snapshots")
+    p.set_defaults(func=cmd_ratings)
+
+    p = sub.add_parser("evaluate-ratings", help="M3 bar: rest-of-season prediction vs baselines")
+    p.add_argument("--seasons", default="2015-2025")
+    p.add_argument("--report", default="docs/reports/m3-evaluation.md")
+    p.set_defaults(func=cmd_evaluate_ratings)
 
     p = sub.add_parser("game-state", help="stints, lineups, goalie starts, coaches, game logs (M2)")
     p.add_argument("--seasons", default=_default_seasons())

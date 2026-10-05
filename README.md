@@ -31,6 +31,10 @@ nhl train-xg                   # tune on 2010-22, validate on 2023-24, test on 2
 nhl score-xg --seasons 2026    # score the current season with the production model
 nhl game-state --seasons 2010-2026   # stints, lineups, goalie starts, coaches, rosters, game logs (M2)
 nhl validate-game-state --seasons 2010-2026   # vs official scores + NHL boxscores -> docs/reports/m2-validation.md
+nhl train-freeze               # frozen-puck model (M3 phase A) + freeze predictions
+nhl build-priors               # season-start priors for finishing, EV/ST ratings, penalties (after each season)
+nhl ratings [--as-of DATE | --backfill 2015-2026]   # point-in-time ratings -> ratings/{date}/
+nhl evaluate-ratings           # M3 bar -> docs/reports/m3-evaluation.md
 nhl update                     # nightly: catalog -> ingest -> build -> features -> score -> game state (current season)
 nhl poll --what odds,goalies,lines,injuries [--window 90]   # one poll of the live sources
 ```
@@ -102,6 +106,7 @@ src/nhl/
   models/xg.py         tuning, testing, refit, out-of-fold predictions, save/load
   models/evaluate.py   log loss, Brier, AUC, calibration
   gamestate/           M2: stints, rosters/coaches, lineups, goalie starts, game logs, validation
+  ratings/             M3: frozen-puck model, finishing/goaltending, EV/ST RAPM, penalties, snapshots
 tests/                 unit tests on hand-built synthetic games
 notebooks/             exploration
 ```
