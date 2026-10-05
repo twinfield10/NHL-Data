@@ -82,7 +82,9 @@ def build_season(store: Store, start_year: int, workers: int = 16) -> SeasonBuil
         keys.rosters(season): rosters,
         keys.coaches(season): coaches,
         keys.lineups(season): build_lineups(stints, rosters),
-        keys.goalie_starts(season): build_goalie_starts(stints, events, xg, _prior_appearances(store, season)),
+        keys.goalie_starts(season): build_goalie_starts(
+            stints, events, xg, _prior_appearances(store, season), store.get_parquet(keys.freeze_predictions(season))
+        ),
         keys.team_game_logs(season): team_game_logs(stints, events, xg),
         keys.player_game_logs(season): player_game_logs(stints, events, shifts, rosters, players, xg),
     }

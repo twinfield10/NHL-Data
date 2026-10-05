@@ -7,7 +7,8 @@
 * Shots against and xG against are counted while the starter is in net (``goalie_in_net_id``
   on the event). ``gsax`` = xGA − GA on unblocked shots, excluding penalty shots.
 * ``sog_frozen``: shots on goal he faced that were followed directly (next event) by a
-  ``goalie-stopped-after-sog`` stoppage. The frozen-puck model supplies the expected rate.
+  ``goalie-stopped-after-sog`` stoppage. ``xfreeze`` is the frozen-puck model's expected
+  count (:mod:`nhl.ratings.freeze`), so ``sog_frozen - xfreeze`` is rebound control.
 * Rest and workload count every appearance (start or relief) strictly before the game,
   including the previous season's when ``prior`` is given.
 """
@@ -45,8 +46,8 @@ def goalie_appearances(stints: pl.DataFrame) -> pl.DataFrame:
     )
 
 
-def _shots_against(events: pl.DataFrame, xg: pl.DataFrame | None) -> pl.DataFrame:
-    """Per goalie-game: shots on goal, goals, unblocked xG and freezes faced."""
+def _shots_against(events: pl.DataFrame, xg: pl.DataFrame | None, freeze: pl.DataFrame | None = None) -> pl.DataFrame:
+    """Per goalie-game: shots on goal, goals, unblocked xG, freezes and expected freezes."""
     ev = events.sort("game_id", "event_idx").with_columns(
         pl.col("event_type").shift(-1).over("game_id").alias("_next_type"),
         pl.col("reason").shift(-1).over("game_id").alias("_next_reason"),
@@ -60,6 +61,10 @@ def _shots_against(events: pl.DataFrame, xg: pl.DataFrame | None) -> pl.DataFram
         ev = ev.join(xg.select("game_id", "event_idx", "xg"), on=["game_id", "event_idx"], how="left")
     else:
         ev = ev.with_columns(pl.lit(None, pl.Float32).alias("xg"))
+    if freeze is not None:
+        ev = ev.join(freeze.select("game_id", "event_idx", "p_freeze"), on=["game_id", "event_idx"], how="left")
+    else:
+        ev = ev.with_columns(pl.lit(None, pl.Float32).alias("p_freeze"))
     etype = pl.col("event_type")
     return ev.group_by("game_id", pl.col("goalie_in_net_id").alias("goalie_id")).agg(
         etype.is_in(["SHOT", "GOAL"]).sum().cast(pl.Int32).alias("shots_against"),
@@ -69,6 +74,7 @@ def _shots_against(events: pl.DataFrame, xg: pl.DataFrame | None) -> pl.DataFram
         .sum()
         .cast(pl.Int32)
         .alias("sog_frozen"),
+        pl.col("p_freeze").sum().cast(pl.Float64).alias("xfreeze"),
     )
 
 
@@ -77,6 +83,7 @@ def build_goalie_starts(
     events: pl.DataFrame,
     xg: pl.DataFrame | None = None,
     prior: pl.DataFrame | None = None,
+    freeze: pl.DataFrame | None = None,
 ) -> pl.DataFrame:
     """One row per team-game describing the starting goalie.
 
@@ -86,6 +93,7 @@ def build_goalie_starts(
         xg: Per-shot predictions.
         prior: The previous season's goalie appearances (``goalie_appearances`` output
             with ``game_date``), so rest days carry over the season boundary.
+        freeze: Per-shot ``p_freeze`` (``predictions/freeze``) for ``xfreeze``.
 
     Returns:
         See module docstring.
@@ -129,10 +137,10 @@ def build_goalie_starts(
         out.join(relief, on=["game_id", "team_id"], how="left")
         .join(games, on="game_id", how="left")
         .with_columns((pl.col("team_id") == pl.col("home_team_id")).alias("home"))
-        .join(_shots_against(events, xg), left_on=["game_id", "starter"], right_on=["game_id", "goalie_id"], how="left")
+        .join(_shots_against(events, xg, freeze), left_on=["game_id", "starter"], right_on=["game_id", "goalie_id"], how="left")
         .with_columns(
             pl.col("shots_against", "goals_against", "sog_frozen").fill_null(0),
-            pl.col("xga").fill_null(0.0),
+            pl.col("xga", "xfreeze").fill_null(0.0),
         )
         .with_columns(
             (pl.col("shots_against") - pl.col("goals_against")).alias("saves"),
@@ -143,7 +151,7 @@ def build_goalie_starts(
     return _with_workload(out, apps, prior).select(
         "game_id", "season", "game_date", "team_id", "home", "starter", "finished", "pulled_at_s",
         "relief_goalie", "relief_entry_s", "toi_s", "shots_against", "goals_against", "saves", "xga", "gsax",
-        "sog_frozen", "rest_days", "is_back_to_back", "starts_last_7d", "consecutive_starts",
+        "sog_frozen", "xfreeze", "rest_days", "is_back_to_back", "starts_last_7d", "consecutive_starts",
     ).sort("game_id", "home")
 
 

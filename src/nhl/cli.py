@@ -183,6 +183,31 @@ def cmd_xg_monitor(args: argparse.Namespace) -> None:
               f"{r['goals']:>5} goals / {r['shots']:>6} shots{'  FLAG' if r['flagged'] else ''}")
 
 
+def cmd_train_freeze(args: argparse.Namespace) -> None:
+    """Train the frozen-puck model, mark it LATEST, write historical and current predictions."""
+    from datetime import datetime, timezone
+
+    from nhl.ratings.freeze import train_and_store
+    from nhl.storage.s3 import Store
+
+    version = args.version or "f" + datetime.now(timezone.utc).strftime("%Y%m%d%H%M")
+    result = train_and_store(
+        Store(), config.parse_seasons(args.train), config.parse_seasons(args.valid), config.parse_seasons(args.test),
+        config.parse_seasons(args.score), version,
+    )
+    t = result.test
+    print(f"{version}: test log loss {t['log_loss']:.5f} (skill {t['log_loss_skill']:.4f}), "
+          f"AUC {t['auc']:.3f}, freezes/expected {t['goals_per_xg']:.3f}")
+
+
+def cmd_score_freeze(args: argparse.Namespace) -> None:
+    """Score seasons with the production frozen-puck model."""
+    from nhl.ratings.freeze import score_seasons
+    from nhl.storage.s3 import Store
+
+    score_seasons(Store(), config.parse_seasons(args.seasons))
+
+
 def cmd_game_state(args: argparse.Namespace) -> None:
     """Build stints, lineups, goalie starts, coaches and game logs (M2)."""
     from nhl.gamestate.build import build_season
@@ -214,6 +239,7 @@ def cmd_update(args: argparse.Namespace) -> None:
     cmd_rink_adjust(argparse.Namespace(seasons=year, apply_only=True))
     cmd_score_xg(argparse.Namespace(seasons=year, version=None))
     cmd_xg_monitor(argparse.Namespace(season=int(year), no_write=False))
+    cmd_score_freeze(argparse.Namespace(seasons=year))
     cmd_game_state(argparse.Namespace(seasons=year, workers=16))
 
 
@@ -367,6 +393,18 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--season", type=int, default=None, help="season start year (default: current)")
     p.add_argument("--no-write", action="store_true", help="don't snapshot the summary to S3")
     p.set_defaults(func=cmd_xg_monitor)
+
+    p = sub.add_parser("train-freeze", help="train the frozen-puck model and write freeze predictions")
+    p.add_argument("--train", default="2010-2023")
+    p.add_argument("--valid", default="2024")
+    p.add_argument("--test", default="2025")
+    p.add_argument("--score", default=_default_seasons(), help="seasons to write predictions for")
+    p.add_argument("--version", default=None)
+    p.set_defaults(func=cmd_train_freeze)
+
+    p = sub.add_parser("score-freeze", help="score seasons with the production frozen-puck model")
+    p.add_argument("--seasons", default=str(_current_start_year()))
+    p.set_defaults(func=cmd_score_freeze)
 
     p = sub.add_parser("game-state", help="stints, lineups, goalie starts, coaches, game logs (M2)")
     p.add_argument("--seasons", default=_default_seasons())

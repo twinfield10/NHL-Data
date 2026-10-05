@@ -214,3 +214,11 @@ def team_game_logs(season: int) -> str:
 def player_game_logs(season: int) -> str:
     """Player-game individual and on-ice counts by strength."""
     return f"processed/game_logs/player/{season}.parquet"
+
+
+# --- ratings (M3) -------------------------------------------------------------------------
+
+
+def freeze_predictions(season: int) -> str:
+    """Per saved shot on goal: P(goalie freezes the puck) (see nhl.ratings.freeze)."""
+    return f"predictions/freeze/{season}.parquet"
