@@ -1,0 +1,25 @@
+# Environment
+.env
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# Data lives in S3 (s3://tmw-nhl-data); this is only a local read-through cache
+data/
+*.parquet
+*.pkl
+*.ubj
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+
+# Cron logs
+logs/
