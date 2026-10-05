@@ -274,7 +274,8 @@ def build_shot_features(
     shots = _add_rolling_features(shots, events)
     shots = _apply_fatigue(shots, events, shifts, players)
 
-    features = feature_set("v2")
+    shots = add_era_flags(shots)
+    features = feature_set("v2e")
     return shots.select(ID_COLUMNS + features + ["same_team_last"]).with_columns(
         pl.col(features + ["same_team_last"]).cast(pl.Float32)
     )
@@ -503,13 +504,33 @@ try:  # Group 5 lives in its own module; imported last so it may import from thi
 except ModuleNotFoundError:  # pragma: no cover - only while fatigue.py doesn't exist yet
     FATIGUE_FEATURES: list[str] = []
 
+#: Shot-recording eras. Tracking-based coordinates arrived in 2021-22; from 2023-24 the
+#: feed logs many more quick-succession attempts (missed-shot share 27% -> 35%, rebound
+#: goal rate 18% -> 11%). Flagging the era lets the model learn era-specific behaviour
+#: while still learning geometry from every season: in the 2026-10-05 experiment the
+#: tuned recency half-life rose from 0.20 to 0.61 seasons and EV log loss improved.
+ERA_FEATURES: list[str] = ["era_tracking", "era_feed23"]
+TRACKING_ERA_START = 20212022
+FEED23_ERA_START = 20232024
+
+
+def add_era_flags(shots: pl.DataFrame) -> pl.DataFrame:
+    """Add the recording-era indicator columns (:data:`ERA_FEATURES`) from ``season``."""
+    return shots.with_columns(
+        (pl.col("season") >= TRACKING_ERA_START).cast(pl.Float32).alias("era_tracking"),
+        (pl.col("season") >= FEED23_ERA_START).cast(pl.Float32).alias("era_feed23"),
+    )
+
+
 #: Feature sets by version. Models record the list they were trained on in metadata.
+#: v2e = v2 + recording-era flags (default for the next retrain).
 FEATURE_SETS: dict[str, list[str]] = {
     "v1": FEATURES,
     "v2": FEATURES + FEATURES_V2_EVENTS + list(FATIGUE_FEATURES),
+    "v2e": FEATURES + FEATURES_V2_EVENTS + list(FATIGUE_FEATURES) + ERA_FEATURES,
 }
 
 
 def feature_set(name: str) -> list[str]:
-    """Columns of a feature set (``"v1"`` or ``"v2"``)."""
+    """Columns of a feature set (``"v1"``, ``"v2"`` or ``"v2e"``)."""
     return FEATURE_SETS[name]

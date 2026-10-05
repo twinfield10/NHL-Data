@@ -1,6 +1,6 @@
 # Plan: NHL game-prediction platform (roadmap)
 
-**Status:** M1 complete (2026-10-05). Data sources for M5/M6 built early. Everything else is proposed.
+**Status:** M1 complete (2026-10-05). Data sources for M5/M6 built early. M2 planned ([m2-game-state.md](m2-game-state.md)). Everything else is proposed.
 **Written:** 2026-10-05.
 **Audience:** the owner and a few friends. **Use:** betting the main game markets
 (moneyline, puck line ±1.5, totals), with player props (goals, assists, points) later.

@@ -1,6 +1,12 @@
 # Plan: xG feature engineering, pass 1
 
-**Status:** scoped 2026-10-05, not started.
+**Status:** complete 2026-10-05.
+- **Promoted:** `v2-pooled-20261005` (pooled, arena-adjusted, v2 features). It beats the
+  previous production model in every state: EV −0.6%, PP −1.6%, SH −1.8%, EN −4.2%
+  test log loss.
+- **Recording-era flags** (`v2e` feature set) are in the pipeline for the next retrain.
+- **In-season calibration** is monitored by `nhl xg-monitor` (nightly).
+- **Retrain each offseason**, or earlier if the monitor flags a state.
 **Scope:** `src/nhl/features/shots.py`, plus feature-set versioning in `src/nhl/models/xg.py`.
 **Principle:** xG stays talent-neutral. It describes the chance, not who took it or how
 good their team is. Talent (finishing, goaltending, xG generation and suppression) and
@@ -118,3 +124,22 @@ The hybrid (EV, PP separate; SH+EN pooled) captured only part of the gain.
 
 **Done when:** a v2 model beats `v20261005b` on the test season and is promoted with
 `--promote`.
+
+## Outcome and findings (2026-10-05)
+- **v2 features vs v1** (both pooled): small gains. EV −0.02%, PP −0.39%, EN −0.70%,
+  all shots −0.11%. Geometry (24% of gain) and goalie workload (21%) largely re-express
+  information already in distance, angle, rebound and timing features.
+- **Drift diagnosis.** The recency preference is a *recording* change, not a hockey
+  change. From 2022-23 the feed logs far more quick-succession attempts:
+  - missed-shot share 27% → 35%;
+  - rebound share 3.8% → 5.7%, with rebound goal rate 18% → 11%;
+  - a 2015-19 model's goals ÷ xG on shots within 1 s fell to 0.30.
+
+  Snap/wrist labels were also redrawn in 2024-25 (snap 13% → 25%). An era classifier
+  separates 2017-19 from 2022-24 shots with AUC 0.94.
+- **Era flags** raised the tuned half-life from 0.20 to 0.61 seasons and improved EV
+  log loss and calibration. Merging wrist and snap improved overall calibration but hurt
+  log loss, so it was not adopted.
+- **Ceiling.** Further xG gains from public play-by-play are tenths of a percent. The
+  next meaningful gains for betting come from M2/M3 (lines, goalies, talent and
+  context).

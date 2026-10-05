@@ -172,6 +172,17 @@ def cmd_score_xg(args: argparse.Namespace) -> None:
     _write_predictions(store, shots, xg.predict_xg(shots, models, meta), meta["version"])
 
 
+def cmd_xg_monitor(args: argparse.Namespace) -> None:
+    """Season-to-date xG calibration by strength state (flags drift worth a retrain)."""
+    from nhl.models.monitor import run_monitor
+    from nhl.storage.s3 import Store
+
+    rows = run_monitor(Store(), config.season_id(args.season or _current_start_year()), write=not args.no_write)
+    for r in rows:
+        print(f"{r['state']:4} goals/xG {r['ratio']:.3f}  [{r['lo']:.3f}, {r['hi']:.3f}]  "
+              f"{r['goals']:>5} goals / {r['shots']:>6} shots{'  FLAG' if r['flagged'] else ''}")
+
+
 def cmd_update(args: argparse.Namespace) -> None:
     """Nightly: catalog -> ingest new games -> rebuild current season -> features -> score."""
     year = str(args.season or _current_start_year())
@@ -181,6 +192,7 @@ def cmd_update(args: argparse.Namespace) -> None:
     cmd_features(argparse.Namespace(seasons=year))
     cmd_rink_adjust(argparse.Namespace(seasons=year, apply_only=True))
     cmd_score_xg(argparse.Namespace(seasons=year, version=None))
+    cmd_xg_monitor(argparse.Namespace(season=int(year), no_write=False))
 
 
 POLL_TARGETS = ("odds", "goalies", "lines", "injuries")
@@ -307,7 +319,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--groups", default=None, help="subset of the architecture's model names")
     p.add_argument("--architecture", default="pooled", choices=["pooled", "split", "hybrid", "ev_st"],
                    help="which strength groups share a model (pooled won the 2026-10-05 comparison)")
-    p.add_argument("--feature-set", default="v1", help="feature set from nhl.features.shots.FEATURE_SETS")
+    p.add_argument("--feature-set", default="v2e", help="feature set from nhl.features.shots.FEATURE_SETS")
     p.add_argument("--trials", type=int, default=40)
     p.add_argument("--timeout", type=int, default=1800, help="EV tuning seconds (others get a third)")
     p.add_argument("--version", default=None)
@@ -328,6 +340,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--window", type=int, default=None,
                    help="only run if a game starts within this many minutes")
     p.set_defaults(func=cmd_poll)
+
+    p = sub.add_parser("xg-monitor", help="season-to-date xG calibration by strength state")
+    p.add_argument("--season", type=int, default=None, help="season start year (default: current)")
+    p.add_argument("--no-write", action="store_true", help="don't snapshot the summary to S3")
+    p.set_defaults(func=cmd_xg_monitor)
 
     p = sub.add_parser("update", help="nightly incremental update of the current season")
     p.add_argument("--season", type=int, default=None)

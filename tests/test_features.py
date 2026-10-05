@@ -84,3 +84,17 @@ def test_season_weights_recency_and_symmetry():
     assert w.tolist() == [1.0, 0.5, 0.25, 1.0]  # future seasons are not up-weighted beyond 1
     sym = season_weights(np.array([20132014, 20172018]), 20152016, 2.0, symmetric=True)
     assert sym[0] == pytest.approx(sym[1]) == pytest.approx(0.5)
+
+
+def test_era_flags_by_season():
+    from nhl.features.shots import FEATURE_SETS, add_era_flags
+
+    df = add_era_flags(pl.DataFrame({"season": [20192020, 20212022, 20232024]}))
+    assert df["era_tracking"].to_list() == [0.0, 1.0, 1.0]
+    assert df["era_feed23"].to_list() == [0.0, 0.0, 1.0]
+    assert FEATURE_SETS["v2e"][-2:] == ["era_tracking", "era_feed23"]
+    assert "era_tracking" not in FEATURE_SETS["v2"]  # promoted v2 model's feature list is unchanged
+
+
+def test_shots_carry_era_flags(shots):
+    assert {"era_tracking", "era_feed23"} <= set(shots.columns)
