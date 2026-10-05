@@ -1,0 +1,84 @@
+{
+ "20": {
+  "team": {
+   "id": "20",
+   "abbreviation": "TB",
+   "displayName": "Tampa Bay Lightning"
+  },
+  "athletes": [
+   {
+    "position": "Centers",
+    "items": []
+   },
+   {
+    "position": "Left Wings",
+    "items": []
+   },
+   {
+    "position": "Right Wings",
+    "items": [
+     {
+      "id": "2563060",
+      "firstName": "Nikita",
+      "lastName": "Kucherov",
+      "fullName": "Nikita Kucherov",
+      "displayName": "Nikita Kucherov"
+     }
+    ]
+   },
+   {
+    "position": "Defense",
+    "items": []
+   },
+   {
+    "position": "Goalies",
+    "items": [
+     {
+      "id": "2976847",
+      "firstName": "Andrei",
+      "lastName": "Vasilevskiy",
+      "fullName": "Andrei Vasilevskiy",
+      "displayName": "Andrei Vasilevskiy"
+     }
+    ]
+   }
+  ]
+ },
+ "15": {
+  "team": {
+   "id": "15",
+   "abbreviation": "PHI",
+   "displayName": "Philadelphia Flyers"
+  },
+  "athletes": [
+   {
+    "position": "Centers",
+    "items": []
+   },
+   {
+    "position": "Left Wings",
+    "items": []
+   },
+   {
+    "position": "Right Wings",
+    "items": [
+     {
+      "id": "3900169",
+      "firstName": "Travis",
+      "lastName": "Konecny",
+      "fullName": "Travis Konecny",
+      "displayName": "Travis Konecny"
+     }
+    ]
+   },
+   {
+    "position": "Defense",
+    "items": []
+   },
+   {
+    "position": "Goalies",
+    "items": []
+   }
+  ]
+ }
+}

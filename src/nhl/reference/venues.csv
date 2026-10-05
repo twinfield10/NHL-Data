@@ -1,0 +1,114 @@
+venue_name,arena_id,city,latitude,longitude,timezone,elevation_m,is_outdoor,home_team,home_first_season,home_last_season,coord_confidence,notes
+Honda Center,honda_center,Anaheim,33.8078,-117.8765,America/Los_Angeles,50,false,ANA,20102011,,high,
+Jobing.com Arena,glendale_arena,Glendale,33.5319,-112.2611,America/Phoenix,330,false,PHX,20102011,20132014,high,renamed Gila River Arena 2014
+Gila River Arena,glendale_arena,Glendale,33.5319,-112.2611,America/Phoenix,330,false,ARI,20142015,20212022,high,
+Mullett Arena,mullett_arena,Tempe,33.4246,-111.9306,America/Phoenix,355,false,ARI,20222023,20232024,medium,ASU campus; coords ~0.005 deg
+Delta Center,delta_center,Salt Lake City,40.7683,-111.9011,America/Denver,1290,false,UTA,20242025,,high,
+Rice-Eccles Stadium,rice_eccles_stadium,Salt Lake City,40.7600,-111.8489,America/Denver,1450,true,,,,high,2026-27 outdoor game
+Philips Arena,philips_arena,Atlanta,33.7573,-84.3963,America/New_York,300,false,ATL,20102011,20102011,high,Thrashers relocated to Winnipeg 2011
+TD Garden,td_garden,Boston,42.3662,-71.0621,America/New_York,5,false,BOS,20102011,,high,
+Gillette Stadium,gillette_stadium,Foxborough,42.0909,-71.2643,America/New_York,85,true,,,,high,2016 Winter Classic
+Fenway Park,fenway_park,Boston,42.3467,-71.0972,America/New_York,6,true,,,,high,2023 Winter Classic
+HSBC Arena,buffalo_arena,Buffalo,42.8750,-78.8764,America/New_York,180,false,BUF,20102011,,high,later First Niagara Center / KeyBank Center
+First Niagara Center,buffalo_arena,Buffalo,42.8750,-78.8764,America/New_York,180,false,BUF,20102011,,high,
+KeyBank Center,buffalo_arena,Buffalo,42.8750,-78.8764,America/New_York,180,false,BUF,20102011,,high,
+RBC Center,raleigh_arena,Raleigh,35.8033,-78.7219,America/New_York,130,false,CAR,20102011,,high,later PNC Arena / Lenovo Center
+PNC Arena,raleigh_arena,Raleigh,35.8033,-78.7219,America/New_York,130,false,CAR,20102011,,high,
+Lenovo Center,raleigh_arena,Raleigh,35.8033,-78.7219,America/New_York,130,false,CAR,20102011,,high,
+Carter-Finley Stadium,carter_finley_stadium,Raleigh,35.8007,-78.7195,America/New_York,130,true,,,,high,2023 Stadium Series
+Nationwide Arena,nationwide_arena,Columbus,39.9693,-83.0061,America/New_York,230,false,CBJ,20102011,,high,
+Ohio Stadium,ohio_stadium,Columbus,40.0017,-83.0197,America/New_York,220,true,,,,high,2025 Stadium Series
+Scotiabank Saddledome,saddledome,Calgary,51.0374,-114.0519,America/Edmonton,1045,false,CGY,20102011,,high,
+McMahon Stadium,mcmahon_stadium,Calgary,51.0703,-114.1214,America/Edmonton,1080,true,,,,high,2011 Heritage Classic
+United Center,united_center,Chicago,41.8807,-87.6742,America/Chicago,180,false,CHI,20102011,,high,
+Soldier Field,soldier_field,Chicago,41.8623,-87.6167,America/Chicago,180,true,,,,high,2014 Stadium Series
+Wrigley Field,wrigley_field,Chicago,41.9484,-87.6553,America/Chicago,180,true,,,,high,2025 Winter Classic
+Notre Dame Stadium,notre_dame_stadium,Notre Dame,41.6985,-86.2340,America/Indiana/Indianapolis,225,true,,,,high,2019 Winter Classic; St. Joseph County IN observes Eastern time
+Pepsi Center,denver_arena,Denver,39.7487,-105.0077,America/Denver,1600,false,COL,20102011,,high,renamed Ball Arena 2020
+Ball Arena,denver_arena,Denver,39.7487,-105.0077,America/Denver,1600,false,COL,20102011,,high,
+Coors Field,coors_field,Denver,39.7559,-104.9942,America/Denver,1580,true,,,,high,2016 Stadium Series
+Falcon Stadium,falcon_stadium,Colorado Springs,38.9970,-104.8434,America/Denver,2210,true,,,,medium,2020 Stadium Series (Air Force Academy); elevation approximate
+American Airlines Center,american_airlines_center,Dallas,32.7905,-96.8103,America/Chicago,140,false,DAL,20102011,,high,
+Cotton Bowl Stadium,cotton_bowl,Dallas,32.7795,-96.7597,America/Chicago,140,true,,,,high,2020 Winter Classic
+AT&T Stadium,att_stadium,Arlington,32.7473,-97.0945,America/Chicago,180,true,,,,high,2026-27 stadium game; retractable roof - verify roof status
+Joe Louis Arena,joe_louis_arena,Detroit,42.3253,-83.0517,America/Detroit,180,false,DET,20102011,20162017,high,
+Little Caesars Arena,little_caesars_arena,Detroit,42.3411,-83.0553,America/Detroit,185,false,DET,20172018,,high,
+Michigan Stadium,michigan_stadium,Ann Arbor,42.2658,-83.7487,America/Detroit,255,true,,,,high,2014 Winter Classic
+Rexall Place,rexall_place,Edmonton,53.5714,-113.4560,America/Edmonton,670,false,EDM,20102011,20152016,high,
+Rogers Place,rogers_place,Edmonton,53.5469,-113.4979,America/Edmonton,668,false,EDM,20162017,,high,also 2020 playoff hub (neutral for non-EDM home teams)
+"Commonwealth Stadium, Edmonton",commonwealth_stadium,Edmonton,53.5597,-113.4763,America/Edmonton,665,true,,,,high,2023 Heritage Classic
+BankAtlantic Center,sunrise_arena,Sunrise,26.1584,-80.3256,America/New_York,3,false,FLA,20102011,,high,later BB&T Center / FLA Live Arena / Amerant Bank Arena
+BB&T Center,sunrise_arena,Sunrise,26.1584,-80.3256,America/New_York,3,false,FLA,20102011,,high,
+FLA Live Arena,sunrise_arena,Sunrise,26.1584,-80.3256,America/New_York,3,false,FLA,20102011,,high,
+Amerant Bank Arena,sunrise_arena,Sunrise,26.1584,-80.3256,America/New_York,3,false,FLA,20102011,,high,
+loanDepot park,loandepot_park,Miami,25.7781,-80.2196,America/New_York,3,true,,,,high,2026 Winter Classic; retractable roof (open for the game)
+STAPLES Center,la_arena,Los Angeles,34.0430,-118.2673,America/Los_Angeles,85,false,LAK,20102011,,high,renamed Crypto.com Arena Dec 2021
+Crypto.com Arena,la_arena,Los Angeles,34.0430,-118.2673,America/Los_Angeles,85,false,LAK,20102011,,high,
+Dodger Stadium,dodger_stadium,Los Angeles,34.0739,-118.2400,America/Los_Angeles,165,true,,,,high,2014 Stadium Series
+Xcel Energy Center,st_paul_arena,St. Paul,44.9448,-93.1010,America/Chicago,215,false,MIN,20102011,,high,renamed Grand Casino Arena 2025
+Grand Casino Arena,st_paul_arena,St. Paul,44.9448,-93.1010,America/Chicago,215,false,MIN,20102011,,high,
+TCF Bank Stadium,tcf_bank_stadium,Minneapolis,44.9765,-93.2246,America/Chicago,255,true,,,,high,2016 Stadium Series
+Target Field,target_field,Minneapolis,44.9817,-93.2776,America/Chicago,250,true,,,,high,2022 Winter Classic
+Centre Bell,centre_bell,Montreal,45.4961,-73.5693,America/Toronto,40,false,MTL,20102011,,high,
+Prudential Center,prudential_center,Newark,40.7335,-74.1711,America/New_York,10,false,NJD,20102011,,high,
+Yankee Stadium,yankee_stadium,Bronx,40.8296,-73.9262,America/New_York,15,true,,,,high,2014 Stadium Series
+MetLife Stadium,metlife_stadium,East Rutherford,40.8135,-74.0745,America/New_York,5,true,,,,high,2024 Stadium Series
+Bridgestone Arena,bridgestone_arena,Nashville,36.1592,-86.7785,America/Chicago,135,false,NSH,20102011,,high,
+Nissan Stadium,nissan_stadium,Nashville,36.1665,-86.7713,America/Chicago,130,true,,,,high,2022 Stadium Series
+Nassau Veterans Memorial Coliseum,nassau_coliseum,Uniondale,40.7229,-73.5904,America/New_York,25,false,NYI,20102011,20202021,high,NYI home 2010-15 and part-time 2018-21 (Barclays 2015-18)
+NYCB Live/Nassau Coliseum,nassau_coliseum,Uniondale,40.7229,-73.5904,America/New_York,25,false,NYI,20102011,20202021,high,
+Barclays Center,barclays_center,Brooklyn,40.6826,-73.9754,America/New_York,15,false,NYI,20152016,20192020,high,
+UBS Arena,ubs_arena,Elmont,40.7114,-73.7255,America/New_York,25,false,NYI,20212022,,high,
+Madison Square Garden,madison_square_garden,New York,40.7505,-73.9934,America/New_York,10,false,NYR,20102011,,high,
+Citi Field,citi_field,Queens,40.7571,-73.8458,America/New_York,5,true,,,,high,2018 Winter Classic
+Scotiabank Place,ottawa_arena,Ottawa,45.2969,-75.9272,America/Toronto,95,false,OTT,20102011,,high,renamed Canadian Tire Centre 2013
+Canadian Tire Centre,ottawa_arena,Ottawa,45.2969,-75.9272,America/Toronto,95,false,OTT,20102011,,high,
+Lansdowne Park,lansdowne_park,Ottawa,45.3983,-75.6838,America/Toronto,65,true,,,,high,2017 NHL100 Classic (TD Place Stadium)
+Wells Fargo Center,philadelphia_arena,Philadelphia,39.9012,-75.1720,America/New_York,5,false,PHI,20102011,,high,renamed Xfinity Mobile Arena 2025
+Xfinity Mobile Arena,philadelphia_arena,Philadelphia,39.9012,-75.1720,America/New_York,5,false,PHI,20102011,,high,
+Citizens Bank Park,citizens_bank_park,Philadelphia,39.9061,-75.1665,America/New_York,5,true,,,,high,2012 Winter Classic
+Lincoln Financial Field,lincoln_financial_field,Philadelphia,39.9008,-75.1675,America/New_York,5,true,,,,high,2019 Stadium Series
+CONSOL Energy Center,pittsburgh_arena,Pittsburgh,40.4395,-79.9892,America/New_York,230,false,PIT,20102011,,high,renamed PPG Paints Arena 2016
+PPG Paints Arena,pittsburgh_arena,Pittsburgh,40.4395,-79.9892,America/New_York,230,false,PIT,20102011,,high,
+Heinz Field,heinz_field,Pittsburgh,40.4468,-80.0158,America/New_York,220,true,,,,high,2011 Winter Classic and 2017 Stadium Series
+Climate Pledge Arena,climate_pledge_arena,Seattle,47.6221,-122.3540,America/Los_Angeles,40,false,SEA,20212022,,high,
+T-Mobile Park,tmobile_park,Seattle,47.5914,-122.3325,America/Los_Angeles,5,true,,,,high,2024 Winter Classic; retractable roof (open)
+HP Pavilion at San Jose,san_jose_arena,San Jose,37.3327,-121.9012,America/Los_Angeles,30,false,SJS,20102011,,high,renamed SAP Center 2013
+SAP Center at San Jose,san_jose_arena,San Jose,37.3327,-121.9012,America/Los_Angeles,30,false,SJS,20102011,,high,
+Levi's Stadium,levis_stadium,Santa Clara,37.4030,-121.9700,America/Los_Angeles,5,true,,,,high,2015 Stadium Series
+Scottrade Center,st_louis_arena,St. Louis,38.6268,-90.2027,America/Chicago,140,false,STL,20102011,,high,renamed Enterprise Center 2018
+Enterprise Center,st_louis_arena,St. Louis,38.6268,-90.2027,America/Chicago,140,false,STL,20102011,,high,
+Busch Stadium,busch_stadium,St. Louis,38.6226,-90.1928,America/Chicago,140,true,,,,high,2017 Winter Classic
+St. Pete Times Forum,tampa_arena,Tampa,27.9427,-82.4518,America/New_York,5,false,TBL,20102011,,high,later Tampa Bay Times Forum / Amalie Arena / Benchmark International Arena
+Tampa Bay Times Forum,tampa_arena,Tampa,27.9427,-82.4518,America/New_York,5,false,TBL,20102011,,high,
+Amalie Arena,tampa_arena,Tampa,27.9427,-82.4518,America/New_York,5,false,TBL,20102011,,high,
+Benchmark International Arena,tampa_arena,Tampa,27.9427,-82.4518,America/New_York,5,false,TBL,20102011,,high,
+Raymond James Stadium,raymond_james_stadium,Tampa,27.9759,-82.5033,America/New_York,10,true,,,,high,2026 Stadium Series
+Air Canada Centre,toronto_arena,Toronto,43.6435,-79.3791,America/Toronto,80,false,TOR,20102011,,high,renamed Scotiabank Arena 2018
+Scotiabank Arena,toronto_arena,Toronto,43.6435,-79.3791,America/Toronto,80,false,TOR,20102011,,high,also 2020 playoff hub (neutral for non-TOR home teams)
+Exhibition Stadium,bmo_field,Toronto,43.6332,-79.4186,America/Toronto,80,true,,,,high,2017 Centennial Classic (BMO Field)
+Tim Hortons Field,tim_hortons_field,Hamilton,43.2522,-79.8302,America/Toronto,95,true,,,,high,2022 Heritage Classic
+Rogers Arena,rogers_arena,Vancouver,49.2778,-123.1089,America/Vancouver,10,false,VAN,20102011,,high,
+BC Place,bc_place,Vancouver,49.2768,-123.1119,America/Vancouver,10,false,,,,high,2014 Heritage Classic; retractable roof was closed so treated as indoor
+T-Mobile Arena,tmobile_arena,Paradise,36.1029,-115.1784,America/Los_Angeles,620,false,VGK,20172018,,high,
+MTS Centre,winnipeg_arena,Winnipeg,49.8928,-97.1437,America/Winnipeg,232,false,WPG,20112012,,high,later Bell MTS Place / Canada Life Centre
+Bell MTS Place,winnipeg_arena,Winnipeg,49.8928,-97.1437,America/Winnipeg,232,false,WPG,20112012,,high,
+Canada Life Centre,winnipeg_arena,Winnipeg,49.8928,-97.1437,America/Winnipeg,232,false,WPG,20112012,,high,
+Investors Group Field,winnipeg_stadium,Winnipeg,49.8075,-97.1435,America/Winnipeg,232,true,,,,high,2016 Heritage Classic; renamed Princess Auto Stadium
+Princess Auto Stadium,winnipeg_stadium,Winnipeg,49.8075,-97.1435,America/Winnipeg,232,true,,,,high,2026 Heritage Classic
+Mosaic Stadium,mosaic_stadium,Regina,50.4520,-104.6268,America/Regina,575,true,,,,medium,2019 Heritage Classic; Saskatchewan has no DST
+Verizon Center,washington_arena,Washington,38.8981,-77.0209,America/New_York,15,false,WSH,20102011,,high,renamed Capital One Arena 2017
+Capital One Arena,washington_arena,Washington,38.8981,-77.0209,America/New_York,15,false,WSH,20102011,,high,
+Nationals Park,nationals_park,Washington,38.8730,-77.0074,America/New_York,5,true,,,,high,2015 Winter Classic
+Navy-Marine Corps Memorial Stadium,navy_stadium,Annapolis,38.9845,-76.5019,America/New_York,15,true,,,,high,2018 Stadium Series
+Edgewood Tahoe Resort,edgewood_tahoe,Stateline,38.9690,-119.9450,America/Los_Angeles,1900,true,,,,medium,2021 NHL Outdoors at Lake Tahoe (golf course; no fans)
+Ericsson Globe,stockholm_globe,Stockholm,59.2937,18.0834,Europe/Stockholm,25,false,,,,high,renamed Avicii Arena 2021
+Avicii Arena,stockholm_globe,Stockholm,59.2937,18.0834,Europe/Stockholm,25,false,,,,high,
+Scandinavium,scandinavium,Gothenburg,57.7004,11.9876,Europe/Stockholm,10,false,,,,high,
+Hartwall Areena,helsinki_halli,Helsinki,60.2052,24.9288,Europe/Helsinki,20,false,,,,high,same building as Hartwall Arena (spelling variant)
+Hartwall Arena,helsinki_halli,Helsinki,60.2052,24.9288,Europe/Helsinki,20,false,,,,high,
+Veikkaus Arena,helsinki_halli,Helsinki,60.2052,24.9288,Europe/Helsinki,20,false,,,,medium,assumed to be the renamed Hartwall Arena / Helsinki Halli - verify
+Nokia Arena,nokia_arena,Tampere,61.4940,23.7720,Europe/Helsinki,110,false,,,,medium,
+O2 Czech Republic,prague_o2_arena,Prague,50.1047,14.4934,Europe/Prague,190,false,,,,high,
+O2 Arena Berlin,berlin_o2_arena,Berlin,52.5053,13.4432,Europe/Berlin,35,false,,,,high,
+PSD Bank Dome,psd_bank_dome,Düsseldorf,51.2617,6.7335,Europe/Berlin,40,false,,,,medium,2026 Global Series

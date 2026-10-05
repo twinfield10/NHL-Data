@@ -1,0 +1,384 @@
+{
+ "timestamp": "2026-10-05T18:06:48Z",
+ "status": "success",
+ "season": {
+  "year": 2027,
+  "type": 2,
+  "name": "Regular Season",
+  "displayName": "2026-27"
+ },
+ "injuries": [
+  {
+   "id": "25",
+   "displayName": "Anaheim Ducks",
+   "injuries": [
+    {
+     "id": "594260",
+     "longComment": "ir",
+     "shortComment": "ir",
+     "status": "Injured Reserve",
+     "date": "2026-09-30T15:57Z",
+     "type": {
+      "id": "5",
+      "name": "INJURY_STATUS_IR",
+      "description": "Injured Reserve",
+      "abbreviation": "IR"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "IR",
+       "abbreviation": "IR"
+      },
+      "type": "Lower Body",
+      "returnDate": "2026-10-07"
+     },
+     "athlete": {
+      "firstName": "Drew",
+      "lastName": "Helleson",
+      "displayName": "Drew Helleson",
+      "links": [
+       {
+        "language": "en-US",
+        "rel": [
+         "playercard",
+         "desktop",
+         "athlete"
+        ],
+        "href": "https://www.espn.com/nhl/player/_/id/4565270",
+        "text": "Player Card",
+        "shortText": "Player Card",
+        "isExternal": false,
+        "isPremium": false
+       }
+      ],
+      "position": {
+       "abbreviation": "D"
+      },
+      "team": {
+       "id": "25",
+       "slug": "anaheim-ducks",
+       "abbreviation": "ANA",
+       "displayName": "Anaheim Ducks"
+      }
+     }
+    },
+    {
+     "id": "594251",
+     "longComment": "Terry isn't expected to be back until mid-November at the earliest, so this transfer doesn't impact his timetable. He had 19 goals and 57 points in 61 regular-season appearances in 2025-26. Terry should occupy a top-six role and play on the first power-play unit once he's healthy.",
+     "shortComment": "Terry (hip) was moved from the non-roster list to long-term injured reserve Wednesday, Zach Cavanagh of The Sporting Tribune reports.",
+     "status": "Injured Reserve",
+     "date": "2026-09-30T14:53Z",
+     "type": {
+      "id": "5",
+      "name": "INJURY_STATUS_IR",
+      "description": "Injured Reserve",
+      "abbreviation": "IR"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "IR-LT",
+       "abbreviation": "IR-LT"
+      },
+      "type": "Hip",
+      "detail": "Surgery",
+      "returnDate": "2026-11-21"
+     },
+     "athlete": {
+      "firstName": "Troy",
+      "lastName": "Terry",
+      "displayName": "Troy Terry",
+      "links": [
+       {
+        "language": "en-US",
+        "rel": [
+         "playercard",
+         "desktop",
+         "athlete"
+        ],
+        "href": "https://www.espn.com/nhl/player/_/id/3942905",
+        "text": "Player Card",
+        "shortText": "Player Card",
+        "isExternal": false,
+        "isPremium": false
+       }
+      ],
+      "position": {
+       "abbreviation": "RW"
+      },
+      "team": {
+       "id": "25",
+       "slug": "anaheim-ducks",
+       "abbreviation": "ANA",
+       "displayName": "Anaheim Ducks"
+      }
+     }
+    },
+    {
+     "id": "594155",
+     "longComment": "ir",
+     "shortComment": "ir",
+     "status": "Injured Reserve",
+     "date": "2026-09-29T00:06Z",
+     "type": {
+      "id": "5",
+      "name": "INJURY_STATUS_IR",
+      "description": "Injured Reserve",
+      "abbreviation": "IR"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "IR",
+       "abbreviation": "IR"
+      },
+      "type": "Lower Body",
+      "detail": "Not Specified",
+      "side": "Not Specified",
+      "returnDate": "2026-10-16"
+     },
+     "athlete": {
+      "firstName": "Ian",
+      "lastName": "Moore",
+      "displayName": "Ian Moore",
+      "links": [
+       {
+        "language": "en-US",
+        "rel": [
+         "playercard",
+         "desktop",
+         "athlete"
+        ],
+        "href": "https://www.espn.com/nhl/player/_/id/5188523",
+        "text": "Player Card",
+        "shortText": "Player Card",
+        "isExternal": false,
+        "isPremium": false
+       }
+      ],
+      "position": {
+       "abbreviation": "D"
+      },
+      "team": {
+       "id": "25",
+       "slug": "anaheim-ducks",
+       "abbreviation": "ANA",
+       "displayName": "Anaheim Ducks"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "1",
+   "displayName": "Boston Bruins",
+   "injuries": [
+    {
+     "id": "593387",
+     "longComment": "McAvoy is set to serve a six-game suspension to begin the year after slashing the Sabres' Zach Benson during the Bruins' first-round series loss last season. While the right-shot defenseman's draft stock may have dipped ever so slightly because of the suspension, fantasy managers should keep in mind that McAvoy is coming off a career-best year (11 goals, 61 points in 69 regular-season games), so don't let him fall too far in upcoming drafts. The 28-year-old is eligible to make his 2026-27 debut Oct. 13 in San Jose.",
+     "shortComment": "McAvoy logged an even-strength goal on three shots and four PIM in a game-high 28:35 of ice time during Sunday's 3-2 shootout win over the Capitals in preseason play.",
+     "status": "Suspension",
+     "date": "2026-09-21T05:14Z",
+     "type": {
+      "id": "17",
+      "name": "INJURY_STATUS_SUSPENSION",
+      "description": "Suspension",
+      "abbreviation": "SUSP"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Suspension",
+      "returnDate": "2026-10-13"
+     },
+     "athlete": {
+      "firstName": "Charlie",
+      "lastName": "McAvoy",
+      "displayName": "Charlie McAvoy",
+      "links": [
+       {
+        "language": "en-US",
+        "rel": [
+         "playercard",
+         "desktop",
+         "athlete"
+        ],
+        "href": "https://www.espn.com/nhl/player/_/id/3988803",
+        "text": "Player Card",
+        "shortText": "Player Card",
+        "isExternal": false,
+        "isPremium": false
+       }
+      ],
+      "position": {
+       "abbreviation": "D"
+      },
+      "team": {
+       "id": "1",
+       "slug": "boston-bruins",
+       "abbreviation": "BOS",
+       "displayName": "Boston Bruins"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "20",
+   "displayName": "Tampa Bay Lightning",
+   "injuries": [
+    {
+     "id": "594801",
+     "longComment": "Lilleberg suffered an undisclosed injury early in the third period of Saturday's game against the Capitals, and he'll be forced to miss some time. Max Crozier, Jansen Harkins and Scott Sabourin are candidates to see increased playing time in Lilleberg's absence.",
+     "shortComment": "Lilleberg (undisclosed) has been ruled out for Monday's game against the Flyers and is expected to miss approximately one week, Eduardo A. Encina of the Tampa Bay Times reports.",
+     "status": "Out",
+     "date": "2026-10-05T14:48Z",
+     "type": {
+      "id": "4",
+      "name": "INJURY_STATUS_OUT",
+      "description": "out",
+      "abbreviation": "O"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "OUT",
+       "abbreviation": "OUT"
+      },
+      "type": "Undisclosed",
+      "returnDate": "2026-10-13"
+     },
+     "athlete": {
+      "firstName": "Emil",
+      "lastName": "Lilleberg",
+      "displayName": "Emil Lilleberg",
+      "links": [
+       {
+        "language": "en-US",
+        "rel": [
+         "playercard",
+         "desktop",
+         "athlete"
+        ],
+        "href": "https://www.espn.com/nhl/player/_/id/5146599",
+        "text": "Player Card",
+        "shortText": "Player Card",
+        "isExternal": false,
+        "isPremium": false
+       }
+      ],
+      "position": {
+       "abbreviation": "D"
+      },
+      "team": {
+       "id": "20",
+       "slug": "tampa-bay-lightning",
+       "abbreviation": "TB",
+       "displayName": "Tampa Bay Lightning"
+      }
+     }
+    },
+    {
+     "id": "594107",
+     "longComment": "Gourde won't be available to play until at least December after having offseason hip surgery. He contributed 19 assists, 28 points, 114 shots on net, 115 hits and 66 PIM in 82 regular-season games with Tampa Bay in 2025-26.",
+     "shortComment": "Gourde (hip) was placed on the injured non-roster list Monday.",
+     "status": "Injured Reserve",
+     "date": "2026-09-28T19:18Z",
+     "type": {
+      "id": "5",
+      "name": "INJURY_STATUS_IR",
+      "description": "Injured Reserve",
+      "abbreviation": "IR"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "IR-NR",
+       "abbreviation": "IR-NR"
+      },
+      "type": "Hip",
+      "detail": "Surgery",
+      "returnDate": "2026-12-02"
+     },
+     "athlete": {
+      "firstName": "Yanni",
+      "lastName": "Gourde",
+      "displayName": "Yanni Gourde",
+      "links": [
+       {
+        "language": "en-US",
+        "rel": [
+         "playercard",
+         "desktop",
+         "athlete"
+        ],
+        "href": "https://www.espn.com/nhl/player/_/id/3094261",
+        "text": "Player Card",
+        "shortText": "Player Card",
+        "isExternal": false,
+        "isPremium": false
+       }
+      ],
+      "position": {
+       "abbreviation": "C"
+      },
+      "team": {
+       "id": "20",
+       "slug": "tampa-bay-lightning",
+       "abbreviation": "TB",
+       "displayName": "Tampa Bay Lightning"
+      }
+     }
+    },
+    {
+     "id": "594106",
+     "longComment": "James entered training camp with a broken hand and was expected to miss the first two weeks of the regular season, so his move to non-roster injured reserve isn't surprising. Conor Geekie and Scott Sabourin are candidates to see increased time in the lineup early in the year while James is sidelined.",
+     "shortComment": "The Lightning placed James (hand) on non-roster injured reserve Monday.",
+     "status": "Injured Reserve",
+     "date": "2026-09-28T19:17Z",
+     "type": {
+      "id": "5",
+      "name": "INJURY_STATUS_IR",
+      "description": "Injured Reserve",
+      "abbreviation": "IR"
+     },
+     "details": {
+      "fantasyStatus": {
+       "description": "IR-NR",
+       "abbreviation": "IR-NR"
+      },
+      "type": "Hand",
+      "returnDate": "2026-10-08"
+     },
+     "athlete": {
+      "firstName": "Dominic",
+      "lastName": "James",
+      "displayName": "Dominic James",
+      "links": [
+       {
+        "language": "en-US",
+        "rel": [
+         "playercard",
+         "desktop",
+         "athlete"
+        ],
+        "href": "https://www.espn.com/nhl/player/_/id/4997033",
+        "text": "Player Card",
+        "shortText": "Player Card",
+        "isExternal": false,
+        "isPremium": false
+       }
+      ],
+      "position": {
+       "abbreviation": "C"
+      },
+      "team": {
+       "id": "20",
+       "slug": "tampa-bay-lightning",
+       "abbreviation": "TB",
+       "displayName": "Tampa Bay Lightning"
+      }
+     }
+    }
+   ]
+  }
+ ]
+}

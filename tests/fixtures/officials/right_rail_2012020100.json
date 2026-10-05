@@ -1,0 +1,38 @@
+{
+ "gameInfo": {
+  "referees": [
+   {
+    "fullName": {
+     "default": "Paul Devorski"
+    },
+    "sweaterNumber": 10
+   },
+   {
+    "fullName": {
+     "default": "Dennis LaRue"
+    },
+    "sweaterNumber": 14
+   }
+  ],
+  "linesmen": [
+   {
+    "fullName": {
+     "default": "Lonnie Cameron"
+    },
+    "sweaterNumber": 74
+   },
+   {
+    "fullName": {
+     "default": "Jonny Murray"
+    },
+    "sweaterNumber": 95
+   }
+  ],
+  "awayTeam": {
+   "abbrev": null
+  },
+  "homeTeam": {
+   "abbrev": null
+  }
+ }
+}

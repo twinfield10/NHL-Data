@@ -1,0 +1,432 @@
+{
+ "data": {
+  "market": null,
+  "games": [
+   {
+    "isSpecials": true,
+    "live": false,
+    "eventName": "TAMPA BAY LIGHTNING (TEAM TOTAL GOALS)",
+    "periodName": "Full Time",
+    "id": "6ac39f3ae16d06a69b3239dc",
+    "parentGameID": "6ac0bf4ae16d06a69b2da690",
+    "cheapDataUID": "Bookmaker-TT-HOME-fe7971ab84d8563ef6e0f5648ccd23ac",
+    "league": "NHL-PROPS",
+    "sport": "hockey",
+    "start": "2026-10-05T23:07:00.000Z",
+    "ended": false,
+    "isYesNo": false,
+    "participants": [
+     {
+      "id": "61682acd0672772dc72af7ae",
+      "longName": "Philadelphia Flyers",
+      "shortName": "PHI",
+      "homeAway": "away",
+      "rotationNumber": "1"
+     },
+     {
+      "id": "6165e6e83c65e61a09bf21c9",
+      "longName": "Tampa Bay Lightning",
+      "shortName": "TBL",
+      "homeAway": "home",
+      "rotationNumber": "2"
+     }
+    ],
+    "awayMoneylines": [],
+    "homeMoneylines": [],
+    "awaySpreads": {},
+    "homeSpreads": {},
+    "over": {
+     "3.5": [
+      {
+       "odds": 107,
+       "sumUntaken": 252.538318,
+       "total": 3.5,
+       "OU": "over"
+      },
+      {
+       "odds": -110,
+       "sumUntaken": 27.5,
+       "total": 3.5,
+       "OU": "over"
+      }
+     ]
+    },
+    "under": {
+     "3.5": [
+      {
+       "odds": -131,
+       "sumUntaken": 119.109231,
+       "total": 3.5,
+       "OU": "under"
+      },
+      {
+       "odds": -135,
+       "sumUntaken": 33.75,
+       "total": 3.5,
+       "OU": "under"
+      }
+     ]
+    },
+    "mainHomeSpread": 0,
+    "mainAwaySpread": 0,
+    "mainTotal": 3.5
+   },
+   {
+    "isSpecials": true,
+    "live": false,
+    "eventName": "TREVOR ZEGRAS (ASSISTS)",
+    "periodName": "Full Time",
+    "id": "6ac3212ce16d06a69b321abf",
+    "parentGameID": "6ac0bf4ae16d06a69b2da690",
+    "cheapDataUID": "VN-PROP-6ac0bf4ae16d06a69b2da690-ASSISTS-TREVOR_ZEGRAS",
+    "league": "NHL-PROPS",
+    "sport": "hockey",
+    "start": "2026-10-05T23:07:00.000Z",
+    "ended": false,
+    "isYesNo": false,
+    "participants": [
+     {
+      "id": "61682acd0672772dc72af7ae",
+      "longName": "Philadelphia Flyers",
+      "shortName": "PHI",
+      "homeAway": "away",
+      "rotationNumber": "1"
+     },
+     {
+      "id": "6165e6e83c65e61a09bf21c9",
+      "longName": "Tampa Bay Lightning",
+      "shortName": "TBL",
+      "homeAway": "home",
+      "rotationNumber": "2"
+     }
+    ],
+    "awayMoneylines": [],
+    "homeMoneylines": [],
+    "awaySpreads": {},
+    "homeSpreads": {},
+    "over": {
+     "0.5": [
+      {
+       "odds": 201,
+       "sumUntaken": 139.373134,
+       "total": 0.5,
+       "OU": "over"
+      }
+     ]
+    },
+    "under": {
+     "0.5": [
+      {
+       "odds": -287,
+       "sumUntaken": 312.981053,
+       "total": 0.5,
+       "OU": "under"
+      }
+     ]
+    },
+    "mainHomeSpread": 0,
+    "mainAwaySpread": 0,
+    "mainTotal": 0.5
+   },
+   {
+    "isSpecials": true,
+    "live": false,
+    "eventName": "BRAYDEN POINT (SHOTS ON GOAL)",
+    "periodName": "Full Time",
+    "id": "6ac2af7be16d06a69b316fc2",
+    "parentGameID": "6ac0bf4ae16d06a69b2da690",
+    "cheapDataUID": "VN-PROP-6ac0bf4ae16d06a69b2da690-SHOTS_ON_GOAL-BRAYDEN_POINT",
+    "league": "NHL-PROPS",
+    "sport": "hockey",
+    "start": "2026-10-05T23:07:00.000Z",
+    "ended": false,
+    "isYesNo": false,
+    "participants": [
+     {
+      "id": "61682acd0672772dc72af7ae",
+      "longName": "Philadelphia Flyers",
+      "shortName": "PHI",
+      "homeAway": "away",
+      "rotationNumber": "1"
+     },
+     {
+      "id": "6165e6e83c65e61a09bf21c9",
+      "longName": "Tampa Bay Lightning",
+      "shortName": "TBL",
+      "homeAway": "home",
+      "rotationNumber": "2"
+     }
+    ],
+    "awayMoneylines": [],
+    "homeMoneylines": [],
+    "awaySpreads": {},
+    "homeSpreads": {},
+    "over": {
+     "2.5": [
+      {
+       "odds": 128,
+       "sumUntaken": 234.61875,
+       "total": 2.5,
+       "OU": "over"
+      }
+     ]
+    },
+    "under": {
+     "2.5": [
+      {
+       "odds": -179,
+       "sumUntaken": 106.193258,
+       "total": 2.5,
+       "OU": "under"
+      }
+     ]
+    },
+    "mainHomeSpread": 0,
+    "mainAwaySpread": 0,
+    "mainTotal": 2.5
+   },
+   {
+    "isSpecials": true,
+    "live": false,
+    "eventName": "NIKITA KUCHEROV (GOALS)",
+    "periodName": "Full Time",
+    "id": "6ac29caee16d06a69b3129f5",
+    "parentGameID": "6ac0bf4ae16d06a69b2da690",
+    "cheapDataUID": "VN-PROP-6ac0bf4ae16d06a69b2da690-GOALS-NIKITA_KUCHEROV",
+    "league": "NHL-PROPS",
+    "sport": "hockey",
+    "start": "2026-10-05T23:07:00.000Z",
+    "ended": false,
+    "isYesNo": false,
+    "participants": [
+     {
+      "id": "61682acd0672772dc72af7ae",
+      "longName": "Philadelphia Flyers",
+      "shortName": "PHI",
+      "homeAway": "away",
+      "rotationNumber": "1"
+     },
+     {
+      "id": "6165e6e83c65e61a09bf21c9",
+      "longName": "Tampa Bay Lightning",
+      "shortName": "TBL",
+      "homeAway": "home",
+      "rotationNumber": "2"
+     }
+    ],
+    "awayMoneylines": [],
+    "homeMoneylines": [],
+    "awaySpreads": {},
+    "homeSpreads": {},
+    "over": {
+     "0.5": [
+      {
+       "odds": 169,
+       "sumUntaken": 153.301775,
+       "total": 0.5,
+       "OU": "over"
+      }
+     ]
+    },
+    "under": {
+     "0.5": [
+      {
+       "odds": -358,
+       "sumUntaken": 260.180282,
+       "total": 0.5,
+       "OU": "under"
+      }
+     ]
+    },
+    "mainHomeSpread": 0,
+    "mainAwaySpread": 0,
+    "mainTotal": 0.5
+   },
+   {
+    "isSpecials": true,
+    "live": false,
+    "eventName": "NOEL ACCIARI (GOALS)",
+    "periodName": "Full Time",
+    "id": "6ac29caee16d06a69b3129f7",
+    "parentGameID": "6ac0bf4ae16d06a69b2da690",
+    "cheapDataUID": "VN-PROP-6ac0bf4ae16d06a69b2da690-GOALS-NOEL_ACCIARI",
+    "league": "NHL-PROPS",
+    "sport": "hockey",
+    "start": "2026-10-05T23:07:00.000Z",
+    "ended": false,
+    "isYesNo": false,
+    "participants": [
+     {
+      "id": "61682acd0672772dc72af7ae",
+      "longName": "Philadelphia Flyers",
+      "shortName": "PHI",
+      "homeAway": "away",
+      "rotationNumber": "1"
+     },
+     {
+      "id": "6165e6e83c65e61a09bf21c9",
+      "longName": "Tampa Bay Lightning",
+      "shortName": "TBL",
+      "homeAway": "home",
+      "rotationNumber": "2"
+     }
+    ],
+    "awayMoneylines": [],
+    "homeMoneylines": [],
+    "awaySpreads": {},
+    "homeSpreads": {},
+    "over": {
+     "0.5": [
+      {
+       "odds": 650,
+       "sumUntaken": 40.061538,
+       "total": 0.5,
+       "OU": "over"
+      }
+     ]
+    },
+    "under": {
+     "0.5": []
+    },
+    "mainHomeSpread": 0,
+    "mainAwaySpread": 0,
+    "mainTotal": 0.5
+   },
+   {
+    "isSpecials": true,
+    "live": false,
+    "eventName": "ANDREI VASILEVSKIY (SAVES)",
+    "periodName": "Full Time",
+    "id": "6ac3cc38e16d06a69b32521d",
+    "parentGameID": "6ac0bf4ae16d06a69b2da690",
+    "cheapDataUID": "VN-PROP-6ac0bf4ae16d06a69b2da690-SAVES-ANDREI_VASILEVSKIY",
+    "league": "NHL-PROPS",
+    "sport": "hockey",
+    "start": "2026-10-05T23:07:00.000Z",
+    "ended": false,
+    "isYesNo": false,
+    "participants": [
+     {
+      "id": "61682acd0672772dc72af7ae",
+      "longName": "Philadelphia Flyers",
+      "shortName": "PHI",
+      "homeAway": "away",
+      "rotationNumber": "1"
+     },
+     {
+      "id": "6165e6e83c65e61a09bf21c9",
+      "longName": "Tampa Bay Lightning",
+      "shortName": "TBL",
+      "homeAway": "home",
+      "rotationNumber": "2"
+     }
+    ],
+    "awayMoneylines": [],
+    "homeMoneylines": [],
+    "awaySpreads": {},
+    "homeSpreads": {},
+    "over": {
+     "20.5": [
+      {
+       "odds": -126,
+       "sumUntaken": 88.3008,
+       "total": 20.5,
+       "OU": "over"
+      }
+     ]
+    },
+    "under": {
+     "20.5": [
+      {
+       "odds": -124,
+       "sumUntaken": 89.521951,
+       "total": 20.5,
+       "OU": "under"
+      }
+     ]
+    },
+    "mainHomeSpread": 0,
+    "mainAwaySpread": 0,
+    "mainTotal": 20.5
+   },
+   {
+    "isSpecials": true,
+    "live": false,
+    "eventName": "CAM YORK (GOALS)",
+    "periodName": "Full Time",
+    "id": "6ac29caee16d06a69b3129e5",
+    "parentGameID": "6ac0bf4ae16d06a69b2da690",
+    "cheapDataUID": "VN-PROP-6ac0bf4ae16d06a69b2da690-GOALS-CAM_YORK",
+    "league": "NHL-PROPS",
+    "sport": "hockey",
+    "start": "2026-10-05T23:07:00.000Z",
+    "ended": false,
+    "isYesNo": false,
+    "participants": [
+     {
+      "id": "61682acd0672772dc72af7ae",
+      "longName": "Philadelphia Flyers",
+      "shortName": "PHI",
+      "homeAway": "away",
+      "rotationNumber": "1"
+     },
+     {
+      "id": "6165e6e83c65e61a09bf21c9",
+      "longName": "Tampa Bay Lightning",
+      "shortName": "TBL",
+      "homeAway": "home",
+      "rotationNumber": "2"
+     }
+    ],
+    "awayMoneylines": [],
+    "homeMoneylines": [],
+    "awaySpreads": {},
+    "homeSpreads": {},
+    "over": {},
+    "under": {},
+    "mainHomeSpread": 0,
+    "mainAwaySpread": 0,
+    "mainTotal": 0.5
+   },
+   {
+    "isSpecials": true,
+    "live": false,
+    "eventName": "J.J. MOSER (GOALS)",
+    "periodName": "Full Time",
+    "id": "6ac29caee16d06a69b3129ed",
+    "parentGameID": "6ac0bf4ae16d06a69b2da690",
+    "cheapDataUID": "VN-PROP-6ac0bf4ae16d06a69b2da690-GOALS-J_J_MOSER",
+    "league": "NHL-PROPS",
+    "sport": "hockey",
+    "start": "2026-10-05T23:07:00.000Z",
+    "ended": false,
+    "isYesNo": false,
+    "participants": [
+     {
+      "id": "61682acd0672772dc72af7ae",
+      "longName": "Philadelphia Flyers",
+      "shortName": "PHI",
+      "homeAway": "away",
+      "rotationNumber": "1"
+     },
+     {
+      "id": "6165e6e83c65e61a09bf21c9",
+      "longName": "Tampa Bay Lightning",
+      "shortName": "TBL",
+      "homeAway": "home",
+      "rotationNumber": "2"
+     }
+    ],
+    "awayMoneylines": [],
+    "homeMoneylines": [],
+    "awaySpreads": {},
+    "homeSpreads": {},
+    "over": {},
+    "under": {},
+    "mainHomeSpread": 0,
+    "mainAwaySpread": 0,
+    "mainTotal": 0.5
+   }
+  ]
+ }
+}

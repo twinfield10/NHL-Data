@@ -1,0 +1,914 @@
+{
+ "slug": "tampa-bay-lightning",
+ "combinations": {
+  "teamId": 27,
+  "teamName": "Tampa Bay Lightning",
+  "teamAbbreviation": "TBL",
+  "teamSlug": "tampa-bay-lightning",
+  "sourceName": "Gabby Shirley",
+  "source": "https://x.com/Gabby_Shirley_/status/2106770978550473208?s=20",
+  "updatedAt": "2026-10-04T17:10:23.716Z",
+  "players": [
+   {
+    "playerId": 32521,
+    "playerSlug": "gage-goncalves",
+    "name": "Gage Goncalves",
+    "jerseyNumber": 93,
+    "positionIdentifier": "lw",
+    "positionName": "Left Wing",
+    "groupIdentifier": "f1",
+    "groupName": "Forwards 1",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-03-10T11:25:30.825-04:00",
+     "details": "Goncalves (lower-body) will return to Tampa Bay's lineup vs. Columbus on Tuesday. "
+    }
+   },
+   {
+    "playerId": 2456,
+    "playerSlug": "brayden-point",
+    "name": "Brayden Point",
+    "jerseyNumber": 21,
+    "positionIdentifier": "c",
+    "positionName": "Center",
+    "groupIdentifier": "f1",
+    "groupName": "Forwards 1",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-15T18:51:33.664-04:00",
+     "details": "Point (rest) will not play against the Rangers on Wednesday. "
+    }
+   },
+   {
+    "playerId": 2031,
+    "playerSlug": "nikita-kucherov",
+    "name": "Nikita Kucherov",
+    "jerseyNumber": 86,
+    "positionIdentifier": "rw",
+    "positionName": "Right Wing",
+    "groupIdentifier": "f1",
+    "groupName": "Forwards 1",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-03-31T18:37:49.498-04:00",
+     "details": "Kucherov (illness) took full part in warmups and is expected to return to the Lightning lineup on Tuesday. "
+    }
+   },
+   {
+    "playerId": 27046,
+    "playerSlug": "brandon-hagel",
+    "name": "Brandon Hagel",
+    "jerseyNumber": 38,
+    "positionIdentifier": "lw",
+    "positionName": "Left Wing",
+    "groupIdentifier": "f2",
+    "groupName": "Forwards 2",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-15T11:06:55.726-04:00",
+     "details": " Hagel (undisclosed) will return vs. Detroit on Wednesday. "
+    }
+   },
+   {
+    "playerId": 3842,
+    "playerSlug": "anthony-cirelli",
+    "name": "Anthony Cirelli",
+    "jerseyNumber": 71,
+    "positionIdentifier": "c",
+    "positionName": "Center",
+    "groupIdentifier": "f2",
+    "groupName": "Forwards 2",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-15T18:51:44.462-04:00",
+     "details": "Cirelli (rest) will not play against the Rangers on Wednesday. "
+    }
+   },
+   {
+    "playerId": 2707,
+    "playerSlug": "jake-guentzel",
+    "name": "Jake Guentzel",
+    "jerseyNumber": 59,
+    "positionIdentifier": "rw",
+    "positionName": "Right Wing",
+    "groupIdentifier": "f2",
+    "groupName": "Forwards 2",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-15T18:51:22.069-04:00",
+     "details": "Guentzel (rest) will not play against the Rangers on Wednesday. "
+    }
+   },
+   {
+    "playerId": 30651,
+    "playerSlug": "ilya-mikheyev",
+    "name": "Ilya Mikheyev",
+    "jerseyNumber": 95,
+    "positionIdentifier": "lw",
+    "positionName": "Left Wing",
+    "groupIdentifier": "f3",
+    "groupName": "Forwards 3",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-07-01T19:59:00.000-04:00",
+     "details": "4-year, $15,400,000 contract with the Tampa Bay Lightning. NTC Yr 1,  16 team approved trade list Yr 2-4. Expires 2030 (UFA)."
+    }
+   },
+   {
+    "playerId": 1953,
+    "playerSlug": "zemgus-girgensons",
+    "name": "Zemgus Girgensons",
+    "jerseyNumber": 28,
+    "positionIdentifier": "c",
+    "positionName": "Center",
+    "groupIdentifier": "f3",
+    "groupName": "Forwards 3",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-13T11:31:52.134-04:00",
+     "details": "Girgensons (undisclosed) will return to the Lightning lineup on Monday. \r\n"
+    }
+   },
+   {
+    "playerId": 29640,
+    "playerSlug": "pontus-holmberg",
+    "name": "Pontus Holmberg",
+    "jerseyNumber": 29,
+    "positionIdentifier": "rw",
+    "positionName": "Right Wing",
+    "groupIdentifier": "f3",
+    "groupName": "Forwards 3",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-22T12:58:17.001-04:00",
+     "details": "Holmberg (upper-body) has been ruled out for Tampa Bay's opening round series vs. Montreal. "
+    }
+   },
+   {
+    "playerId": 24312,
+    "playerSlug": "jeffrey-truchon-viel",
+    "name": "Jeffrey Viel",
+    "jerseyNumber": 28,
+    "positionIdentifier": "lw",
+    "positionName": "Left Wing",
+    "groupIdentifier": "f4",
+    "groupName": "Forwards 4",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-07-01T19:59:00.000-04:00",
+     "details": "5-year, $12,500,000 contract with the Tampa Bay Lightning. Full NTC Yr 1-2, 16 team trade list Yr 3-5. Expires 2031 (UFA)."
+    }
+   },
+   {
+    "playerId": 31505,
+    "playerSlug": "conor-geekie",
+    "name": "Conor Geekie",
+    "jerseyNumber": 14,
+    "positionIdentifier": "c",
+    "positionName": "Center",
+    "groupIdentifier": "f4",
+    "groupName": "Forwards 4",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-05-01T18:58:33.585-04:00",
+     "details": "Geekie is listed as a healthy scratch for Game 6. "
+    }
+   },
+   {
+    "playerId": 34680,
+    "playerSlug": "janis-moser",
+    "name": "J.J. Moser",
+    "jerseyNumber": 90,
+    "positionIdentifier": "ld",
+    "positionName": "Left Defense",
+    "groupIdentifier": "d1",
+    "groupName": "Defense 1",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-15T18:51:54.734-04:00",
+     "details": "Moser (rest) will not play against the Rangers on Wednesday. "
+    }
+   },
+   {
+    "playerId": 1507,
+    "playerSlug": "john-carlson",
+    "name": "John Carlson",
+    "jerseyNumber": 74,
+    "positionIdentifier": "rd",
+    "positionName": "Right Defense",
+    "groupIdentifier": "d1",
+    "groupName": "Defense 1",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-07-01T23:17:06.210-04:00",
+     "details": "The Lightning have signed John Carlson to a two-year deal worth $8.5M AAV ($17.0M total). "
+    }
+   },
+   {
+    "playerId": 1369,
+    "playerSlug": "victor-hedman",
+    "name": "Victor Hedman",
+    "jerseyNumber": 77,
+    "positionIdentifier": "ld",
+    "positionName": "Left Defense",
+    "groupIdentifier": "d2",
+    "groupName": "Defense 2",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-05-01T11:37:25.263-04:00",
+     "details": "Hedman (personal) is \"going to be an option really soon.\"\r\n"
+    }
+   },
+   {
+    "playerId": 37940,
+    "playerSlug": "emil-lilleberg",
+    "name": "Emil Lilleberg",
+    "jerseyNumber": null,
+    "positionIdentifier": "rd",
+    "positionName": "Right Defense",
+    "groupIdentifier": "d2",
+    "groupName": "Defense 2",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": true,
+    "latestNews": {
+     "createdAt": "2026-10-05T10:45:17.851-04:00",
+     "details": "Lilleberg (undisclosed) is expected to miss the next week. "
+    }
+   },
+   {
+    "playerId": 1048,
+    "playerSlug": "ryan-mcdonagh",
+    "name": "Ryan McDonagh",
+    "jerseyNumber": 27,
+    "positionIdentifier": "ld",
+    "positionName": "Left Defense",
+    "groupIdentifier": "d3",
+    "groupName": "Defense 3",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-15T18:52:04.494-04:00",
+     "details": "McDonagh (rest) will not play against the Rangers on Wednesday. "
+    }
+   },
+   {
+    "playerId": 2749,
+    "playerSlug": "erik-cernak",
+    "name": "Erik Cernak",
+    "jerseyNumber": 81,
+    "positionIdentifier": "rd",
+    "positionName": "Right Defense",
+    "groupIdentifier": "d3",
+    "groupName": "Defense 3",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-03-14T18:36:17.153-04:00",
+     "details": "Cernak (upper-body) will return vs. Carolina on Saturday. "
+    }
+   },
+   {
+    "playerId": 2413,
+    "playerSlug": "andrei-vasilevskiy",
+    "name": "Andrei Vasilevskiy",
+    "jerseyNumber": 88,
+    "positionIdentifier": "g1",
+    "positionName": "Starting Goalie",
+    "groupIdentifier": "g",
+    "groupName": "Goalies",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-10-05T11:20:03.484-04:00",
+     "details": "Vasilevskiy is expected to start vs. Philadelphia on Monday. "
+    }
+   },
+   {
+    "playerId": 36477,
+    "playerSlug": "dennis-hildeby",
+    "name": "Dennis Hildeby",
+    "jerseyNumber": null,
+    "positionIdentifier": "g2",
+    "positionName": "Backup Goalie",
+    "groupIdentifier": "g",
+    "groupName": "Goalies",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-07-01T16:04:21.176-04:00",
+     "details": "Tampa Bay has acquired Dennis Hildeby, 2027 4th round pick and a 2028 3rd round pick from Toronto for Nick Paul. "
+    }
+   },
+   {
+    "playerId": 26500,
+    "playerSlug": "charle-edouard-d-astous",
+    "name": "Charle-Edouard D'Astous",
+    "jerseyNumber": 51,
+    "positionIdentifier": "rd",
+    "positionName": "Right Defense",
+    "groupIdentifier": "d4",
+    "groupName": "Defense 4",
+    "categoryIdentifier": "ev",
+    "categoryName": "Even Strength",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-05-01T18:55:41.762-04:00",
+     "details": "D'Astous (undisclosed) is listed as active for Game 6. "
+    }
+   },
+   {
+    "playerId": 2707,
+    "playerSlug": "jake-guentzel",
+    "name": "Jake Guentzel",
+    "jerseyNumber": 59,
+    "positionIdentifier": "sk1",
+    "positionName": "Skater 1",
+    "groupIdentifier": "pp1",
+    "groupName": "1st Powerplay Unit",
+    "categoryIdentifier": "pp",
+    "categoryName": "Power Play",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-15T18:51:22.069-04:00",
+     "details": "Guentzel (rest) will not play against the Rangers on Wednesday. "
+    }
+   },
+   {
+    "playerId": 2456,
+    "playerSlug": "brayden-point",
+    "name": "Brayden Point",
+    "jerseyNumber": 21,
+    "positionIdentifier": "sk2",
+    "positionName": "Skater 2",
+    "groupIdentifier": "pp1",
+    "groupName": "1st Powerplay Unit",
+    "categoryIdentifier": "pp",
+    "categoryName": "Power Play",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-15T18:51:33.664-04:00",
+     "details": "Point (rest) will not play against the Rangers on Wednesday. "
+    }
+   },
+   {
+    "playerId": 2031,
+    "playerSlug": "nikita-kucherov",
+    "name": "Nikita Kucherov",
+    "jerseyNumber": 86,
+    "positionIdentifier": "sk3",
+    "positionName": "Skater 3",
+    "groupIdentifier": "pp1",
+    "groupName": "1st Powerplay Unit",
+    "categoryIdentifier": "pp",
+    "categoryName": "Power Play",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-03-31T18:37:49.498-04:00",
+     "details": "Kucherov (illness) took full part in warmups and is expected to return to the Lightning lineup on Tuesday. "
+    }
+   },
+   {
+    "playerId": 27046,
+    "playerSlug": "brandon-hagel",
+    "name": "Brandon Hagel",
+    "jerseyNumber": 38,
+    "positionIdentifier": "sk4",
+    "positionName": "Skater 4",
+    "groupIdentifier": "pp1",
+    "groupName": "1st Powerplay Unit",
+    "categoryIdentifier": "pp",
+    "categoryName": "Power Play",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-15T11:06:55.726-04:00",
+     "details": " Hagel (undisclosed) will return vs. Detroit on Wednesday. "
+    }
+   },
+   {
+    "playerId": 1507,
+    "playerSlug": "john-carlson",
+    "name": "John Carlson",
+    "jerseyNumber": 74,
+    "positionIdentifier": "sk5",
+    "positionName": "Skater 5",
+    "groupIdentifier": "pp1",
+    "groupName": "1st Powerplay Unit",
+    "categoryIdentifier": "pp",
+    "categoryName": "Power Play",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-07-01T23:17:06.210-04:00",
+     "details": "The Lightning have signed John Carlson to a two-year deal worth $8.5M AAV ($17.0M total). "
+    }
+   },
+   {
+    "playerId": 29640,
+    "playerSlug": "pontus-holmberg",
+    "name": "Pontus Holmberg",
+    "jerseyNumber": 29,
+    "positionIdentifier": "sk1",
+    "positionName": "Skater 1",
+    "groupIdentifier": "pp2",
+    "groupName": "2nd Powerplay Unit",
+    "categoryIdentifier": "pp",
+    "categoryName": "Power Play",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-22T12:58:17.001-04:00",
+     "details": "Holmberg (upper-body) has been ruled out for Tampa Bay's opening round series vs. Montreal. "
+    }
+   },
+   {
+    "playerId": 3842,
+    "playerSlug": "anthony-cirelli",
+    "name": "Anthony Cirelli",
+    "jerseyNumber": 71,
+    "positionIdentifier": "sk2",
+    "positionName": "Skater 2",
+    "groupIdentifier": "pp2",
+    "groupName": "2nd Powerplay Unit",
+    "categoryIdentifier": "pp",
+    "categoryName": "Power Play",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-15T18:51:44.462-04:00",
+     "details": "Cirelli (rest) will not play against the Rangers on Wednesday. "
+    }
+   },
+   {
+    "playerId": 32521,
+    "playerSlug": "gage-goncalves",
+    "name": "Gage Goncalves",
+    "jerseyNumber": 93,
+    "positionIdentifier": "sk3",
+    "positionName": "Skater 3",
+    "groupIdentifier": "pp2",
+    "groupName": "2nd Powerplay Unit",
+    "categoryIdentifier": "pp",
+    "categoryName": "Power Play",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-03-10T11:25:30.825-04:00",
+     "details": "Goncalves (lower-body) will return to Tampa Bay's lineup vs. Columbus on Tuesday. "
+    }
+   },
+   {
+    "playerId": 31505,
+    "playerSlug": "conor-geekie",
+    "name": "Conor Geekie",
+    "jerseyNumber": 14,
+    "positionIdentifier": "sk4",
+    "positionName": "Skater 4",
+    "groupIdentifier": "pp2",
+    "groupName": "2nd Powerplay Unit",
+    "categoryIdentifier": "pp",
+    "categoryName": "Power Play",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-05-01T18:58:33.585-04:00",
+     "details": "Geekie is listed as a healthy scratch for Game 6. "
+    }
+   },
+   {
+    "playerId": 26500,
+    "playerSlug": "charle-edouard-d-astous",
+    "name": "Charle-Edouard D'Astous",
+    "jerseyNumber": 51,
+    "positionIdentifier": "sk5",
+    "positionName": "Skater 5",
+    "groupIdentifier": "pp2",
+    "groupName": "2nd Powerplay Unit",
+    "categoryIdentifier": "pp",
+    "categoryName": "Power Play",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-05-01T18:55:41.762-04:00",
+     "details": "D'Astous (undisclosed) is listed as active for Game 6. "
+    }
+   },
+   {
+    "playerId": 2566,
+    "playerSlug": "yanni-gourde",
+    "name": "Yanni Gourde",
+    "jerseyNumber": 37,
+    "positionIdentifier": "ir1",
+    "positionName": "Injured Reserve 1",
+    "groupIdentifier": "ir",
+    "groupName": "Injured Reserve",
+    "categoryIdentifier": "oi",
+    "categoryName": "Off Ice",
+    "injuryStatus": "out",
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-09-16T13:49:34.747-04:00",
+     "details": "Gourde underwent hip surgery in the summer and is expected to be out until December. "
+    }
+   },
+   {
+    "playerId": 32816,
+    "playerSlug": "dominic-james",
+    "name": "Dominic James",
+    "jerseyNumber": 17,
+    "positionIdentifier": "ir2",
+    "positionName": "Injured Reserve 2",
+    "groupIdentifier": "ir",
+    "groupName": "Injured Reserve",
+    "categoryIdentifier": "oi",
+    "categoryName": "Off Ice",
+    "injuryStatus": "out",
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-10-05T10:46:57.996-04:00",
+     "details": "James (hand) will be an option on Thursday vs. Minnesota. "
+    }
+   },
+   {
+    "playerId": 37940,
+    "playerSlug": "emil-lilleberg",
+    "name": "Emil Lilleberg",
+    "jerseyNumber": null,
+    "positionIdentifier": "ir3",
+    "positionName": "Injured Reserve 3",
+    "groupIdentifier": "ir",
+    "groupName": "Injured Reserve",
+    "categoryIdentifier": "oi",
+    "categoryName": "Off Ice",
+    "injuryStatus": "dtd",
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-10-05T10:45:17.851-04:00",
+     "details": "Lilleberg (undisclosed) is expected to miss the next week. "
+    }
+   },
+   {
+    "playerId": 3842,
+    "playerSlug": "anthony-cirelli",
+    "name": "Anthony Cirelli",
+    "jerseyNumber": 71,
+    "positionIdentifier": "sk1",
+    "positionName": "Skater 1",
+    "groupIdentifier": "pk1",
+    "groupName": "1st Penalty Kill Unit",
+    "categoryIdentifier": "pk",
+    "categoryName": "Penalty Kill",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-15T18:51:44.462-04:00",
+     "details": "Cirelli (rest) will not play against the Rangers on Wednesday. "
+    }
+   },
+   {
+    "playerId": 27046,
+    "playerSlug": "brandon-hagel",
+    "name": "Brandon Hagel",
+    "jerseyNumber": 38,
+    "positionIdentifier": "sk2",
+    "positionName": "Skater 2",
+    "groupIdentifier": "pk1",
+    "groupName": "1st Penalty Kill Unit",
+    "categoryIdentifier": "pk",
+    "categoryName": "Penalty Kill",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-15T11:06:55.726-04:00",
+     "details": " Hagel (undisclosed) will return vs. Detroit on Wednesday. "
+    }
+   },
+   {
+    "playerId": 1048,
+    "playerSlug": "ryan-mcdonagh",
+    "name": "Ryan McDonagh",
+    "jerseyNumber": 27,
+    "positionIdentifier": "sk3",
+    "positionName": "Skater 3",
+    "groupIdentifier": "pk1",
+    "groupName": "1st Penalty Kill Unit",
+    "categoryIdentifier": "pk",
+    "categoryName": "Penalty Kill",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-15T18:52:04.494-04:00",
+     "details": "McDonagh (rest) will not play against the Rangers on Wednesday. "
+    }
+   },
+   {
+    "playerId": 2749,
+    "playerSlug": "erik-cernak",
+    "name": "Erik Cernak",
+    "jerseyNumber": 81,
+    "positionIdentifier": "sk4",
+    "positionName": "Skater 4",
+    "groupIdentifier": "pk1",
+    "groupName": "1st Penalty Kill Unit",
+    "categoryIdentifier": "pk",
+    "categoryName": "Penalty Kill",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-03-14T18:36:17.153-04:00",
+     "details": "Cernak (upper-body) will return vs. Carolina on Saturday. "
+    }
+   },
+   {
+    "playerId": 1953,
+    "playerSlug": "zemgus-girgensons",
+    "name": "Zemgus Girgensons",
+    "jerseyNumber": 28,
+    "positionIdentifier": "sk1",
+    "positionName": "Skater 1",
+    "groupIdentifier": "pk2",
+    "groupName": "2nd Penalty Kill Unit",
+    "categoryIdentifier": "pk",
+    "categoryName": "Penalty Kill",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-13T11:31:52.134-04:00",
+     "details": "Girgensons (undisclosed) will return to the Lightning lineup on Monday. \r\n"
+    }
+   },
+   {
+    "playerId": 30651,
+    "playerSlug": "ilya-mikheyev",
+    "name": "Ilya Mikheyev",
+    "jerseyNumber": 95,
+    "positionIdentifier": "sk2",
+    "positionName": "Skater 2",
+    "groupIdentifier": "pk2",
+    "groupName": "2nd Penalty Kill Unit",
+    "categoryIdentifier": "pk",
+    "categoryName": "Penalty Kill",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-07-01T19:59:00.000-04:00",
+     "details": "4-year, $15,400,000 contract with the Tampa Bay Lightning. NTC Yr 1,  16 team approved trade list Yr 2-4. Expires 2030 (UFA)."
+    }
+   },
+   {
+    "playerId": 1369,
+    "playerSlug": "victor-hedman",
+    "name": "Victor Hedman",
+    "jerseyNumber": 77,
+    "positionIdentifier": "sk3",
+    "positionName": "Skater 3",
+    "groupIdentifier": "pk2",
+    "groupName": "2nd Penalty Kill Unit",
+    "categoryIdentifier": "pk",
+    "categoryName": "Penalty Kill",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-05-01T11:37:25.263-04:00",
+     "details": "Hedman (personal) is \"going to be an option really soon.\"\r\n"
+    }
+   },
+   {
+    "playerId": 34680,
+    "playerSlug": "janis-moser",
+    "name": "J.J. Moser",
+    "jerseyNumber": 90,
+    "positionIdentifier": "sk4",
+    "positionName": "Skater 4",
+    "groupIdentifier": "pk2",
+    "groupName": "2nd Penalty Kill Unit",
+    "categoryIdentifier": "pk",
+    "categoryName": "Penalty Kill",
+    "injuryStatus": null,
+    "gameTimeDecision": false,
+    "latestNews": {
+     "createdAt": "2026-04-15T18:51:54.734-04:00",
+     "details": "Moser (rest) will not play against the Rangers on Wednesday. "
+    }
+   }
+  ]
+ },
+ "sortedTeams": [
+  {
+   "name": "Anaheim Ducks",
+   "shortName": "ANA",
+   "slug": "anaheim-ducks"
+  },
+  {
+   "name": "Boston Bruins",
+   "shortName": "BOS",
+   "slug": "boston-bruins"
+  },
+  {
+   "name": "Buffalo Sabres",
+   "shortName": "BUF",
+   "slug": "buffalo-sabres"
+  },
+  {
+   "name": "Calgary Flames",
+   "shortName": "CGY",
+   "slug": "calgary-flames"
+  },
+  {
+   "name": "Carolina Hurricanes",
+   "shortName": "CAR",
+   "slug": "carolina-hurricanes"
+  },
+  {
+   "name": "Chicago Blackhawks",
+   "shortName": "CHI",
+   "slug": "chicago-blackhawks"
+  },
+  {
+   "name": "Colorado Avalanche",
+   "shortName": "COL",
+   "slug": "colorado-avalanche"
+  },
+  {
+   "name": "Columbus Blue Jackets",
+   "shortName": "CBJ",
+   "slug": "columbus-blue-jackets"
+  },
+  {
+   "name": "Dallas Stars",
+   "shortName": "DAL",
+   "slug": "dallas-stars"
+  },
+  {
+   "name": "Detroit Red Wings",
+   "shortName": "DET",
+   "slug": "detroit-red-wings"
+  },
+  {
+   "name": "Edmonton Oilers",
+   "shortName": "EDM",
+   "slug": "edmonton-oilers"
+  },
+  {
+   "name": "Florida Panthers",
+   "shortName": "FLA",
+   "slug": "florida-panthers"
+  },
+  {
+   "name": "Los Angeles Kings",
+   "shortName": "LA",
+   "slug": "los-angeles-kings"
+  },
+  {
+   "name": "Minnesota Wild",
+   "shortName": "MIN",
+   "slug": "minnesota-wild"
+  },
+  {
+   "name": "Montreal Canadiens",
+   "shortName": "MON",
+   "slug": "montreal-canadiens"
+  },
+  {
+   "name": "Nashville Predators",
+   "shortName": "NAS",
+   "slug": "nashville-predators"
+  },
+  {
+   "name": "New Jersey Devils",
+   "shortName": "NJ",
+   "slug": "new-jersey-devils"
+  },
+  {
+   "name": "New York Islanders",
+   "shortName": "NYI",
+   "slug": "new-york-islanders"
+  },
+  {
+   "name": "New York Rangers",
+   "shortName": "NYR",
+   "slug": "new-york-rangers"
+  },
+  {
+   "name": "Ottawa Senators",
+   "shortName": "OTT",
+   "slug": "ottawa-senators"
+  },
+  {
+   "name": "Philadelphia Flyers",
+   "shortName": "PHI",
+   "slug": "philadelphia-flyers"
+  },
+  {
+   "name": "Pittsburgh Penguins",
+   "shortName": "PIT",
+   "slug": "pittsburgh-penguins"
+  },
+  {
+   "name": "San Jose Sharks",
+   "shortName": "SJ",
+   "slug": "san-jose-sharks"
+  },
+  {
+   "name": "Seattle Kraken",
+   "shortName": "SEA",
+   "slug": "seattle-kraken"
+  },
+  {
+   "name": "St Louis Blues",
+   "shortName": "STL",
+   "slug": "st-louis-blues"
+  },
+  {
+   "name": "Tampa Bay Lightning",
+   "shortName": "TB",
+   "slug": "tampa-bay-lightning"
+  },
+  {
+   "name": "Toronto Maple Leafs",
+   "shortName": "TOR",
+   "slug": "toronto-maple-leafs"
+  },
+  {
+   "name": "Utah Mammoth",
+   "shortName": "UTA",
+   "slug": "utah-mammoth"
+  },
+  {
+   "name": "Vancouver Canucks",
+   "shortName": "VAN",
+   "slug": "vancouver-canucks"
+  },
+  {
+   "name": "Vegas Golden Knights",
+   "shortName": "VEG",
+   "slug": "vegas-golden-knights"
+  },
+  {
+   "name": "Washington Capitals",
+   "shortName": "WAS",
+   "slug": "washington-capitals"
+  },
+  {
+   "name": "Winnipeg Jets",
+   "shortName": "WPG",
+   "slug": "winnipeg-jets"
+  }
+ ]
+}

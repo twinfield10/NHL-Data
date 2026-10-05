@@ -1,0 +1,38 @@
+{
+ "gameInfo": {
+  "referees": [
+   {
+    "fullName": {
+     "default": "Kelly Sutherland"
+    },
+    "sweaterNumber": 11
+   },
+   {
+    "fullName": {
+     "default": "Eric Furlatt"
+    },
+    "sweaterNumber": 27
+   }
+  ],
+  "linesmen": [
+   {
+    "fullName": {
+     "default": "Scott Cherrey"
+    },
+    "sweaterNumber": 50
+   },
+   {
+    "fullName": {
+     "default": "Matt MacPherson"
+    },
+    "sweaterNumber": 83
+   }
+  ],
+  "awayTeam": {
+   "abbrev": null
+  },
+  "homeTeam": {
+   "abbrev": null
+  }
+ }
+}

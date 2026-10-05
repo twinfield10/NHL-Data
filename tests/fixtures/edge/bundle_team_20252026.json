@@ -1,0 +1,2746 @@
+{
+ "kind": "team",
+ "id": 14,
+ "season": 20252026,
+ "captured_at": "2026-10-05T18:30:00+00:00",
+ "game_types": {
+  "2": {
+   "team-detail": {
+    "team": {
+     "id": 14,
+     "commonName": {
+      "default": "Lightning"
+     },
+     "placeNameWithPreposition": {
+      "default": "Tampa Bay",
+      "fr": "de Tampa Bay"
+     },
+     "abbrev": "TBL",
+     "slug": "tampa-bay-lightning-14",
+     "conference": "Eastern",
+     "division": "Atlantic",
+     "wins": 50,
+     "losses": 26,
+     "otLosses": 6,
+     "gamesPlayed": 82,
+     "points": 106
+    },
+    "seasonsWithEdgeStats": [
+     {
+      "id": 20212022,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20222023,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20232024,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20242025,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20252026,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20262027,
+      "gameTypes": [
+       2
+      ]
+     }
+    ],
+    "shotSpeed": {
+     "shotAttemptsOver90": {
+      "value": 131,
+      "rank": 1
+     },
+     "topShotSpeed": {
+      "imperial": 101.42,
+      "rank": 9,
+      "leagueAvg": {
+       "imperial": 99.6925
+      }
+     }
+    },
+    "skatingSpeed": {
+     "burstsOver22": {
+      "value": 95,
+      "rank": 12
+     },
+     "burstsOver20": {
+      "value": 1772,
+      "rank": 12,
+      "leagueAvg": {
+       "value": 1762
+      }
+     },
+     "speedMax": {
+      "imperial": 23.7137,
+      "rank": 17,
+      "leagueAvg": {
+       "imperial": 23.8027
+      }
+     }
+    },
+    "distanceSkated": {
+     "total": {
+      "imperial": 3670.945,
+      "rank": 28,
+      "leagueAvg": {
+       "imperial": 3727.0127
+      }
+     }
+    },
+    "sogSummary": [
+     {
+      "locationCode": "all",
+      "shots": 2305,
+      "shotsRank": 14,
+      "shotsLeagueAvg": 2282.25,
+      "shootingPctg": 0.1241,
+      "shootingPctgRank": 3,
+      "shootingPctgLeagueAvg": 0.1107,
+      "goals": 286,
+      "goalsRank": 4,
+      "goalsLeagueAvg": 252.6875
+     },
+     {
+      "locationCode": "high",
+      "shots": 686,
+      "shotsRank": 10,
+      "shotsLeagueAvg": 648.7813,
+      "shootingPctg": 0.2245,
+      "shootingPctgRank": 4,
+      "shootingPctgLeagueAvg": 0.1941,
+      "goals": 154,
+      "goalsRank": 2,
+      "goalsLeagueAvg": 125.9375
+     },
+     {
+      "locationCode": "long",
+      "shots": 514,
+      "shotsRank": 5,
+      "shotsLeagueAvg": 475.5625,
+      "shootingPctg": 0.0409,
+      "shootingPctgRank": 12,
+      "shootingPctgLeagueAvg": 0.0366,
+      "goals": 21,
+      "goalsRank": 8,
+      "goalsLeagueAvg": 17.4063
+     },
+     {
+      "locationCode": "mid",
+      "shots": 674,
+      "shotsRank": 12,
+      "shotsLeagueAvg": 659.4688,
+      "shootingPctg": 0.1231,
+      "shootingPctgRank": 13,
+      "shootingPctgLeagueAvg": 0.1192,
+      "goals": 83,
+      "goalsRank": 14,
+      "goalsLeagueAvg": 78.5938
+     }
+    ],
+    "sogDetails": [
+     {
+      "area": "Behind the Net",
+      "shots": 12,
+      "shotsRank": 24
+     },
+     {
+      "area": "Beyond Red Line",
+      "shots": 49,
+      "shotsRank": 30
+     },
+     {
+      "area": "Center Point",
+      "shots": 212,
+      "shotsRank": 4
+     },
+     {
+      "area": "Crease",
+      "shots": 88,
+      "shotsRank": 9
+     },
+     {
+      "area": "High Slot",
+      "shots": 228,
+      "shotsRank": 9
+     },
+     {
+      "area": "L Circle",
+      "shots": 239,
+      "shotsRank": 5
+     },
+     {
+      "area": "L Corner",
+      "shots": 3,
+      "shotsRank": 17
+     },
+     {
+      "area": "L Net Side",
+      "shots": 37,
+      "shotsRank": 31
+     },
+     {
+      "area": "L Point",
+      "shots": 136,
+      "shotsRank": 24
+     },
+     {
+      "area": "Low Slot",
+      "shots": 598,
+      "shotsRank": 13
+     },
+     {
+      "area": "Offensive Neutral Zone",
+      "shots": 47,
+      "shotsRank": 17
+     },
+     {
+      "area": "Outside L",
+      "shots": 99,
+      "shotsRank": 30
+     },
+     {
+      "area": "Outside R",
+      "shots": 128,
+      "shotsRank": 12
+     },
+     {
+      "area": "R Circle",
+      "shots": 207,
+      "shotsRank": 22
+     },
+     {
+      "area": "R Corner",
+      "shots": 0,
+      "shotsRank": 29
+     },
+     {
+      "area": "R Net Side",
+      "shots": 56,
+      "shotsRank": 11
+     },
+     {
+      "area": "R Point",
+      "shots": 166,
+      "shotsRank": 6
+     }
+    ],
+    "zoneTimeDetails": {
+     "offensiveZonePctg": 0.4126232,
+     "offensiveZoneRank": 13,
+     "offensiveZoneLeagueAvg": 0.4154386,
+     "offensiveZoneEvPctg": 0.4123593,
+     "offensiveZoneEvRank": 10,
+     "offensiveZoneEvLeagueAvg": 0.4099338,
+     "neutralZonePctg": 0.1828631,
+     "neutralZoneRank": 6,
+     "neutralZoneLeagueAvg": 0.1691227,
+     "defensiveZonePctg": 0.4045137,
+     "defensiveZoneRank": 8,
+     "defensiveZoneLeagueAvg": 0.4154386
+    }
+   },
+   "team-skating-speed-detail": {
+    "topSkatingSpeeds": [
+     {
+      "player": {
+       "id": 8483752,
+       "firstName": {
+        "default": "Dominic"
+       },
+       "lastName": {
+        "default": "James"
+       },
+       "slug": "dominic-james-8483752"
+      },
+      "gameCenterLink": "/gamecenter/tbl-vs-det/2025/11/28/2025020377",
+      "gameDate": "2025-11-28",
+      "gameType": 2,
+      "isHomeTeam": false,
+      "skatingSpeed": {
+       "imperial": 23.7137,
+       "metric": 38.1634
+      },
+      "timeInPeriod": "00:15",
+      "periodDescriptor": {
+       "number": 1,
+       "periodType": "REG",
+       "maxRegulationPeriods": 3
+      },
+      "homeTeam": {
+       "commonName": {
+        "default": "Red Wings"
+       },
+       "placeNameWithPreposition": {
+        "default": "Detroit",
+        "fr": "de Detroit"
+       },
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/DET_light.svg?season=20252026",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/DET_dark.svg?season=20252026"
+       }
+      },
+      "awayTeam": {
+       "commonName": {
+        "default": "Lightning"
+       },
+       "placeNameWithPreposition": {
+        "default": "Tampa Bay",
+        "fr": "de Tampa Bay"
+       },
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/TBL_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/TBL_dark.svg"
+       }
+      }
+     }
+    ],
+    "skatingSpeedDetails": [
+     {
+      "positionCode": "all",
+      "maxSkatingSpeed": {
+       "imperial": 23.7137,
+       "rank": 17,
+       "leagueAvg": {
+        "imperial": 23.8027
+       }
+      },
+      "burstsOver22": {
+       "value": 95,
+       "rank": 12,
+       "leagueAvg": 86.0313
+      },
+      "bursts20To22": {
+       "value": 1677,
+       "rank": 12,
+       "leagueAvg": 1676.6875
+      },
+      "bursts18To20": {
+       "value": 7510,
+       "rank": 24,
+       "leagueAvg": 7842.0625
+      }
+     },
+     {
+      "positionCode": "F",
+      "maxSkatingSpeed": {
+       "imperial": 23.7137,
+       "rank": 15,
+       "leagueAvg": {
+        "imperial": 23.7335
+       }
+      },
+      "burstsOver22": {
+       "value": 90,
+       "rank": 8,
+       "leagueAvg": 73.9375
+      },
+      "bursts20To22": {
+       "value": 1424,
+       "rank": 13,
+       "leagueAvg": 1371.3125
+      },
+      "bursts18To20": {
+       "value": 5748,
+       "rank": 25,
+       "leagueAvg": 6029.8125
+      }
+     },
+     {
+      "positionCode": "D",
+      "maxSkatingSpeed": {
+       "imperial": 22.3262,
+       "rank": 29,
+       "leagueAvg": {
+        "imperial": 23.1153
+       }
+      },
+      "burstsOver22": {
+       "value": 5,
+       "rank": 26,
+       "leagueAvg": 12.0938
+      },
+      "bursts20To22": {
+       "value": 253,
+       "rank": 24,
+       "leagueAvg": 305.375
+      },
+      "bursts18To20": {
+       "value": 1762,
+       "rank": 20,
+       "leagueAvg": 1812.25
+      }
+     }
+    ]
+   },
+   "team-shot-speed-detail": {
+    "hardestShots": [
+     {
+      "player": {
+       "id": 8475167,
+       "firstName": {
+        "default": "Victor"
+       },
+       "lastName": {
+        "default": "Hedman"
+       },
+       "slug": "victor-hedman-8475167"
+      },
+      "gameCenterLink": "/gamecenter/tbl-vs-det/2025/10/17/2025020072",
+      "gameDate": "2025-10-17",
+      "gameType": 2,
+      "isHomeTeam": false,
+      "shotSpeed": {
+       "imperial": 101.42,
+       "metric": 163.2197
+      },
+      "timeInPeriod": "01:08",
+      "periodDescriptor": {
+       "number": 2,
+       "periodType": "REG",
+       "maxRegulationPeriods": 3
+      },
+      "homeTeam": {
+       "commonName": {
+        "default": "Red Wings"
+       },
+       "placeNameWithPreposition": {
+        "default": "Detroit",
+        "fr": "de Detroit"
+       },
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/DET_light.svg?season=20252026",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/DET_dark.svg?season=20252026"
+       }
+      },
+      "awayTeam": {
+       "commonName": {
+        "default": "Lightning"
+       },
+       "placeNameWithPreposition": {
+        "default": "Tampa Bay",
+        "fr": "de Tampa Bay"
+       },
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/TBL_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/TBL_dark.svg"
+       }
+      }
+     }
+    ],
+    "shotSpeedDetails": [
+     {
+      "position": "all",
+      "topShotSpeed": {
+       "imperial": 101.42,
+       "rank": 9,
+       "leagueAvg": {
+        "imperial": 99.6925
+       }
+      },
+      "avgShotSpeed": {
+       "imperial": 58.7606,
+       "rank": 9,
+       "leagueAvg": {
+        "imperial": 58.1809
+       }
+      },
+      "shotAttemptsOver100": {
+       "value": 2,
+       "rank": 4,
+       "leagueAvg": 0.8438
+      },
+      "shotAttempts90To100": {
+       "value": 129,
+       "rank": 1,
+       "leagueAvg": 55.3125
+      },
+      "shotAttempts80To90": {
+       "value": 395,
+       "leagueAvg": 410.0938
+      },
+      "shotAttempts70To80": {
+       "value": 962,
+       "leagueAvg": 1028.2813
+      }
+     },
+     {
+      "position": "D",
+      "topShotSpeed": {
+       "imperial": 101.42,
+       "rank": 7,
+       "leagueAvg": {
+        "imperial": 99.0822
+       }
+      },
+      "avgShotSpeed": {
+       "imperial": 69.403,
+       "rank": 6,
+       "leagueAvg": {
+        "imperial": 67.8463
+       }
+      },
+      "shotAttemptsOver100": {
+       "value": 2,
+       "rank": 4,
+       "leagueAvg": 0.75
+      },
+      "shotAttempts90To100": {
+       "value": 124,
+       "rank": 1,
+       "leagueAvg": 43.0938
+      },
+      "shotAttempts80To90": {
+       "value": 245,
+       "leagueAvg": 219.0
+      },
+      "shotAttempts70To80": {
+       "value": 428,
+       "leagueAvg": 486.5938
+      }
+     },
+     {
+      "position": "F",
+      "topShotSpeed": {
+       "imperial": 92.06,
+       "rank": 29,
+       "leagueAvg": {
+        "imperial": 95.6981
+       }
+      },
+      "avgShotSpeed": {
+       "imperial": 53.1256,
+       "rank": 21,
+       "leagueAvg": {
+        "imperial": 53.1912
+       }
+      },
+      "shotAttemptsOver100": {
+       "value": 0,
+       "rank": 3,
+       "leagueAvg": 0.0938
+      },
+      "shotAttempts90To100": {
+       "value": 5,
+       "rank": 23,
+       "leagueAvg": 12.2188
+      },
+      "shotAttempts80To90": {
+       "value": 150,
+       "leagueAvg": 191.0938
+      },
+      "shotAttempts70To80": {
+       "value": 534,
+       "leagueAvg": 541.6875
+      }
+     }
+    ]
+   },
+   "team-skating-distance-detail": {
+    "skatingDistanceLast10": [
+     {
+      "gameCenterLink": "/gamecenter/nyr-vs-tbl/2026/04/15/2025021302",
+      "gameDate": "2026-04-15",
+      "isHomeTeam": true,
+      "toiAll": 17930,
+      "distanceSkatedAll": {
+       "imperial": 45.0086,
+       "metric": 72.4341
+      },
+      "toiEven": 15480,
+      "distanceSkatedEven": {
+       "imperial": 40.0112,
+       "metric": 64.3916
+      },
+      "toiPP": 1630,
+      "distanceSkatedPP": {
+       "imperial": 3.1829,
+       "metric": 5.1224
+      },
+      "toiPK": 820,
+      "distanceSkatedPK": {
+       "imperial": 1.8145,
+       "metric": 2.9202
+      },
+      "homeTeam": {
+       "commonName": {
+        "default": "Lightning"
+       },
+       "placeNameWithPreposition": {
+        "default": "Tampa Bay",
+        "fr": "de Tampa Bay"
+       },
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/TBL_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/TBL_dark.svg"
+       }
+      },
+      "awayTeam": {
+       "commonName": {
+        "default": "Rangers"
+       },
+       "placeNameWithPreposition": {
+        "default": "New York",
+        "fr": "de New York"
+       },
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/NYR_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/NYR_dark.svg"
+       }
+      }
+     }
+    ],
+    "skatingDistanceDetails": [
+     {
+      "strengthCode": "all",
+      "positionCode": "all",
+      "distanceTotal": {
+       "imperial": 3670.945,
+       "rank": 28,
+       "leagueAvg": {
+        "imperial": 3727.0127
+       }
+      },
+      "distancePer60": {
+       "imperial": 9.0657,
+       "rank": 28,
+       "leagueAvg": {
+        "imperial": 9.1623
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 47.8975,
+       "rank": 32,
+       "leagueAvg": {
+        "imperial": 49.3841
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 16.2813,
+       "rank": 31,
+       "leagueAvg": {
+        "imperial": 16.6302
+       }
+      }
+     },
+     {
+      "strengthCode": "all",
+      "positionCode": "F",
+      "distanceTotal": {
+       "imperial": 2341.7349,
+       "rank": 28,
+       "leagueAvg": {
+        "imperial": 2374.3878
+       }
+      },
+      "distancePer60": {
+       "imperial": 9.4995,
+       "rank": 25,
+       "leagueAvg": {
+        "imperial": 9.6011
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 30.7083,
+       "rank": 32,
+       "leagueAvg": {
+        "imperial": 31.6331
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 10.5306,
+       "rank": 30,
+       "leagueAvg": {
+        "imperial": 10.7753
+       }
+      }
+     },
+     {
+      "strengthCode": "all",
+      "positionCode": "D",
+      "distanceTotal": {
+       "imperial": 1329.2101,
+       "rank": 26,
+       "leagueAvg": {
+        "imperial": 1352.6249
+       }
+      },
+      "distancePer60": {
+       "imperial": 8.3906,
+       "rank": 25,
+       "leagueAvg": {
+        "imperial": 8.4818
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 17.6231,
+       "rank": 31,
+       "leagueAvg": {
+        "imperial": 18.2523
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 6.0388,
+       "rank": 30,
+       "leagueAvg": {
+        "imperial": 6.2425
+       }
+      }
+     },
+     {
+      "strengthCode": "pp",
+      "positionCode": "all",
+      "distanceTotal": {
+       "imperial": 261.0994,
+       "rank": 23,
+       "leagueAvg": {
+        "imperial": 270.9406
+       }
+      },
+      "distancePer60": {
+       "imperial": 7.5929,
+       "rank": 32,
+       "leagueAvg": {
+        "imperial": 8.3658
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 7.273,
+       "rank": 24,
+       "leagueAvg": {
+        "imperial": 8.2774
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 4.4152,
+       "rank": 22,
+       "leagueAvg": {
+        "imperial": 4.9343
+       }
+      }
+     },
+     {
+      "strengthCode": "pp",
+      "positionCode": "F",
+      "distanceTotal": {
+       "imperial": 203.2216,
+       "rank": 23,
+       "leagueAvg": {
+        "imperial": 208.1921
+       }
+      },
+      "distancePer60": {
+       "imperial": 7.4762,
+       "rank": 32,
+       "leagueAvg": {
+        "imperial": 8.244
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 5.5762,
+       "rank": 26,
+       "leagueAvg": {
+        "imperial": 6.3878
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 3.4517,
+       "rank": 22,
+       "leagueAvg": {
+        "imperial": 3.8006
+       }
+      }
+     },
+     {
+      "strengthCode": "pp",
+      "positionCode": "D",
+      "distanceTotal": {
+       "imperial": 57.8779,
+       "rank": 22,
+       "leagueAvg": {
+        "imperial": 62.7484
+       }
+      },
+      "distancePer60": {
+       "imperial": 8.0333,
+       "rank": 32,
+       "leagueAvg": {
+        "imperial": 8.7968
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 1.6968,
+       "rank": 25,
+       "leagueAvg": {
+        "imperial": 2.0595
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 0.9635,
+       "rank": 31,
+       "leagueAvg": {
+        "imperial": 1.257
+       }
+      }
+     },
+     {
+      "strengthCode": "pk",
+      "positionCode": "all",
+      "distanceTotal": {
+       "imperial": 218.5299,
+       "rank": 3,
+       "leagueAvg": {
+        "imperial": 195.5164
+       }
+      },
+      "distancePer60": {
+       "imperial": 7.8486,
+       "rank": 7,
+       "leagueAvg": {
+        "imperial": 7.5963
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 7.6921,
+       "rank": 3,
+       "leagueAvg": {
+        "imperial": 6.0051
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 4.8285,
+       "rank": 1,
+       "leagueAvg": {
+        "imperial": 3.5357
+       }
+      }
+     },
+     {
+      "strengthCode": "pk",
+      "positionCode": "F",
+      "distanceTotal": {
+       "imperial": 121.3187,
+       "rank": 3,
+       "leagueAvg": {
+        "imperial": 107.6296
+       }
+      },
+      "distancePer60": {
+       "imperial": 8.8068,
+       "rank": 6,
+       "leagueAvg": {
+        "imperial": 8.4562
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 4.2893,
+       "rank": 3,
+       "leagueAvg": {
+        "imperial": 3.2984
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 2.6959,
+       "rank": 1,
+       "leagueAvg": {
+        "imperial": 1.9443
+       }
+      }
+     },
+     {
+      "strengthCode": "pk",
+      "positionCode": "D",
+      "distanceTotal": {
+       "imperial": 97.2112,
+       "rank": 5,
+       "leagueAvg": {
+        "imperial": 87.8868
+       }
+      },
+      "distancePer60": {
+       "imperial": 6.9102,
+       "rank": 12,
+       "leagueAvg": {
+        "imperial": 6.7551
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 3.4028,
+       "rank": 4,
+       "leagueAvg": {
+        "imperial": 2.7388
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 2.1326,
+       "rank": 3,
+       "leagueAvg": {
+        "imperial": 1.61
+       }
+      }
+     },
+     {
+      "strengthCode": "es",
+      "positionCode": "all",
+      "distanceTotal": {
+       "imperial": 3191.3157,
+       "rank": 28,
+       "leagueAvg": {
+        "imperial": 3260.5557
+       }
+      },
+      "distancePer60": {
+       "imperial": 9.3123,
+       "rank": 21,
+       "leagueAvg": {
+        "imperial": 9.3519
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 45.5201,
+       "rank": 29,
+       "leagueAvg": {
+        "imperial": 46.9135
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 16.2173,
+       "rank": 29,
+       "leagueAvg": {
+        "imperial": 16.554
+       }
+      }
+     },
+     {
+      "strengthCode": "es",
+      "positionCode": "F",
+      "distanceTotal": {
+       "imperial": 2017.1947,
+       "rank": 27,
+       "leagueAvg": {
+        "imperial": 2058.566
+       }
+      },
+      "distancePer60": {
+       "imperial": 9.8135,
+       "rank": 17,
+       "leagueAvg": {
+        "imperial": 9.8344
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 28.9345,
+       "rank": 28,
+       "leagueAvg": {
+        "imperial": 29.677
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 10.262,
+       "rank": 31,
+       "leagueAvg": {
+        "imperial": 10.5217
+       }
+      }
+     },
+     {
+      "strengthCode": "es",
+      "positionCode": "D",
+      "distanceTotal": {
+       "imperial": 1174.121,
+       "rank": 27,
+       "leagueAvg": {
+        "imperial": 1201.9897
+       }
+      },
+      "distancePer60": {
+       "imperial": 8.5612,
+       "rank": 24,
+       "leagueAvg": {
+        "imperial": 8.6269
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 16.7463,
+       "rank": 30,
+       "leagueAvg": {
+        "imperial": 17.3978
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 6.0388,
+       "rank": 26,
+       "leagueAvg": {
+        "imperial": 6.2011
+       }
+      }
+     }
+    ]
+   },
+   "team-zone-time-details": {
+    "zoneTimeDetails": [
+     {
+      "strengthCode": "all",
+      "offensiveZonePctg": 0.4126232,
+      "offensiveZoneRank": 13,
+      "offensiveZoneLeagueAvg": 0.4154386,
+      "neutralZonePctg": 0.1828631,
+      "neutralZoneRank": 6,
+      "neutralZoneLeagueAvg": 0.1691227,
+      "defensiveZonePctg": 0.4045137,
+      "defensiveZoneRank": 8,
+      "defensiveZoneLeagueAvg": 0.4154386
+     },
+     {
+      "strengthCode": "es",
+      "offensiveZonePctg": 0.4123593,
+      "offensiveZoneRank": 10,
+      "offensiveZoneLeagueAvg": 0.4099338,
+      "neutralZonePctg": 0.1885307,
+      "neutralZoneRank": 8,
+      "neutralZoneLeagueAvg": 0.1801324,
+      "defensiveZonePctg": 0.39911,
+      "defensiveZoneRank": 8,
+      "defensiveZoneLeagueAvg": 0.4099338
+     },
+     {
+      "strengthCode": "pp",
+      "offensiveZonePctg": 0.5683251,
+      "offensiveZoneRank": 27,
+      "offensiveZoneLeagueAvg": 0.5800387,
+      "neutralZonePctg": 0.157234,
+      "neutralZoneRank": 3,
+      "neutralZoneLeagueAvg": 0.1216727,
+      "defensiveZonePctg": 0.2744409,
+      "defensiveZoneRank": 21,
+      "defensiveZoneLeagueAvg": 0.2982887
+     },
+     {
+      "strengthCode": "pk",
+      "offensiveZonePctg": 0.2671472,
+      "offensiveZoneRank": 16,
+      "offensiveZoneLeagueAvg": 0.2982887,
+      "neutralZonePctg": 0.1524506,
+      "neutralZoneRank": 8,
+      "neutralZoneLeagueAvg": 0.1216727,
+      "defensiveZonePctg": 0.5804022,
+      "defensiveZoneRank": 11,
+      "defensiveZoneLeagueAvg": 0.5800387
+     }
+    ],
+    "shotDifferential": {
+     "shotAttemptDifferential": 1.414634,
+     "shotAttemptDifferentialRank": 9,
+     "sogDifferential": 0.024096,
+     "sogDifferentialRank": 15
+    }
+   },
+   "team-shot-location-detail": {
+    "shotLocationDetails": [
+     {
+      "area": "Behind the Net",
+      "sog": 12,
+      "sogRank": 24,
+      "goals": 0,
+      "goalsRank": 20,
+      "shootingPctg": null,
+      "shootingPctgRank": null
+     },
+     {
+      "area": "Beyond Red Line",
+      "sog": 49,
+      "sogRank": 30,
+      "goals": 3,
+      "goalsRank": 24,
+      "shootingPctg": 0.0612,
+      "shootingPctgRank": 21
+     },
+     {
+      "area": "Center Point",
+      "sog": 212,
+      "sogRank": 4,
+      "goals": 14,
+      "goalsRank": 3,
+      "shootingPctg": 0.066,
+      "shootingPctgRank": 6
+     },
+     {
+      "area": "Crease",
+      "sog": 88,
+      "sogRank": 9,
+      "goals": 22,
+      "goalsRank": 12,
+      "shootingPctg": 0.25,
+      "shootingPctgRank": 17
+     },
+     {
+      "area": "High Slot",
+      "sog": 228,
+      "sogRank": 9,
+      "goals": 32,
+      "goalsRank": 16,
+      "shootingPctg": 0.1404,
+      "shootingPctgRank": 18
+     },
+     {
+      "area": "L Circle",
+      "sog": 239,
+      "sogRank": 5,
+      "goals": 30,
+      "goalsRank": 3,
+      "shootingPctg": 0.1255,
+      "shootingPctgRank": 3
+     },
+     {
+      "area": "L Corner",
+      "sog": 3,
+      "sogRank": 17,
+      "goals": 0,
+      "goalsRank": 6,
+      "shootingPctg": null,
+      "shootingPctgRank": null
+     },
+     {
+      "area": "L Net Side",
+      "sog": 37,
+      "sogRank": 31,
+      "goals": 4,
+      "goalsRank": 19,
+      "shootingPctg": 0.1081,
+      "shootingPctgRank": 12
+     },
+     {
+      "area": "L Point",
+      "sog": 136,
+      "sogRank": 24,
+      "goals": 4,
+      "goalsRank": 14,
+      "shootingPctg": 0.0294,
+      "shootingPctgRank": 15
+     },
+     {
+      "area": "Low Slot",
+      "sog": 598,
+      "sogRank": 13,
+      "goals": 132,
+      "goalsRank": 2,
+      "shootingPctg": 0.2207,
+      "shootingPctgRank": 2
+     },
+     {
+      "area": "Offensive Neutral Zone",
+      "sog": 47,
+      "sogRank": 17,
+      "goals": 2,
+      "goalsRank": 14,
+      "shootingPctg": 0.0426,
+      "shootingPctgRank": 13
+     },
+     {
+      "area": "Outside L",
+      "sog": 99,
+      "sogRank": 30,
+      "goals": 4,
+      "goalsRank": 20,
+      "shootingPctg": 0.0404,
+      "shootingPctgRank": 20
+     },
+     {
+      "area": "Outside R",
+      "sog": 128,
+      "sogRank": 12,
+      "goals": 8,
+      "goalsRank": 6,
+      "shootingPctg": 0.0625,
+      "shootingPctgRank": 7
+     },
+     {
+      "area": "R Circle",
+      "sog": 207,
+      "sogRank": 22,
+      "goals": 21,
+      "goalsRank": 15,
+      "shootingPctg": 0.1014,
+      "shootingPctgRank": 21
+     },
+     {
+      "area": "R Corner",
+      "sog": 0,
+      "sogRank": 29,
+      "goals": 0,
+      "goalsRank": 3,
+      "shootingPctg": null,
+      "shootingPctgRank": null
+     },
+     {
+      "area": "R Net Side",
+      "sog": 56,
+      "sogRank": 11,
+      "goals": 7,
+      "goalsRank": 7,
+      "shootingPctg": 0.125,
+      "shootingPctgRank": 8
+     },
+     {
+      "area": "R Point",
+      "sog": 166,
+      "sogRank": 6,
+      "goals": 3,
+      "goalsRank": 19,
+      "shootingPctg": 0.0181,
+      "shootingPctgRank": 24
+     }
+    ],
+    "shotLocationTotals": [
+     {
+      "locationCode": "all",
+      "position": "all",
+      "sog": 2305,
+      "sogRank": 14,
+      "sogLeagueAvg": 2282.25,
+      "goals": 286,
+      "goalsRank": 4,
+      "goalsLeagueAvg": 252.6875,
+      "shootingPctg": 0.1241,
+      "shootingPctgRank": 3,
+      "shootingPctgLeagueAvg": 0.1107
+     },
+     {
+      "locationCode": "high",
+      "position": "all",
+      "sog": 686,
+      "sogRank": 10,
+      "sogLeagueAvg": 648.7813,
+      "goals": 154,
+      "goalsRank": 2,
+      "goalsLeagueAvg": 125.9375,
+      "shootingPctg": 0.2245,
+      "shootingPctgRank": 4,
+      "shootingPctgLeagueAvg": 0.1941
+     },
+     {
+      "locationCode": "long",
+      "position": "all",
+      "sog": 514,
+      "sogRank": 5,
+      "sogLeagueAvg": 475.5625,
+      "goals": 21,
+      "goalsRank": 8,
+      "goalsLeagueAvg": 17.4063,
+      "shootingPctg": 0.0409,
+      "shootingPctgRank": 12,
+      "shootingPctgLeagueAvg": 0.0366
+     },
+     {
+      "locationCode": "mid",
+      "position": "all",
+      "sog": 674,
+      "sogRank": 12,
+      "sogLeagueAvg": 659.4688,
+      "goals": 83,
+      "goalsRank": 14,
+      "goalsLeagueAvg": 78.5938,
+      "shootingPctg": 0.1231,
+      "shootingPctgRank": 13,
+      "shootingPctgLeagueAvg": 0.1192
+     },
+     {
+      "locationCode": "all",
+      "position": "F",
+      "sog": 1632,
+      "sogRank": 17,
+      "sogLeagueAvg": 1651.1563,
+      "goals": 235,
+      "goalsRank": 8,
+      "goalsLeagueAvg": 214.375,
+      "shootingPctg": 0.144,
+      "shootingPctgRank": 4,
+      "shootingPctgLeagueAvg": 0.1298
+     },
+     {
+      "locationCode": "high",
+      "position": "F",
+      "sog": 644,
+      "sogRank": 8,
+      "sogLeagueAvg": 607.7813,
+      "goals": 143,
+      "goalsRank": 2,
+      "goalsLeagueAvg": 119.0313,
+      "shootingPctg": 0.2221,
+      "shootingPctgRank": 4,
+      "shootingPctgLeagueAvg": 0.1958
+     },
+     {
+      "locationCode": "long",
+      "position": "F",
+      "sog": 135,
+      "sogRank": 24,
+      "sogLeagueAvg": 153.9063,
+      "goals": 6,
+      "goalsRank": 13,
+      "goalsLeagueAvg": 5.9688,
+      "shootingPctg": 0.0444,
+      "shootingPctgRank": 13,
+      "shootingPctgLeagueAvg": 0.0388
+     },
+     {
+      "locationCode": "mid",
+      "position": "F",
+      "sog": 530,
+      "sogRank": 11,
+      "sogLeagueAvg": 523.125,
+      "goals": 62,
+      "goalsRank": 17,
+      "goalsLeagueAvg": 63.4375,
+      "shootingPctg": 0.117,
+      "shootingPctgRank": 21,
+      "shootingPctgLeagueAvg": 0.1213
+     },
+     {
+      "locationCode": "all",
+      "position": "D",
+      "sog": 673,
+      "sogRank": 10,
+      "sogLeagueAvg": 630.7813,
+      "goals": 51,
+      "goalsRank": 5,
+      "goalsLeagueAvg": 38.3125,
+      "shootingPctg": 0.0758,
+      "shootingPctgRank": 4,
+      "shootingPctgLeagueAvg": 0.0607
+     },
+     {
+      "locationCode": "high",
+      "position": "D",
+      "sog": 42,
+      "sogRank": 12,
+      "sogLeagueAvg": 41.0,
+      "goals": 11,
+      "goalsRank": 4,
+      "goalsLeagueAvg": 6.9063,
+      "shootingPctg": 0.2619,
+      "shootingPctgRank": 6,
+      "shootingPctgLeagueAvg": 0.1684
+     },
+     {
+      "locationCode": "long",
+      "position": "D",
+      "sog": 379,
+      "sogRank": 4,
+      "sogLeagueAvg": 321.6563,
+      "goals": 15,
+      "goalsRank": 4,
+      "goalsLeagueAvg": 11.4375,
+      "shootingPctg": 0.0396,
+      "shootingPctgRank": 15,
+      "shootingPctgLeagueAvg": 0.0356
+     },
+     {
+      "locationCode": "mid",
+      "position": "D",
+      "sog": 144,
+      "sogRank": 13,
+      "sogLeagueAvg": 136.3438,
+      "goals": 21,
+      "goalsRank": 5,
+      "goalsLeagueAvg": 15.1563,
+      "shootingPctg": 0.1458,
+      "shootingPctgRank": 3,
+      "shootingPctgLeagueAvg": 0.1112
+     }
+    ]
+   }
+  },
+  "3": {
+   "team-detail": {
+    "team": {
+     "id": 14,
+     "commonName": {
+      "default": "Lightning"
+     },
+     "placeNameWithPreposition": {
+      "default": "Tampa Bay",
+      "fr": "de Tampa Bay"
+     },
+     "abbrev": "TBL",
+     "slug": "tampa-bay-lightning-14",
+     "conference": "Eastern",
+     "division": "Atlantic",
+     "wins": 3,
+     "losses": 4,
+     "otLosses": 0,
+     "gamesPlayed": 7,
+     "points": 6
+    },
+    "seasonsWithEdgeStats": [
+     {
+      "id": 20212022,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20222023,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20232024,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20242025,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20252026,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20262027,
+      "gameTypes": [
+       2
+      ]
+     }
+    ],
+    "shotSpeed": {
+     "shotAttemptsOver90": {
+      "value": 15,
+      "rank": 3
+     },
+     "topShotSpeed": {
+      "imperial": 97.72,
+      "rank": 5,
+      "leagueAvg": {
+       "imperial": 96.05
+      }
+     }
+    },
+    "skatingSpeed": {
+     "burstsOver22": {
+      "value": 7,
+      "rank": 14
+     },
+     "burstsOver20": {
+      "value": 164,
+      "rank": 11,
+      "leagueAvg": {
+       "value": 251
+      }
+     },
+     "speedMax": {
+      "imperial": 22.4792,
+      "rank": 15,
+      "leagueAvg": {
+       "imperial": 23.0982
+      }
+     }
+    },
+    "distanceSkated": {
+     "total": {
+      "imperial": 319.8466,
+      "rank": 9,
+      "leagueAvg": {
+       "imperial": 482.9281
+      }
+     }
+    },
+    "sogSummary": [
+     {
+      "locationCode": "all",
+      "shots": 196,
+      "shotsRank": 9,
+      "shotsLeagueAvg": 288.8125,
+      "shootingPctg": 0.0765,
+      "shootingPctgRank": 13,
+      "shootingPctgLeagueAvg": 0.1052,
+      "goals": 15,
+      "goalsRank": 11,
+      "goalsLeagueAvg": 30.375
+     },
+     {
+      "locationCode": "high",
+      "shots": 41,
+      "shotsRank": 10,
+      "shotsLeagueAvg": 76.4375,
+      "shootingPctg": 0.1707,
+      "shootingPctgRank": 7,
+      "shootingPctgLeagueAvg": 0.1832,
+      "goals": 7,
+      "goalsRank": 9,
+      "goalsLeagueAvg": 14.0
+     },
+     {
+      "locationCode": "long",
+      "shots": 37,
+      "shotsRank": 12,
+      "shotsLeagueAvg": 58.25,
+      "shootingPctg": 0.0,
+      "shootingPctgRank": 14,
+      "shootingPctgLeagueAvg": 0.0397,
+      "goals": 0,
+      "goalsRank": 14,
+      "goalsLeagueAvg": 2.3125
+     },
+     {
+      "locationCode": "mid",
+      "shots": 79,
+      "shotsRank": 7,
+      "shotsLeagueAvg": 80.8125,
+      "shootingPctg": 0.0759,
+      "shootingPctgRank": 13,
+      "shootingPctgLeagueAvg": 0.1129,
+      "goals": 6,
+      "goalsRank": 10,
+      "goalsLeagueAvg": 9.125
+     }
+    ],
+    "sogDetails": [
+     {
+      "area": "Behind the Net",
+      "shots": 3,
+      "shotsRank": 6
+     },
+     {
+      "area": "Beyond Red Line",
+      "shots": 4,
+      "shotsRank": 13
+     },
+     {
+      "area": "Center Point",
+      "shots": 14,
+      "shotsRank": 9
+     },
+     {
+      "area": "Crease",
+      "shots": 6,
+      "shotsRank": 10
+     },
+     {
+      "area": "High Slot",
+      "shots": 24,
+      "shotsRank": 6
+     },
+     {
+      "area": "L Circle",
+      "shots": 27,
+      "shotsRank": 7
+     },
+     {
+      "area": "L Corner",
+      "shots": 0,
+      "shotsRank": 6
+     },
+     {
+      "area": "L Net Side",
+      "shots": 3,
+      "shotsRank": 13
+     },
+     {
+      "area": "L Point",
+      "shots": 7,
+      "shotsRank": 14
+     },
+     {
+      "area": "Low Slot",
+      "shots": 35,
+      "shotsRank": 11
+     },
+     {
+      "area": "Offensive Neutral Zone",
+      "shots": 2,
+      "shotsRank": 16
+     },
+     {
+      "area": "Outside L",
+      "shots": 10,
+      "shotsRank": 13
+     },
+     {
+      "area": "Outside R",
+      "shots": 12,
+      "shotsRank": 10
+     },
+     {
+      "area": "R Circle",
+      "shots": 28,
+      "shotsRank": 8
+     },
+     {
+      "area": "R Corner",
+      "shots": 0,
+      "shotsRank": 8
+     },
+     {
+      "area": "R Net Side",
+      "shots": 5,
+      "shotsRank": 8
+     },
+     {
+      "area": "R Point",
+      "shots": 16,
+      "shotsRank": 9
+     }
+    ],
+    "zoneTimeDetails": {
+     "offensiveZonePctg": 0.431707,
+     "offensiveZoneRank": 2,
+     "offensiveZoneLeagueAvg": 0.4078447,
+     "offensiveZoneEvPctg": 0.4341541,
+     "offensiveZoneEvRank": 3,
+     "offensiveZoneEvLeagueAvg": 0.4066881,
+     "neutralZonePctg": 0.1771245,
+     "neutralZoneRank": 11,
+     "neutralZoneLeagueAvg": 0.1843105,
+     "defensiveZonePctg": 0.3911686,
+     "defensiveZoneRank": 2,
+     "defensiveZoneLeagueAvg": 0.4078447
+    }
+   },
+   "team-skating-speed-detail": {
+    "topSkatingSpeeds": [
+     {
+      "player": {
+       "id": 8478010,
+       "firstName": {
+        "default": "Brayden"
+       },
+       "lastName": {
+        "default": "Point"
+       },
+       "slug": "brayden-point-8478010"
+      },
+      "gameCenterLink": "/gamecenter/mtl-vs-tbl/2026/04/29/2025030125",
+      "gameDate": "2026-04-29",
+      "gameType": 3,
+      "isHomeTeam": true,
+      "skatingSpeed": {
+       "imperial": 22.4792,
+       "metric": 36.1766
+      },
+      "timeInPeriod": "00:14",
+      "periodDescriptor": {
+       "number": 2,
+       "periodType": "REG",
+       "maxRegulationPeriods": 3
+      },
+      "homeTeam": {
+       "commonName": {
+        "default": "Lightning"
+       },
+       "placeNameWithPreposition": {
+        "default": "Tampa Bay",
+        "fr": "de Tampa Bay"
+       },
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/TBL_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/TBL_dark.svg"
+       }
+      },
+      "awayTeam": {
+       "commonName": {
+        "default": "Canadiens"
+       },
+       "placeNameWithPreposition": {
+        "default": "Montréal",
+        "fr": "de Montréal"
+       },
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/MTL_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/MTL_dark.svg"
+       }
+      }
+     }
+    ],
+    "skatingSpeedDetails": [
+     {
+      "positionCode": "all",
+      "maxSkatingSpeed": {
+       "imperial": 22.4792,
+       "rank": 15,
+       "leagueAvg": {
+        "imperial": 23.0982
+       }
+      },
+      "burstsOver22": {
+       "value": 7,
+       "rank": 14,
+       "leagueAvg": 15.8125
+      },
+      "bursts20To22": {
+       "value": 157,
+       "rank": 10,
+       "leagueAvg": 236.0
+      },
+      "bursts18To20": {
+       "value": 658,
+       "rank": 9,
+       "leagueAvg": 1020.5
+      }
+     },
+     {
+      "positionCode": "F",
+      "maxSkatingSpeed": {
+       "imperial": 22.4792,
+       "rank": 15,
+       "leagueAvg": {
+        "imperial": 23.0733
+       }
+      },
+      "burstsOver22": {
+       "value": 7,
+       "rank": 13,
+       "leagueAvg": 13.6875
+      },
+      "bursts20To22": {
+       "value": 126,
+       "rank": 11,
+       "leagueAvg": 196.375
+      },
+      "bursts18To20": {
+       "value": 523,
+       "rank": 9,
+       "leagueAvg": 791.8125
+      }
+     },
+     {
+      "positionCode": "D",
+      "maxSkatingSpeed": {
+       "imperial": 21.7148,
+       "rank": 14,
+       "leagueAvg": {
+        "imperial": 22.3387
+       }
+      },
+      "burstsOver22": {
+       "value": 0,
+       "rank": 12,
+       "leagueAvg": 2.125
+      },
+      "bursts20To22": {
+       "value": 31,
+       "rank": 8,
+       "leagueAvg": 39.625
+      },
+      "bursts18To20": {
+       "value": 135,
+       "rank": 11,
+       "leagueAvg": 228.6875
+      }
+     }
+    ]
+   },
+   "team-shot-speed-detail": {
+    "hardestShots": [
+     {
+      "player": {
+       "id": 8478178,
+       "firstName": {
+        "default": "Darren"
+       },
+       "lastName": {
+        "default": "Raddysh"
+       },
+       "slug": "darren-raddysh-8478178"
+      },
+      "gameCenterLink": "/gamecenter/tbl-vs-mtl/2026/05/01/2025030126",
+      "gameDate": "2026-05-01",
+      "gameType": 3,
+      "isHomeTeam": false,
+      "shotSpeed": {
+       "imperial": 97.72,
+       "metric": 157.2651
+      },
+      "timeInPeriod": "17:30",
+      "periodDescriptor": {
+       "number": 3,
+       "periodType": "REG",
+       "maxRegulationPeriods": 3
+      },
+      "homeTeam": {
+       "commonName": {
+        "default": "Canadiens"
+       },
+       "placeNameWithPreposition": {
+        "default": "Montréal",
+        "fr": "de Montréal"
+       },
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/MTL_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/MTL_dark.svg"
+       }
+      },
+      "awayTeam": {
+       "commonName": {
+        "default": "Lightning"
+       },
+       "placeNameWithPreposition": {
+        "default": "Tampa Bay",
+        "fr": "de Tampa Bay"
+       },
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/TBL_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/TBL_dark.svg"
+       }
+      }
+     }
+    ],
+    "shotSpeedDetails": [
+     {
+      "position": "all",
+      "topShotSpeed": {
+       "imperial": 97.72,
+       "rank": 5,
+       "leagueAvg": {
+        "imperial": 96.05
+       }
+      },
+      "avgShotSpeed": {
+       "imperial": 60.1891,
+       "rank": 5,
+       "leagueAvg": {
+        "imperial": 59.3689
+       }
+      },
+      "shotAttemptsOver100": {
+       "value": 0,
+       "rank": 2,
+       "leagueAvg": 0.0625
+      },
+      "shotAttempts90To100": {
+       "value": 15,
+       "rank": 3,
+       "leagueAvg": 8.8125
+      },
+      "shotAttempts80To90": {
+       "value": 48,
+       "leagueAvg": 59.125
+      },
+      "shotAttempts70To80": {
+       "value": 86,
+       "leagueAvg": 140.25
+      }
+     },
+     {
+      "position": "F",
+      "topShotSpeed": {
+       "imperial": 90.78,
+       "rank": 12,
+       "leagueAvg": {
+        "imperial": 92.0906
+       }
+      },
+      "avgShotSpeed": {
+       "imperial": 56.7887,
+       "rank": 3,
+       "leagueAvg": {
+        "imperial": 54.7396
+       }
+      },
+      "shotAttemptsOver100": {
+       "value": 0,
+       "rank": 1,
+       "leagueAvg": 0.0
+      },
+      "shotAttempts90To100": {
+       "value": 1,
+       "rank": 9,
+       "leagueAvg": 2.1875
+      },
+      "shotAttempts80To90": {
+       "value": 34,
+       "leagueAvg": 29.9375
+      },
+      "shotAttempts70To80": {
+       "value": 52,
+       "leagueAvg": 74.1875
+      }
+     },
+     {
+      "position": "D",
+      "topShotSpeed": {
+       "imperial": 97.72,
+       "rank": 5,
+       "leagueAvg": {
+        "imperial": 95.9613
+       }
+      },
+      "avgShotSpeed": {
+       "imperial": 68.2785,
+       "rank": 8,
+       "leagueAvg": {
+        "imperial": 68.3089
+       }
+      },
+      "shotAttemptsOver100": {
+       "value": 0,
+       "rank": 2,
+       "leagueAvg": 0.0625
+      },
+      "shotAttempts90To100": {
+       "value": 14,
+       "rank": 3,
+       "leagueAvg": 6.625
+      },
+      "shotAttempts80To90": {
+       "value": 14,
+       "leagueAvg": 29.1875
+      },
+      "shotAttempts70To80": {
+       "value": 34,
+       "leagueAvg": 66.0625
+      }
+     }
+    ]
+   },
+   "team-skating-distance-detail": {
+    "skatingDistanceLast10": [
+     {
+      "gameCenterLink": "/gamecenter/mtl-vs-tbl/2026/05/03/2025030127",
+      "gameDate": "2026-05-03",
+      "isHomeTeam": true,
+      "toiAll": 17913,
+      "distanceSkatedAll": {
+       "imperial": 44.4893,
+       "metric": 71.5984
+      },
+      "toiEven": 16131,
+      "distanceSkatedEven": {
+       "imperial": 40.8373,
+       "metric": 65.7211
+      },
+      "toiPP": 862,
+      "distanceSkatedPP": {
+       "imperial": 1.7672,
+       "metric": 2.844
+      },
+      "toiPK": 920,
+      "distanceSkatedPK": {
+       "imperial": 1.8848,
+       "metric": 3.0333
+      },
+      "homeTeam": {
+       "commonName": {
+        "default": "Lightning"
+       },
+       "placeNameWithPreposition": {
+        "default": "Tampa Bay",
+        "fr": "de Tampa Bay"
+       },
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/TBL_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/TBL_dark.svg"
+       }
+      },
+      "awayTeam": {
+       "commonName": {
+        "default": "Canadiens"
+       },
+       "placeNameWithPreposition": {
+        "default": "Montréal",
+        "fr": "de Montréal"
+       },
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/MTL_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/MTL_dark.svg"
+       }
+      }
+     }
+    ],
+    "skatingDistanceDetails": [
+     {
+      "strengthCode": "all",
+      "positionCode": "all",
+      "distanceTotal": {
+       "imperial": 319.8466,
+       "rank": 9,
+       "leagueAvg": {
+        "imperial": 482.9281
+       }
+      },
+      "distancePer60": {
+       "imperial": 8.8307,
+       "rank": 15,
+       "leagueAvg": {
+        "imperial": 9.0876
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 53.2231,
+       "rank": 11,
+       "leagueAvg": {
+        "imperial": 58.8777
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 15.472,
+       "rank": 15,
+       "leagueAvg": {
+        "imperial": 16.1221
+       }
+      }
+     },
+     {
+      "strengthCode": "all",
+      "positionCode": "F",
+      "distanceTotal": {
+       "imperial": 204.412,
+       "rank": 9,
+       "leagueAvg": {
+        "imperial": 307.5711
+       }
+      },
+      "distancePer60": {
+       "imperial": 9.2171,
+       "rank": 15,
+       "leagueAvg": {
+        "imperial": 9.5221
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 33.665,
+       "rank": 12,
+       "leagueAvg": {
+        "imperial": 37.4456
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 10.1472,
+       "rank": 15,
+       "leagueAvg": {
+        "imperial": 10.4006
+       }
+      }
+     },
+     {
+      "strengthCode": "all",
+      "positionCode": "D",
+      "distanceTotal": {
+       "imperial": 115.4346,
+       "rank": 9,
+       "leagueAvg": {
+        "imperial": 175.357
+       }
+      },
+      "distancePer60": {
+       "imperial": 8.2205,
+       "rank": 15,
+       "leagueAvg": {
+        "imperial": 8.4142
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 19.5581,
+       "rank": 12,
+       "leagueAvg": {
+        "imperial": 21.503
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 5.8137,
+       "rank": 15,
+       "leagueAvg": {
+        "imperial": 6.0395
+       }
+      }
+     },
+     {
+      "strengthCode": "pp",
+      "positionCode": "all",
+      "distanceTotal": {
+       "imperial": 28.9784,
+       "rank": 9,
+       "leagueAvg": {
+        "imperial": 39.5973
+       }
+      },
+      "distancePer60": {
+       "imperial": 7.2036,
+       "rank": 16,
+       "leagueAvg": {
+        "imperial": 8.1569
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 6.1704,
+       "rank": 10,
+       "leagueAvg": {
+        "imperial": 6.9886
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 2.8256,
+       "rank": 15,
+       "leagueAvg": {
+        "imperial": 3.7331
+       }
+      }
+     },
+     {
+      "strengthCode": "pp",
+      "positionCode": "F",
+      "distanceTotal": {
+       "imperial": 22.7299,
+       "rank": 9,
+       "leagueAvg": {
+        "imperial": 30.6447
+       }
+      },
+      "distancePer60": {
+       "imperial": 7.0957,
+       "rank": 16,
+       "leagueAvg": {
+        "imperial": 8.0133
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 4.8881,
+       "rank": 10,
+       "leagueAvg": {
+        "imperial": 5.4536
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 2.2482,
+       "rank": 15,
+       "leagueAvg": {
+        "imperial": 2.9246
+       }
+      }
+     },
+     {
+      "strengthCode": "pp",
+      "positionCode": "D",
+      "distanceTotal": {
+       "imperial": 6.2485,
+       "rank": 9,
+       "leagueAvg": {
+        "imperial": 8.9526
+       }
+      },
+      "distancePer60": {
+       "imperial": 7.6253,
+       "rank": 16,
+       "leagueAvg": {
+        "imperial": 8.6901
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 1.2823,
+       "rank": 14,
+       "leagueAvg": {
+        "imperial": 1.6262
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 0.5991,
+       "rank": 16,
+       "leagueAvg": {
+        "imperial": 0.8726
+       }
+      }
+     },
+     {
+      "strengthCode": "pk",
+      "positionCode": "all",
+      "distanceTotal": {
+       "imperial": 22.1381,
+       "rank": 10,
+       "leagueAvg": {
+        "imperial": 28.417
+       }
+      },
+      "distancePer60": {
+       "imperial": 7.1825,
+       "rank": 12,
+       "leagueAvg": {
+        "imperial": 7.3737
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 4.2138,
+       "rank": 11,
+       "leagueAvg": {
+        "imperial": 4.7251
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 2.1374,
+       "rank": 10,
+       "leagueAvg": {
+        "imperial": 2.5376
+       }
+      }
+     },
+     {
+      "strengthCode": "pk",
+      "positionCode": "F",
+      "distanceTotal": {
+       "imperial": 12.2596,
+       "rank": 9,
+       "leagueAvg": {
+        "imperial": 15.7201
+       }
+      },
+      "distancePer60": {
+       "imperial": 7.9824,
+       "rank": 12,
+       "leagueAvg": {
+        "imperial": 8.2192
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 2.3084,
+       "rank": 10,
+       "leagueAvg": {
+        "imperial": 2.6349
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 1.2359,
+       "rank": 10,
+       "leagueAvg": {
+        "imperial": 1.3977
+       }
+      }
+     },
+     {
+      "strengthCode": "pk",
+      "positionCode": "D",
+      "distanceTotal": {
+       "imperial": 9.8785,
+       "rank": 9,
+       "leagueAvg": {
+        "imperial": 12.6969
+       }
+      },
+      "distancePer60": {
+       "imperial": 6.3881,
+       "rank": 13,
+       "leagueAvg": {
+        "imperial": 6.5407
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 1.9054,
+       "rank": 10,
+       "leagueAvg": {
+        "imperial": 2.0932
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 0.9014,
+       "rank": 13,
+       "leagueAvg": {
+        "imperial": 1.155
+       }
+      }
+     },
+     {
+      "strengthCode": "es",
+      "positionCode": "all",
+      "distanceTotal": {
+       "imperial": 268.73,
+       "rank": 9,
+       "leagueAvg": {
+        "imperial": 414.9139
+       }
+      },
+      "distancePer60": {
+       "imperial": 9.23,
+       "rank": 14,
+       "leagueAvg": {
+        "imperial": 9.3379
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 45.9582,
+       "rank": 12,
+       "leagueAvg": {
+        "imperial": 52.6525
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 15.4175,
+       "rank": 13,
+       "leagueAvg": {
+        "imperial": 15.8038
+       }
+      }
+     },
+     {
+      "strengthCode": "es",
+      "positionCode": "F",
+      "distanceTotal": {
+       "imperial": 169.4225,
+       "rank": 9,
+       "leagueAvg": {
+        "imperial": 261.2063
+       }
+      },
+      "distancePer60": {
+       "imperial": 9.7155,
+       "rank": 13,
+       "leagueAvg": {
+        "imperial": 9.8331
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 28.9136,
+       "rank": 13,
+       "leagueAvg": {
+        "imperial": 33.1793
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 10.0927,
+       "rank": 4,
+       "leagueAvg": {
+        "imperial": 9.9787
+       }
+      }
+     },
+     {
+      "strengthCode": "es",
+      "positionCode": "D",
+      "distanceTotal": {
+       "imperial": 99.3076,
+       "rank": 9,
+       "leagueAvg": {
+        "imperial": 153.7076
+       }
+      },
+      "distancePer60": {
+       "imperial": 8.505,
+       "rank": 13,
+       "leagueAvg": {
+        "imperial": 8.6018
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 17.0445,
+       "rank": 13,
+       "leagueAvg": {
+        "imperial": 19.49
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 5.7814,
+       "rank": 11,
+       "leagueAvg": {
+        "imperial": 5.9172
+       }
+      }
+     }
+    ]
+   },
+   "team-zone-time-details": {
+    "zoneTimeDetails": [
+     {
+      "strengthCode": "all",
+      "offensiveZonePctg": 0.431707,
+      "offensiveZoneRank": 2,
+      "offensiveZoneLeagueAvg": 0.4078447,
+      "neutralZonePctg": 0.1771245,
+      "neutralZoneRank": 11,
+      "neutralZoneLeagueAvg": 0.1843105,
+      "defensiveZonePctg": 0.3911686,
+      "defensiveZoneRank": 2,
+      "defensiveZoneLeagueAvg": 0.4078447
+     },
+     {
+      "strengthCode": "es",
+      "offensiveZonePctg": 0.4341541,
+      "offensiveZoneRank": 3,
+      "offensiveZoneLeagueAvg": 0.4066881,
+      "neutralZonePctg": 0.1820653,
+      "neutralZoneRank": 11,
+      "neutralZoneLeagueAvg": 0.1866238,
+      "defensiveZonePctg": 0.3837806,
+      "defensiveZoneRank": 3,
+      "defensiveZoneLeagueAvg": 0.4066881
+     },
+     {
+      "strengthCode": "pp",
+      "offensiveZonePctg": 0.6251631,
+      "offensiveZoneRank": 2,
+      "offensiveZoneLeagueAvg": 0.5835009,
+      "neutralZonePctg": 0.1353898,
+      "neutralZoneRank": 13,
+      "neutralZoneLeagueAvg": 0.1713382,
+      "defensiveZonePctg": 0.2394472,
+      "defensiveZoneRank": 3,
+      "defensiveZoneLeagueAvg": 0.2451609
+     },
+     {
+      "strengthCode": "pk",
+      "offensiveZonePctg": 0.2115869,
+      "offensiveZoneRank": 16,
+      "offensiveZoneLeagueAvg": 0.2451609,
+      "neutralZonePctg": 0.1833844,
+      "neutralZoneRank": 1,
+      "neutralZoneLeagueAvg": 0.1713382,
+      "defensiveZonePctg": 0.6050287,
+      "defensiveZoneRank": 10,
+      "defensiveZoneLeagueAvg": 0.5835009
+     }
+    ],
+    "shotDifferential": {
+     "shotAttemptDifferential": 5.714286,
+     "shotAttemptDifferentialRank": 3,
+     "sogDifferential": 1.428571,
+     "sogDifferentialRank": 2
+    }
+   },
+   "team-shot-location-detail": {
+    "shotLocationDetails": [
+     {
+      "area": "Behind the Net",
+      "sog": 3,
+      "sogRank": 6,
+      "goals": 1,
+      "goalsRank": 1,
+      "shootingPctg": 0.3333,
+      "shootingPctgRank": 1
+     },
+     {
+      "area": "Beyond Red Line",
+      "sog": 4,
+      "sogRank": 13,
+      "goals": 0,
+      "goalsRank": 8,
+      "shootingPctg": null,
+      "shootingPctgRank": null
+     },
+     {
+      "area": "Center Point",
+      "sog": 14,
+      "sogRank": 9,
+      "goals": 0,
+      "goalsRank": 9,
+      "shootingPctg": null,
+      "shootingPctgRank": null
+     },
+     {
+      "area": "Crease",
+      "sog": 6,
+      "sogRank": 10,
+      "goals": 4,
+      "goalsRank": 5,
+      "shootingPctg": 0.6667,
+      "shootingPctgRank": 1
+     },
+     {
+      "area": "High Slot",
+      "sog": 24,
+      "sogRank": 6,
+      "goals": 0,
+      "goalsRank": 14,
+      "shootingPctg": null,
+      "shootingPctgRank": null
+     },
+     {
+      "area": "L Circle",
+      "sog": 27,
+      "sogRank": 7,
+      "goals": 2,
+      "goalsRank": 8,
+      "shootingPctg": 0.0741,
+      "shootingPctgRank": 11
+     },
+     {
+      "area": "L Corner",
+      "sog": 0,
+      "sogRank": 6,
+      "goals": 0,
+      "goalsRank": 1,
+      "shootingPctg": null,
+      "shootingPctgRank": null
+     },
+     {
+      "area": "L Net Side",
+      "sog": 3,
+      "sogRank": 13,
+      "goals": 0,
+      "goalsRank": 11,
+      "shootingPctg": null,
+      "shootingPctgRank": null
+     },
+     {
+      "area": "L Point",
+      "sog": 7,
+      "sogRank": 14,
+      "goals": 0,
+      "goalsRank": 6,
+      "shootingPctg": null,
+      "shootingPctgRank": null
+     },
+     {
+      "area": "Low Slot",
+      "sog": 35,
+      "sogRank": 11,
+      "goals": 3,
+      "goalsRank": 12,
+      "shootingPctg": 0.0857,
+      "shootingPctgRank": 15
+     },
+     {
+      "area": "Offensive Neutral Zone",
+      "sog": 2,
+      "sogRank": 16,
+      "goals": 0,
+      "goalsRank": 6,
+      "shootingPctg": null,
+      "shootingPctgRank": null
+     },
+     {
+      "area": "Outside L",
+      "sog": 10,
+      "sogRank": 13,
+      "goals": 1,
+      "goalsRank": 2,
+      "shootingPctg": 0.1,
+      "shootingPctgRank": 1
+     },
+     {
+      "area": "Outside R",
+      "sog": 12,
+      "sogRank": 10,
+      "goals": 0,
+      "goalsRank": 10,
+      "shootingPctg": null,
+      "shootingPctgRank": null
+     },
+     {
+      "area": "R Circle",
+      "sog": 28,
+      "sogRank": 8,
+      "goals": 4,
+      "goalsRank": 3,
+      "shootingPctg": 0.1429,
+      "shootingPctgRank": 3
+     },
+     {
+      "area": "R Corner",
+      "sog": 0,
+      "sogRank": 8,
+      "goals": 0,
+      "goalsRank": 1,
+      "shootingPctg": null,
+      "shootingPctgRank": null
+     },
+     {
+      "area": "R Net Side",
+      "sog": 5,
+      "sogRank": 8,
+      "goals": 0,
+      "goalsRank": 7,
+      "shootingPctg": null,
+      "shootingPctgRank": null
+     },
+     {
+      "area": "R Point",
+      "sog": 16,
+      "sogRank": 9,
+      "goals": 0,
+      "goalsRank": 12,
+      "shootingPctg": null,
+      "shootingPctgRank": null
+     }
+    ],
+    "shotLocationTotals": [
+     {
+      "locationCode": "all",
+      "position": "all",
+      "sog": 196,
+      "sogRank": 9,
+      "sogLeagueAvg": 288.8125,
+      "goals": 15,
+      "goalsRank": 11,
+      "goalsLeagueAvg": 30.375,
+      "shootingPctg": 0.0765,
+      "shootingPctgRank": 13,
+      "shootingPctgLeagueAvg": 0.1052
+     },
+     {
+      "locationCode": "high",
+      "position": "all",
+      "sog": 41,
+      "sogRank": 10,
+      "sogLeagueAvg": 76.4375,
+      "goals": 7,
+      "goalsRank": 9,
+      "goalsLeagueAvg": 14.0,
+      "shootingPctg": 0.1707,
+      "shootingPctgRank": 7,
+      "shootingPctgLeagueAvg": 0.1832
+     },
+     {
+      "locationCode": "long",
+      "position": "all",
+      "sog": 37,
+      "sogRank": 12,
+      "sogLeagueAvg": 58.25,
+      "goals": 0,
+      "goalsRank": 14,
+      "goalsLeagueAvg": 2.3125,
+      "shootingPctg": 0.0,
+      "shootingPctgRank": 14,
+      "shootingPctgLeagueAvg": 0.0397
+     },
+     {
+      "locationCode": "mid",
+      "position": "all",
+      "sog": 79,
+      "sogRank": 7,
+      "sogLeagueAvg": 80.8125,
+      "goals": 6,
+      "goalsRank": 10,
+      "goalsLeagueAvg": 9.125,
+      "shootingPctg": 0.0759,
+      "shootingPctgRank": 13,
+      "shootingPctgLeagueAvg": 0.1129
+     },
+     {
+      "locationCode": "all",
+      "position": "F",
+      "sog": 137,
+      "sogRank": 9,
+      "sogLeagueAvg": 211.8125,
+      "goals": 13,
+      "goalsRank": 11,
+      "goalsLeagueAvg": 25.75,
+      "shootingPctg": 0.0949,
+      "shootingPctgRank": 12,
+      "shootingPctgLeagueAvg": 0.1216
+     },
+     {
+      "locationCode": "high",
+      "position": "F",
+      "sog": 35,
+      "sogRank": 12,
+      "sogLeagueAvg": 72.125,
+      "goals": 7,
+      "goalsRank": 9,
+      "goalsLeagueAvg": 13.375,
+      "shootingPctg": 0.2,
+      "shootingPctgRank": 6,
+      "shootingPctgLeagueAvg": 0.1854
+     },
+     {
+      "locationCode": "long",
+      "position": "F",
+      "sog": 15,
+      "sogRank": 11,
+      "sogLeagueAvg": 20.375,
+      "goals": 0,
+      "goalsRank": 8,
+      "goalsLeagueAvg": 0.9375,
+      "shootingPctg": 0.0,
+      "shootingPctgRank": 8,
+      "shootingPctgLeagueAvg": 0.046
+     },
+     {
+      "locationCode": "mid",
+      "position": "F",
+      "sog": 56,
+      "sogRank": 9,
+      "sogLeagueAvg": 64.9375,
+      "goals": 4,
+      "goalsRank": 11,
+      "goalsLeagueAvg": 7.0625,
+      "shootingPctg": 0.0714,
+      "shootingPctgRank": 12,
+      "shootingPctgLeagueAvg": 0.1088
+     },
+     {
+      "locationCode": "all",
+      "position": "D",
+      "sog": 59,
+      "sogRank": 10,
+      "sogLeagueAvg": 76.9375,
+      "goals": 2,
+      "goalsRank": 12,
+      "goalsLeagueAvg": 4.625,
+      "shootingPctg": 0.0339,
+      "shootingPctgRank": 12,
+      "shootingPctgLeagueAvg": 0.0601
+     },
+     {
+      "locationCode": "high",
+      "position": "D",
+      "sog": 6,
+      "sogRank": 5,
+      "sogLeagueAvg": 4.3125,
+      "goals": 0,
+      "goalsRank": 7,
+      "goalsLeagueAvg": 0.625,
+      "shootingPctg": 0.0,
+      "shootingPctgRank": 7,
+      "shootingPctgLeagueAvg": 0.1449
+     },
+     {
+      "locationCode": "long",
+      "position": "D",
+      "sog": 22,
+      "sogRank": 13,
+      "sogLeagueAvg": 37.875,
+      "goals": 0,
+      "goalsRank": 12,
+      "goalsLeagueAvg": 1.375,
+      "shootingPctg": 0.0,
+      "shootingPctgRank": 12,
+      "shootingPctgLeagueAvg": 0.0363
+     },
+     {
+      "locationCode": "mid",
+      "position": "D",
+      "sog": 23,
+      "sogRank": 4,
+      "sogLeagueAvg": 15.875,
+      "goals": 2,
+      "goalsRank": 5,
+      "goalsLeagueAvg": 2.0625,
+      "shootingPctg": 0.087,
+      "shootingPctgRank": 10,
+      "shootingPctgLeagueAvg": 0.1299
+     }
+    ]
+   }
+  }
+ }
+}

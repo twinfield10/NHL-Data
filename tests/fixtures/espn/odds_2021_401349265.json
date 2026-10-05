@@ -1,0 +1,276 @@
+{
+ "count": 4,
+ "pageIndex": 1,
+ "pageSize": 25,
+ "pageCount": 1,
+ "items": [
+  {
+   "provider": {
+    "id": "1001",
+    "name": "Bet365"
+   },
+   "details": "TB +110",
+   "overUnder": 5.5,
+   "spread": -1.5,
+   "overOdds": -125.0,
+   "underOdds": 105.0,
+   "awayTeamOdds": {
+    "favorite": false,
+    "underdog": true,
+    "moneyLine": 220,
+    "spreadOdds": -185.0,
+    "current": {
+     "pointSpread": {
+      "alternateDisplayValue": "+1.5",
+      "american": "+1.5"
+     },
+     "spread": {
+      "alternateDisplayValue": "-185",
+      "american": "-185"
+     },
+     "moneyLine": {
+      "alternateDisplayValue": "+220",
+      "american": "+220"
+     }
+    }
+   },
+   "homeTeamOdds": {
+    "favorite": true,
+    "underdog": false,
+    "moneyLine": 110,
+    "spreadOdds": 165.0,
+    "current": {
+     "pointSpread": {
+      "alternateDisplayValue": "-1.5",
+      "american": "-1.5"
+     },
+     "spread": {
+      "alternateDisplayValue": "+165",
+      "american": "+165"
+     },
+     "moneyLine": {
+      "alternateDisplayValue": "+110",
+      "american": "+110"
+     }
+    }
+   },
+   "moneylineWinner": false,
+   "spreadWinner": false,
+   "current": {
+    "over": {
+     "alternateDisplayValue": "-125",
+     "american": "-125"
+    },
+    "under": {
+     "alternateDisplayValue": "+105",
+     "american": "+105"
+    },
+    "total": {
+     "alternateDisplayValue": "5.5",
+     "american": "5.5"
+    }
+   }
+  },
+  {
+   "provider": {
+    "id": "52",
+    "name": "Caesars Sportsbook (Colorado)"
+   },
+   "details": "TB -145",
+   "overUnder": 5.5,
+   "spread": -1.5,
+   "overOdds": -120.0,
+   "underOdds": 100.0,
+   "awayTeamOdds": {
+    "favorite": false,
+    "underdog": true,
+    "moneyLine": 125,
+    "spreadOdds": -200.0,
+    "current": {
+     "pointSpread": {
+      "alternateDisplayValue": "+1.5",
+      "american": "+1.5"
+     },
+     "spread": {
+      "alternateDisplayValue": "-200",
+      "american": "-200"
+     },
+     "moneyLine": {
+      "alternateDisplayValue": "+125",
+      "american": "+125"
+     }
+    }
+   },
+   "homeTeamOdds": {
+    "favorite": true,
+    "underdog": false,
+    "moneyLine": -145,
+    "spreadOdds": 170.0,
+    "current": {
+     "pointSpread": {
+      "alternateDisplayValue": "-1.5",
+      "american": "-1.5"
+     },
+     "spread": {
+      "alternateDisplayValue": "+170",
+      "american": "+170"
+     },
+     "moneyLine": {
+      "alternateDisplayValue": "-145",
+      "american": "-145"
+     }
+    }
+   },
+   "moneylineWinner": false,
+   "spreadWinner": false,
+   "current": {
+    "over": {
+     "alternateDisplayValue": "-120",
+     "american": "-120"
+    },
+    "under": {
+     "alternateDisplayValue": "+100",
+     "american": "+100"
+    },
+    "total": {
+     "alternateDisplayValue": "5.5",
+     "american": "5.5"
+    }
+   }
+  },
+  {
+   "provider": {
+    "id": "40",
+    "name": "DraftKings"
+   },
+   "details": "TB +105",
+   "overUnder": 5.5,
+   "spread": -1.5,
+   "overOdds": -120.0,
+   "underOdds": 100.0,
+   "awayTeamOdds": {
+    "favorite": false,
+    "underdog": true,
+    "moneyLine": 195,
+    "spreadOdds": -190.0,
+    "current": {
+     "pointSpread": {
+      "alternateDisplayValue": "+1.5",
+      "american": "+1.5"
+     },
+     "spread": {
+      "alternateDisplayValue": "-190",
+      "american": "-190"
+     },
+     "moneyLine": {
+      "alternateDisplayValue": "+195",
+      "american": "+195"
+     }
+    }
+   },
+   "homeTeamOdds": {
+    "favorite": true,
+    "underdog": false,
+    "moneyLine": 105,
+    "spreadOdds": 160.0,
+    "current": {
+     "pointSpread": {
+      "alternateDisplayValue": "-1.5",
+      "american": "-1.5"
+     },
+     "spread": {
+      "alternateDisplayValue": "+160",
+      "american": "+160"
+     },
+     "moneyLine": {
+      "alternateDisplayValue": "+105",
+      "american": "+105"
+     }
+    }
+   },
+   "moneylineWinner": false,
+   "spreadWinner": false,
+   "current": {
+    "over": {
+     "alternateDisplayValue": "-120",
+     "american": "-120"
+    },
+    "under": {
+     "alternateDisplayValue": "+100",
+     "american": "+100"
+    },
+    "total": {
+     "alternateDisplayValue": "5.5",
+     "american": "5.5"
+    }
+   }
+  },
+  {
+   "provider": {
+    "id": "47",
+    "name": "MGM"
+   },
+   "details": "TB -145",
+   "overUnder": 5.5,
+   "spread": -1.5,
+   "overOdds": -120.0,
+   "underOdds": 100.0,
+   "awayTeamOdds": {
+    "favorite": false,
+    "underdog": true,
+    "moneyLine": 120,
+    "spreadOdds": -200.0,
+    "current": {
+     "pointSpread": {
+      "alternateDisplayValue": "+1.5",
+      "american": "+1.5"
+     },
+     "spread": {
+      "alternateDisplayValue": "-200",
+      "american": "-200"
+     },
+     "moneyLine": {
+      "alternateDisplayValue": "+120",
+      "american": "+120"
+     }
+    }
+   },
+   "homeTeamOdds": {
+    "favorite": true,
+    "underdog": false,
+    "moneyLine": -145,
+    "spreadOdds": 170.0,
+    "current": {
+     "pointSpread": {
+      "alternateDisplayValue": "-1.5",
+      "american": "-1.5"
+     },
+     "spread": {
+      "alternateDisplayValue": "+170",
+      "american": "+170"
+     },
+     "moneyLine": {
+      "alternateDisplayValue": "-145",
+      "american": "-145"
+     }
+    }
+   },
+   "moneylineWinner": false,
+   "spreadWinner": false,
+   "current": {
+    "over": {
+     "alternateDisplayValue": "-120",
+     "american": "-120"
+    },
+    "under": {
+     "alternateDisplayValue": "+100",
+     "american": "+100"
+    },
+    "total": {
+     "alternateDisplayValue": "5.5",
+     "american": "5.5"
+    }
+   }
+  }
+ ]
+}

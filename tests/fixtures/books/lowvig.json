@@ -1,0 +1,1808 @@
+{
+ "offering": {
+  "GameOffering": {
+   "Sport": "Hockey",
+   "League": "NHL",
+   "Periods": [
+    {
+     "Number": 0,
+     "Name": "Game",
+     "HasGames": true,
+     "AdditionalMarketCount": null
+    },
+    {
+     "Number": 1,
+     "Name": "1st Period",
+     "HasGames": true,
+     "AdditionalMarketCount": null
+    }
+   ],
+   "GamesDescription": [
+    {
+     "GameDate": "10/05/2026",
+     "Game": {
+      "GameId": 491144351,
+      "AdditionalMarketCount": 28,
+      "WagerCutOff": "2026-10-05T23:07:00",
+      "GameDateTime": "0001-01-01T00:00:00",
+      "AwayTeam": "Philadelphia Flyers",
+      "AwayRotation": 1,
+      "AwayPitcher": "",
+      "HomeTeam": "Tampa Bay Lightning",
+      "HomeRotation": 2,
+      "HomePitcher": "",
+      "HasUrlWidget": false,
+      "CorrelationId": "Hock-NHL Mo Philadelphia@Tampa Bay Lig  ",
+      "Comments": "",
+      "ScheduleText": "",
+      "GameRestrictionRule": 1,
+      "PreventBuyPoint": true,
+      "DrawRotaion": 0,
+      "Limit": {
+       "Global": 0,
+       "Spread": 0,
+       "MoneyLine": 0,
+       "TeamTotal": 0,
+       "Total": 0
+      },
+      "PeriodWagerCutOff": "2026-10-05T19:12:00",
+      "AwayLine": {
+       "SpreadLine": {
+        "Point": 1.5,
+        "Line": -135,
+        "DecimalLine": 1.74,
+        "FractionalNumeratorLine": 20,
+        "FractionalDenominatorLine": 27,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       },
+       "MoneyLine": {
+        "Line": 193,
+        "DecimalLine": 2.93,
+        "FractionalNumeratorLine": 193,
+        "FractionalDenominatorLine": 100,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       },
+       "TotalLine": {
+        "Point": 0,
+        "Over": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "Under": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        }
+       },
+       "TeamTotalLine": {
+        "Point": 2.5,
+        "Over": {
+         "Line": 113,
+         "DecimalLine": 2.13,
+         "FractionalNumeratorLine": 113,
+         "FractionalDenominatorLine": 100,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "Under": {
+         "Line": -145,
+         "DecimalLine": 1.69,
+         "FractionalNumeratorLine": 20,
+         "FractionalDenominatorLine": 29,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        }
+       },
+       "BuyPointLineRule": null
+      },
+      "HomeLine": {
+       "SpreadLine": {
+        "Point": -1.5,
+        "Line": 115,
+        "DecimalLine": 2.15,
+        "FractionalNumeratorLine": 23,
+        "FractionalDenominatorLine": 20,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       },
+       "MoneyLine": {
+        "Line": -222,
+        "DecimalLine": 1.45,
+        "FractionalNumeratorLine": 50,
+        "FractionalDenominatorLine": 111,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       },
+       "TotalLine": {
+        "Point": 0,
+        "Over": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "Under": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        }
+       },
+       "TeamTotalLine": {
+        "Point": 3.5,
+        "Over": {
+         "Line": -110,
+         "DecimalLine": 1.91,
+         "FractionalNumeratorLine": 10,
+         "FractionalDenominatorLine": 11,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "Under": {
+         "Line": -120,
+         "DecimalLine": 1.83,
+         "FractionalNumeratorLine": 5,
+         "FractionalDenominatorLine": 6,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        }
+       },
+       "BuyPointLineRule": null
+      },
+      "DrawLine": {
+       "SpreadLine": {
+        "Point": 0,
+        "Line": 0,
+        "DecimalLine": 0,
+        "FractionalNumeratorLine": 0,
+        "FractionalDenominatorLine": 0,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       },
+       "MoneyLine": {
+        "Line": 0,
+        "DecimalLine": 1,
+        "FractionalNumeratorLine": 0,
+        "FractionalDenominatorLine": 1,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       },
+       "TotalLine": {
+        "Point": 0,
+        "Over": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "Under": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        }
+       },
+       "TeamTotalLine": {
+        "Point": 0,
+        "Over": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "Under": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        }
+       },
+       "BuyPointLineRule": null
+      },
+      "TotalLine": {
+       "SpreadLine": {
+        "Point": 0,
+        "Line": 0,
+        "DecimalLine": 0,
+        "FractionalNumeratorLine": 0,
+        "FractionalDenominatorLine": 0,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       },
+       "MoneyLine": {
+        "Line": 0,
+        "DecimalLine": 0,
+        "FractionalNumeratorLine": 0,
+        "FractionalDenominatorLine": 0,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       },
+       "TotalLine": {
+        "Point": 5.5,
+        "Over": {
+         "Line": -125,
+         "DecimalLine": 1.8,
+         "FractionalNumeratorLine": 4,
+         "FractionalDenominatorLine": 5,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "Under": {
+         "Line": 109,
+         "DecimalLine": 2.09,
+         "FractionalNumeratorLine": 109,
+         "FractionalDenominatorLine": 100,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        }
+       },
+       "TeamTotalLine": {
+        "Point": 0,
+        "Over": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "Under": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        }
+       },
+       "BuyPointLineRule": null
+      },
+      "UrlWidgetPlayerProps": null,
+      "WidgetPlayerPropsSessionID": null,
+      "CustomerID": null,
+      "IsSpreadMaxLoss": false,
+      "IsMoneyLineMaxLoss": false,
+      "IsTotalMaxLoss": false,
+      "IsTeamTotal1MaxLoss": false,
+      "IsTeamTotal2MaxLoss": false,
+      "SportCastFixtureId": 602513,
+      "LiveBettingID": null,
+      "ParentLinkEvent": null,
+      "AuxAltTag": null
+     }
+    },
+    {
+     "GameDate": "10/06/2026",
+     "Game": {
+      "GameId": 491146506,
+      "AdditionalMarketCount": 1,
+      "WagerCutOff": "2026-10-06T23:07:00",
+      "GameDateTime": "0001-01-01T00:00:00",
+      "AwayTeam": "Nashville Predators",
+      "AwayRotation": 9,
+      "AwayPitcher": "",
+      "HomeTeam": "Toronto Maple Leafs",
+      "HomeRotation": 10,
+      "HomePitcher": "",
+      "HasUrlWidget": false,
+      "CorrelationId": "Hock-NHL Tu Nashville Predators@Toronto ",
+      "Comments": "",
+      "ScheduleText": "",
+      "GameRestrictionRule": 1,
+      "PreventBuyPoint": true,
+      "DrawRotaion": 0,
+      "Limit": {
+       "Global": 0,
+       "Spread": 0,
+       "MoneyLine": 0,
+       "TeamTotal": 0,
+       "Total": 0
+      },
+      "PeriodWagerCutOff": "2026-10-06T19:12:00",
+      "AwayLine": {
+       "SpreadLine": {
+        "Point": 0,
+        "Line": 0,
+        "DecimalLine": 0,
+        "FractionalNumeratorLine": 0,
+        "FractionalDenominatorLine": 0,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       },
+       "MoneyLine": {
+        "Line": 134,
+        "DecimalLine": 2.34,
+        "FractionalNumeratorLine": 67,
+        "FractionalDenominatorLine": 50,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       },
+       "TotalLine": {
+        "Point": 0,
+        "Over": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "Under": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        }
+       },
+       "TeamTotalLine": {
+        "Point": 0,
+        "Over": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "Under": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        }
+       },
+       "BuyPointLineRule": null
+      },
+      "HomeLine": {
+       "SpreadLine": {
+        "Point": 0,
+        "Line": 0,
+        "DecimalLine": 0,
+        "FractionalNumeratorLine": 0,
+        "FractionalDenominatorLine": 0,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       },
+       "MoneyLine": {
+        "Line": -152,
+        "DecimalLine": 1.66,
+        "FractionalNumeratorLine": 25,
+        "FractionalDenominatorLine": 38,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       },
+       "TotalLine": {
+        "Point": 0,
+        "Over": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "Under": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        }
+       },
+       "TeamTotalLine": {
+        "Point": 0,
+        "Over": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "Under": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        }
+       },
+       "BuyPointLineRule": null
+      },
+      "DrawLine": {
+       "SpreadLine": {
+        "Point": 0,
+        "Line": 0,
+        "DecimalLine": 0,
+        "FractionalNumeratorLine": 0,
+        "FractionalDenominatorLine": 0,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       },
+       "MoneyLine": {
+        "Line": 0,
+        "DecimalLine": 1,
+        "FractionalNumeratorLine": 0,
+        "FractionalDenominatorLine": 1,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       },
+       "TotalLine": {
+        "Point": 0,
+        "Over": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "Under": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        }
+       },
+       "TeamTotalLine": {
+        "Point": 0,
+        "Over": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "Under": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        }
+       },
+       "BuyPointLineRule": null
+      },
+      "TotalLine": {
+       "SpreadLine": {
+        "Point": 0,
+        "Line": 0,
+        "DecimalLine": 0,
+        "FractionalNumeratorLine": 0,
+        "FractionalDenominatorLine": 0,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       },
+       "MoneyLine": {
+        "Line": 0,
+        "DecimalLine": 0,
+        "FractionalNumeratorLine": 0,
+        "FractionalDenominatorLine": 0,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       },
+       "TotalLine": {
+        "Point": 6,
+        "Over": {
+         "Line": -101,
+         "DecimalLine": 1.99,
+         "FractionalNumeratorLine": 100,
+         "FractionalDenominatorLine": 101,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "Under": {
+         "Line": -115,
+         "DecimalLine": 1.87,
+         "FractionalNumeratorLine": 20,
+         "FractionalDenominatorLine": 23,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        }
+       },
+       "TeamTotalLine": {
+        "Point": 0,
+        "Over": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "Under": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        }
+       },
+       "BuyPointLineRule": null
+      },
+      "UrlWidgetPlayerProps": null,
+      "WidgetPlayerPropsSessionID": null,
+      "CustomerID": null,
+      "IsSpreadMaxLoss": false,
+      "IsMoneyLineMaxLoss": false,
+      "IsTotalMaxLoss": false,
+      "IsTeamTotal1MaxLoss": false,
+      "IsTeamTotal2MaxLoss": false,
+      "SportCastFixtureId": null,
+      "LiveBettingID": null,
+      "ParentLinkEvent": null,
+      "AuxAltTag": null
+     }
+    }
+   ]
+  }
+ },
+ "events": {
+  "491144351": {
+   "EventOffering": {
+    "PeriodEvents": [
+     {
+      "Event": {
+       "GameId": 491144351,
+       "AdditionalMarketCount": 28,
+       "WagerCutOff": "2026-10-05T23:07:00",
+       "GameDateTime": "0001-01-01T00:00:00",
+       "AwayTeam": "Philadelphia Flyers",
+       "AwayRotation": 1,
+       "AwayPitcher": "",
+       "HomeTeam": "Tampa Bay Lightning",
+       "HomeRotation": 2,
+       "HomePitcher": "",
+       "HasUrlWidget": true,
+       "CorrelationId": "Hock-NHL Mo Philadelphia@Tampa Bay Lig  ",
+       "Comments": "",
+       "ScheduleText": "",
+       "GameRestrictionRule": 1,
+       "PreventBuyPoint": true,
+       "DrawRotaion": 0,
+       "Limit": {
+        "Global": 0,
+        "Spread": 0,
+        "MoneyLine": 0,
+        "TeamTotal": 0,
+        "Total": 0
+       },
+       "PeriodWagerCutOff": "2026-10-05T19:12:00",
+       "AwayLine": {
+        "SpreadLine": {
+         "Point": 1.5,
+         "Line": -135,
+         "DecimalLine": 1.74,
+         "FractionalNumeratorLine": 20,
+         "FractionalDenominatorLine": 27,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "MoneyLine": {
+         "Line": 193,
+         "DecimalLine": 2.93,
+         "FractionalNumeratorLine": 193,
+         "FractionalDenominatorLine": 100,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "TotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "TeamTotalLine": {
+         "Point": 2.5,
+         "Over": {
+          "Line": 113,
+          "DecimalLine": 2.13,
+          "FractionalNumeratorLine": 113,
+          "FractionalDenominatorLine": 100,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": -145,
+          "DecimalLine": 1.69,
+          "FractionalNumeratorLine": 20,
+          "FractionalDenominatorLine": 29,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "BuyPointLineRule": null
+       },
+       "HomeLine": {
+        "SpreadLine": {
+         "Point": -1.5,
+         "Line": 115,
+         "DecimalLine": 2.15,
+         "FractionalNumeratorLine": 23,
+         "FractionalDenominatorLine": 20,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "MoneyLine": {
+         "Line": -222,
+         "DecimalLine": 1.45,
+         "FractionalNumeratorLine": 50,
+         "FractionalDenominatorLine": 111,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "TotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "TeamTotalLine": {
+         "Point": 3.5,
+         "Over": {
+          "Line": -110,
+          "DecimalLine": 1.91,
+          "FractionalNumeratorLine": 10,
+          "FractionalDenominatorLine": 11,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": -120,
+          "DecimalLine": 1.83,
+          "FractionalNumeratorLine": 5,
+          "FractionalDenominatorLine": 6,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "BuyPointLineRule": null
+       },
+       "DrawLine": {
+        "SpreadLine": {
+         "Point": 0,
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "MoneyLine": {
+         "Line": 0,
+         "DecimalLine": 1,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 1,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "TotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "TeamTotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "BuyPointLineRule": null
+       },
+       "TotalLine": {
+        "SpreadLine": {
+         "Point": 0,
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "MoneyLine": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "TotalLine": {
+         "Point": 5.5,
+         "Over": {
+          "Line": -125,
+          "DecimalLine": 1.8,
+          "FractionalNumeratorLine": 4,
+          "FractionalDenominatorLine": 5,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 109,
+          "DecimalLine": 2.09,
+          "FractionalNumeratorLine": 109,
+          "FractionalDenominatorLine": 100,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "TeamTotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "BuyPointLineRule": null
+       },
+       "UrlWidgetPlayerProps": null,
+       "WidgetPlayerPropsSessionID": null,
+       "CustomerID": null,
+       "IsSpreadMaxLoss": false,
+       "IsMoneyLineMaxLoss": false,
+       "IsTotalMaxLoss": false,
+       "IsTeamTotal1MaxLoss": false,
+       "IsTeamTotal2MaxLoss": false,
+       "SportCastFixtureId": 602513,
+       "LiveBettingID": null,
+       "ParentLinkEvent": null,
+       "AuxAltTag": null
+      },
+      "Number": 0,
+      "Name": "Game",
+      "HasGames": true,
+      "AdditionalMarketCount": null
+     },
+     {
+      "Event": {
+       "GameId": 491144351,
+       "AdditionalMarketCount": 28,
+       "WagerCutOff": "2026-10-05T23:07:00",
+       "GameDateTime": "0001-01-01T00:00:00",
+       "AwayTeam": "Philadelphia Flyers",
+       "AwayRotation": 1,
+       "AwayPitcher": "",
+       "HomeTeam": "Tampa Bay Lightning",
+       "HomeRotation": 2,
+       "HomePitcher": "",
+       "HasUrlWidget": true,
+       "CorrelationId": "Hock-NHL Mo Philadelphia@Tampa Bay Lig  ",
+       "Comments": "",
+       "ScheduleText": "",
+       "GameRestrictionRule": 1,
+       "PreventBuyPoint": true,
+       "DrawRotaion": 0,
+       "Limit": {
+        "Global": 0,
+        "Spread": 0,
+        "MoneyLine": 0,
+        "TeamTotal": 0,
+        "Total": 0
+       },
+       "PeriodWagerCutOff": "2026-10-05T19:12:00",
+       "AwayLine": {
+        "SpreadLine": {
+         "Point": 0.5,
+         "Line": -162,
+         "DecimalLine": 1.62,
+         "FractionalNumeratorLine": 50,
+         "FractionalDenominatorLine": 81,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "MoneyLine": {
+         "Line": 142,
+         "DecimalLine": 2.42,
+         "FractionalNumeratorLine": 71,
+         "FractionalDenominatorLine": 50,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "TotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "TeamTotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "BuyPointLineRule": null
+       },
+       "HomeLine": {
+        "SpreadLine": {
+         "Point": -0.5,
+         "Line": 142,
+         "DecimalLine": 2.42,
+         "FractionalNumeratorLine": 71,
+         "FractionalDenominatorLine": 50,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "MoneyLine": {
+         "Line": -162,
+         "DecimalLine": 1.62,
+         "FractionalNumeratorLine": 50,
+         "FractionalDenominatorLine": 81,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "TotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "TeamTotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "BuyPointLineRule": null
+       },
+       "DrawLine": {
+        "SpreadLine": {
+         "Point": 0,
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "MoneyLine": {
+         "Line": 0,
+         "DecimalLine": 1,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 1,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "TotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "TeamTotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "BuyPointLineRule": null
+       },
+       "TotalLine": {
+        "SpreadLine": {
+         "Point": 0,
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "MoneyLine": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "TotalLine": {
+         "Point": 1.5,
+         "Over": {
+          "Line": -120,
+          "DecimalLine": 1.83,
+          "FractionalNumeratorLine": 5,
+          "FractionalDenominatorLine": 6,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 100,
+          "DecimalLine": 2,
+          "FractionalNumeratorLine": 1,
+          "FractionalDenominatorLine": 1,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "TeamTotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "BuyPointLineRule": null
+       },
+       "UrlWidgetPlayerProps": null,
+       "WidgetPlayerPropsSessionID": null,
+       "CustomerID": null,
+       "IsSpreadMaxLoss": false,
+       "IsMoneyLineMaxLoss": false,
+       "IsTotalMaxLoss": false,
+       "IsTeamTotal1MaxLoss": false,
+       "IsTeamTotal2MaxLoss": false,
+       "SportCastFixtureId": 602513,
+       "LiveBettingID": null,
+       "ParentLinkEvent": null,
+       "AuxAltTag": null
+      },
+      "Number": 1,
+      "Name": "1st Period",
+      "HasGames": true,
+      "AdditionalMarketCount": null
+     }
+    ],
+    "ContestTypes": [
+     {
+      "ContestType": "NHL Props                                         ",
+      "ContestTypeID": 5812,
+      "DescriptionGroup": [
+       {
+        "Description": "Team to Score First",
+        "Contests": [
+         {
+          "ID": 664096968,
+          "Group": "Philadelphia Flyers @ Tampa Bay Lightning",
+          "SubGroup": ".",
+          "Description": "Team to Score First",
+          "ContestDateTime": "2026-10-05T23:07:00",
+          "WagerCutoff": "2026-10-05T23:07:00",
+          "CorrelationID": "Hock-NHL Mo Philadelphia@Tampa Bay Lig",
+          "FirstRotationNumber": 21000,
+          "Contestants": [
+           {
+            "ID": 664096969,
+            "Name": "Philadelphia Flyers",
+            "RotationNumber": 21000,
+            "HasThreshold": true,
+            "ThresholdType": "",
+            "ThresholdUnits": "",
+            "ThresholdLine": 0,
+            "Line": {
+             "MoneyLine": {
+              "Line": 110
+             }
+            }
+           },
+           {
+            "ID": 664096970,
+            "Name": "Tampa Bay Lightning",
+            "RotationNumber": 21001,
+            "HasThreshold": true,
+            "ThresholdType": "",
+            "ThresholdUnits": "",
+            "ThresholdLine": 0,
+            "Line": {
+             "MoneyLine": {
+              "Line": -150
+             }
+            }
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "Description": "Alternate Total 4.5",
+        "Contests": [
+         {
+          "ID": 664097009,
+          "Group": "Philadelphia Flyers @ Tampa Bay Lightning",
+          "SubGroup": ".",
+          "Description": "Alternate Total 4.5",
+          "ContestDateTime": "2026-10-05T23:07:00",
+          "WagerCutoff": "2026-10-05T23:07:00",
+          "CorrelationID": "Hock-NHL Mo Philadelphia@Tampa Bay Lig",
+          "FirstRotationNumber": 21031,
+          "Contestants": [
+           {
+            "ID": 664097010,
+            "Name": "Over",
+            "RotationNumber": 21031,
+            "HasThreshold": false,
+            "ThresholdType": "P",
+            "ThresholdUnits": "Goals",
+            "ThresholdLine": 4.5,
+            "Line": {
+             "MoneyLine": {
+              "Line": -400
+             }
+            }
+           },
+           {
+            "ID": 664097011,
+            "Name": "Under",
+            "RotationNumber": 21032,
+            "HasThreshold": false,
+            "ThresholdType": "P",
+            "ThresholdUnits": "Goals",
+            "ThresholdLine": 4.5,
+            "Line": {
+             "MoneyLine": {
+              "Line": 250
+             }
+            }
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "Description": "Alternate Total 7.5",
+        "Contests": [
+         {
+          "ID": 664097012,
+          "Group": "Philadelphia Flyers @ Tampa Bay Lightning",
+          "SubGroup": ".",
+          "Description": "Alternate Total 7.5",
+          "ContestDateTime": "2026-10-05T23:07:00",
+          "WagerCutoff": "2026-10-05T23:07:00",
+          "CorrelationID": "Hock-NHL Mo Philadelphia@Tampa Bay Lig",
+          "FirstRotationNumber": 21033,
+          "Contestants": [
+           {
+            "ID": 664097013,
+            "Name": "Over",
+            "RotationNumber": 21033,
+            "HasThreshold": false,
+            "ThresholdType": "P",
+            "ThresholdUnits": "Goals",
+            "ThresholdLine": 7.5,
+            "Line": {
+             "MoneyLine": {
+              "Line": 275
+             }
+            }
+           },
+           {
+            "ID": 664097014,
+            "Name": "Under",
+            "RotationNumber": 21034,
+            "HasThreshold": false,
+            "ThresholdType": "P",
+            "ThresholdUnits": "Goals",
+            "ThresholdLine": 7.5,
+            "Line": {
+             "MoneyLine": {
+              "Line": -450
+             }
+            }
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "Description": "Alternate Puckline Philadelphia Flyers",
+        "Contests": [
+         {
+          "ID": 664097021,
+          "Group": "Philadelphia Flyers @ Tampa Bay Lightning",
+          "SubGroup": ".",
+          "Description": "Alternate Puckline Philadelphia Flyers",
+          "ContestDateTime": "2026-10-05T23:07:00",
+          "WagerCutoff": "2026-10-05T23:07:00",
+          "CorrelationID": "Hock-NHL Mo Philadelphia@Tampa Bay Lig",
+          "FirstRotationNumber": 21039,
+          "Contestants": [
+           {
+            "ID": 664097022,
+            "Name": "Philadelphia Flyers",
+            "RotationNumber": 21039,
+            "HasThreshold": true,
+            "ThresholdType": "S",
+            "ThresholdUnits": "Goals",
+            "ThresholdLine": 2.5,
+            "Line": {
+             "MoneyLine": {
+              "Line": -300
+             }
+            }
+           },
+           {
+            "ID": 664097023,
+            "Name": "Tampa Bay Lightning",
+            "RotationNumber": 21040,
+            "HasThreshold": true,
+            "ThresholdType": "S",
+            "ThresholdUnits": "Goals",
+            "ThresholdLine": -2.5,
+            "Line": {
+             "MoneyLine": {
+              "Line": 200
+             }
+            }
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "Description": "Alternate Puckline Tampa Bay Lightning",
+        "Contests": [
+         {
+          "ID": 664097024,
+          "Group": "Philadelphia Flyers @ Tampa Bay Lightning",
+          "SubGroup": ".",
+          "Description": "Alternate Puckline Tampa Bay Lightning",
+          "ContestDateTime": "2026-10-05T23:07:00",
+          "WagerCutoff": "2026-10-05T23:07:00",
+          "CorrelationID": "Hock-NHL Mo Philadelphia@Tampa Bay Lig",
+          "FirstRotationNumber": 21041,
+          "Contestants": [
+           {
+            "ID": 664097025,
+            "Name": "Philadelphia Flyers",
+            "RotationNumber": 21041,
+            "HasThreshold": true,
+            "ThresholdType": "S",
+            "ThresholdUnits": "Goals",
+            "ThresholdLine": -1.5,
+            "Line": {
+             "MoneyLine": {
+              "Line": 350
+             }
+            }
+           },
+           {
+            "ID": 664097026,
+            "Name": "Tampa Bay Lightning",
+            "RotationNumber": 21042,
+            "HasThreshold": true,
+            "ThresholdType": "S",
+            "ThresholdUnits": "Goals",
+            "ThresholdLine": 1.5,
+            "Line": {
+             "MoneyLine": {
+              "Line": -600
+             }
+            }
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "Description": "Alternate Team Total Tampa Bay Lightning",
+        "Contests": [
+         {
+          "ID": 664097039,
+          "Group": "Philadelphia Flyers @ Tampa Bay Lightning",
+          "SubGroup": ".",
+          "Description": "Alternate Team Total Tampa Bay Lightning",
+          "ContestDateTime": "2026-10-05T23:07:00",
+          "WagerCutoff": "2026-10-05T23:07:00",
+          "CorrelationID": "Hock-NHL Mo Philadelphia@Tampa Bay Lig",
+          "FirstRotationNumber": 21051,
+          "Contestants": [
+           {
+            "ID": 664097047,
+            "Name": "Under",
+            "RotationNumber": 21056,
+            "HasThreshold": false,
+            "ThresholdType": "P",
+            "ThresholdUnits": "",
+            "ThresholdLine": 5.5,
+            "Line": {
+             "MoneyLine": {
+              "Line": -900
+             }
+            }
+           },
+           {
+            "ID": 664097044,
+            "Name": "Under",
+            "RotationNumber": 21054,
+            "HasThreshold": false,
+            "ThresholdType": "P",
+            "ThresholdUnits": "",
+            "ThresholdLine": 4.5,
+            "Line": {
+             "MoneyLine": {
+              "Line": -300
+             }
+            }
+           },
+           {
+            "ID": 664097040,
+            "Name": "Over",
+            "RotationNumber": 21051,
+            "HasThreshold": false,
+            "ThresholdType": "P",
+            "ThresholdUnits": "",
+            "ThresholdLine": 2.5,
+            "Line": {
+             "MoneyLine": {
+              "Line": -280
+             }
+            }
+           },
+           {
+            "ID": 664097041,
+            "Name": "Under",
+            "RotationNumber": 21052,
+            "HasThreshold": false,
+            "ThresholdType": "P",
+            "ThresholdUnits": "",
+            "ThresholdLine": 2.5,
+            "Line": {
+             "MoneyLine": {
+              "Line": 185
+             }
+            }
+           },
+           {
+            "ID": 664097043,
+            "Name": "Over",
+            "RotationNumber": 21053,
+            "HasThreshold": false,
+            "ThresholdType": "P",
+            "ThresholdUnits": "",
+            "ThresholdLine": 4.5,
+            "Line": {
+             "MoneyLine": {
+              "Line": 200
+             }
+            }
+           },
+           {
+            "ID": 664097046,
+            "Name": "Over",
+            "RotationNumber": 21055,
+            "HasThreshold": false,
+            "ThresholdType": "P",
+            "ThresholdUnits": "",
+            "ThresholdLine": 5.5,
+            "Line": {
+             "MoneyLine": {
+              "Line": 500
+             }
+            }
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "491146506": {
+   "EventOffering": {
+    "PeriodEvents": [
+     {
+      "Event": {
+       "GameId": 491146506,
+       "AdditionalMarketCount": 1,
+       "WagerCutOff": "2026-10-06T23:07:00",
+       "GameDateTime": "0001-01-01T00:00:00",
+       "AwayTeam": "Nashville Predators",
+       "AwayRotation": 9,
+       "AwayPitcher": "",
+       "HomeTeam": "Toronto Maple Leafs",
+       "HomeRotation": 10,
+       "HomePitcher": "",
+       "HasUrlWidget": true,
+       "CorrelationId": "Hock-NHL Tu Nashville Predators@Toronto ",
+       "Comments": "",
+       "ScheduleText": "",
+       "GameRestrictionRule": 2,
+       "PreventBuyPoint": true,
+       "DrawRotaion": 0,
+       "Limit": {
+        "Global": 0,
+        "Spread": 0,
+        "MoneyLine": 0,
+        "TeamTotal": 0,
+        "Total": 0
+       },
+       "PeriodWagerCutOff": "2026-10-06T19:12:00",
+       "AwayLine": {
+        "SpreadLine": {
+         "Point": 0,
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "MoneyLine": {
+         "Line": 134,
+         "DecimalLine": 2.34,
+         "FractionalNumeratorLine": 67,
+         "FractionalDenominatorLine": 50,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "TotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "TeamTotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "BuyPointLineRule": null
+       },
+       "HomeLine": {
+        "SpreadLine": {
+         "Point": 0,
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "MoneyLine": {
+         "Line": -152,
+         "DecimalLine": 1.66,
+         "FractionalNumeratorLine": 25,
+         "FractionalDenominatorLine": 38,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "TotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "TeamTotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "BuyPointLineRule": null
+       },
+       "DrawLine": {
+        "SpreadLine": {
+         "Point": 0,
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "MoneyLine": {
+         "Line": 0,
+         "DecimalLine": 1,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 1,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "TotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "TeamTotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "BuyPointLineRule": null
+       },
+       "TotalLine": {
+        "SpreadLine": {
+         "Point": 0,
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "MoneyLine": {
+         "Line": 0,
+         "DecimalLine": 0,
+         "FractionalNumeratorLine": 0,
+         "FractionalDenominatorLine": 0,
+         "ThresholdLine": 0,
+         "ThresholdType": null
+        },
+        "TotalLine": {
+         "Point": 6,
+         "Over": {
+          "Line": -101,
+          "DecimalLine": 1.99,
+          "FractionalNumeratorLine": 100,
+          "FractionalDenominatorLine": 101,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": -115,
+          "DecimalLine": 1.87,
+          "FractionalNumeratorLine": 20,
+          "FractionalDenominatorLine": 23,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "TeamTotalLine": {
+         "Point": 0,
+         "Over": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         },
+         "Under": {
+          "Line": 0,
+          "DecimalLine": 0,
+          "FractionalNumeratorLine": 0,
+          "FractionalDenominatorLine": 0,
+          "ThresholdLine": 0,
+          "ThresholdType": null
+         }
+        },
+        "BuyPointLineRule": null
+       },
+       "UrlWidgetPlayerProps": null,
+       "WidgetPlayerPropsSessionID": null,
+       "CustomerID": null,
+       "IsSpreadMaxLoss": false,
+       "IsMoneyLineMaxLoss": false,
+       "IsTotalMaxLoss": false,
+       "IsTeamTotal1MaxLoss": false,
+       "IsTeamTotal2MaxLoss": false,
+       "SportCastFixtureId": null,
+       "LiveBettingID": null,
+       "ParentLinkEvent": null,
+       "AuxAltTag": null
+      },
+      "Number": 0,
+      "Name": "Game",
+      "HasGames": true,
+      "AdditionalMarketCount": null
+     }
+    ]
+   }
+  }
+ },
+ "threeway": {
+  "GameOffering": {
+   "Sport": "Hockey",
+   "League": "NHL 3 WAY",
+   "GamesDescription": [
+    {
+     "GameDate": "10/05/2026",
+     "Game": {
+      "GameId": 491144357,
+      "WagerCutOff": "2026-10-05T23:07:00",
+      "AwayTeam": "Philadelphia Flyers",
+      "HomeTeam": "Tampa Bay Lightning",
+      "AwayLine": {
+       "MoneyLine": {
+        "Line": 280,
+        "DecimalLine": 3.8,
+        "FractionalNumeratorLine": 14,
+        "FractionalDenominatorLine": 5,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       }
+      },
+      "HomeLine": {
+       "MoneyLine": {
+        "Line": -138,
+        "DecimalLine": 1.72,
+        "FractionalNumeratorLine": 50,
+        "FractionalDenominatorLine": 69,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       }
+      },
+      "DrawLine": {
+       "MoneyLine": {
+        "Line": 360,
+        "DecimalLine": 4.6,
+        "FractionalNumeratorLine": 18,
+        "FractionalDenominatorLine": 5,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       }
+      },
+      "TotalLine": {
+       "MoneyLine": {
+        "Line": 0,
+        "DecimalLine": 0,
+        "FractionalNumeratorLine": 0,
+        "FractionalDenominatorLine": 0,
+        "ThresholdLine": 0,
+        "ThresholdType": null
+       }
+      }
+     }
+    }
+   ]
+  }
+ }
+}

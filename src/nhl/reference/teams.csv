@@ -1,0 +1,37 @@
+team_id,tricode,full_name,place_name,common_name,franchise_id,lineage_id,first_season,last_season,aliases,notes
+24,ANA,Anaheim Ducks,Anaheim,Ducks,32,ANA,20102011,,Anaheim|ANH,
+53,ARI,Arizona Coyotes,Arizona,Coyotes,28,UTA,20142015,20232024,Arizona|AZ|Arizona Coyotes|Arizonas,Renamed from Phoenix Coyotes (same franchise 28). Franchise deactivated after 2023-24; players and hockey ops went to Utah (franchise 40).
+11,ATL,Atlanta Thrashers,Atlanta,Thrashers,35,WPG,20102011,20102011,Atlanta|Thrashers,Relocated to Winnipeg for 2011-12 (same franchise 35).
+6,BOS,Boston Bruins,Boston,Bruins,6,BOS,20102011,,Boston,
+7,BUF,Buffalo Sabres,Buffalo,Sabres,19,BUF,20102011,,Buffalo,
+12,CAR,Carolina Hurricanes,Carolina,Hurricanes,26,CAR,20102011,,Carolina|Canes,
+29,CBJ,Columbus Blue Jackets,Columbus,Blue Jackets,36,CBJ,20102011,,Columbus|CLB|CLS|CBS,
+20,CGY,Calgary Flames,Calgary,Flames,21,CGY,20102011,,Calgary|CAL,
+16,CHI,Chicago Blackhawks,Chicago,Blackhawks,11,CHI,20102011,,Chicago,
+21,COL,Colorado Avalanche,Colorado,Avalanche,27,COL,20102011,,Colorado|Avs,
+25,DAL,Dallas Stars,Dallas,Stars,15,DAL,20102011,,Dallas,
+17,DET,Detroit Red Wings,Detroit,Red Wings,12,DET,20102011,,Detroit,
+22,EDM,Edmonton Oilers,Edmonton,Oilers,25,EDM,20102011,,Edmonton,
+13,FLA,Florida Panthers,Florida,Panthers,33,FLA,20102011,,Florida|FLO,
+26,LAK,Los Angeles Kings,Los Angeles,Kings,14,LAK,20102011,,Los Angeles|LosAngeles|LA|L.A. Kings,
+30,MIN,Minnesota Wild,Minnesota,Wild,37,MIN,20102011,,Minnesota,
+8,MTL,Montréal Canadiens,Montréal,Canadiens,1,MTL,20102011,,Montreal|Montréal|MON|Habs,
+1,NJD,New Jersey Devils,New Jersey,Devils,23,NJD,20102011,,New Jersey|NewJersey|NJ,
+18,NSH,Nashville Predators,Nashville,Predators,34,NSH,20102011,,Nashville|NAS|Preds,
+2,NYI,New York Islanders,New York,Islanders,22,NYI,20102011,,NY Islanders|NYIslanders|Islanders,
+3,NYR,New York Rangers,New York,Rangers,10,NYR,20102011,,NY Rangers|NYRangers|Rangers,
+9,OTT,Ottawa Senators,Ottawa,Senators,30,OTT,20102011,,Ottawa|Sens,
+4,PHI,Philadelphia Flyers,Philadelphia,Flyers,16,PHI,20102011,,Philadelphia,
+27,PHX,Phoenix Coyotes,Phoenix,Coyotes,28,UTA,20102011,20132014,Phoenix|Phoenix Coyotes,Renamed Arizona Coyotes for 2014-15 (same franchise 28).
+5,PIT,Pittsburgh Penguins,Pittsburgh,Penguins,17,PIT,20102011,,Pittsburgh|Pens,
+55,SEA,Seattle Kraken,Seattle,Kraken,39,SEA,20212022,,Seattle,Expansion 2021-22.
+28,SJS,San Jose Sharks,San Jose,Sharks,29,SJS,20102011,,San Jose|SanJose|SJ,
+19,STL,St. Louis Blues,St. Louis,Blues,18,STL,20102011,,St. Louis|St Louis|StLouis|St.Louis,
+14,TBL,Tampa Bay Lightning,Tampa Bay,Lightning,31,TBL,20102011,,Tampa Bay|TampaBay|Tampa|TB|TBay,
+10,TOR,Toronto Maple Leafs,Toronto,Maple Leafs,5,TOR,20102011,,Toronto|Leafs,
+59,UTA,Utah Hockey Club,Utah,Hockey Club,40,UTA,20242025,20242025,Utah Hockey Club|Utah HC|UTAH|UTH|Utah,New franchise 40 (not a Coyotes relocation); received Arizona's players and hockey operations. Renamed Utah Mammoth for 2025-26.
+68,UTA,Utah Mammoth,Utah,Mammoth,40,UTA,20252026,,Utah Mammoth|UTAH|UTH|Utah,Renamed from Utah Hockey Club (same franchise 40).
+23,VAN,Vancouver Canucks,Vancouver,Canucks,20,VAN,20102011,,Vancouver,
+54,VGK,Vegas Golden Knights,Vegas,Golden Knights,38,VGK,20172018,,Vegas|Las Vegas|LV|VEG|VGS,Expansion 2017-18.
+52,WPG,Winnipeg Jets,Winnipeg,Jets,35,WPG,20112012,,Winnipeg|WIN,Relocated from Atlanta (same franchise 35).
+15,WSH,Washington Capitals,Washington,Capitals,24,WSH,20102011,,Washington|WAS|Caps,
