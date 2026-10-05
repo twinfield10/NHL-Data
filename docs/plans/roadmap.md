@@ -1,6 +1,8 @@
 # Plan: NHL game-prediction platform (roadmap)
 
 **Status:** M1 complete (2026-10-05). Data sources for M5/M6 built early. M2 planned ([m2-game-state.md](m2-game-state.md)). Everything else is proposed.
+M3 methods and the xG sub-models were revised 2026-10-05 after a review of HockeyViz's
+Magnus 8 xG and Magnus 9 EV/ST models (see [References](#references)).
 **Written:** 2026-10-05.
 **Audience:** the owner and a few friends. **Use:** betting the main game markets
 (moneyline, puck line ±1.5, totals), with player props (goals, assists, points) later.
@@ -60,6 +62,23 @@ tuned training, out-of-fold historical xG, nightly `nhl update`.
 **Done when:** test-season (2024-25, 2025-26) xG is calibrated within ±3% of goals
 for each strength group and the EV AUC is at least the legacy model's ~0.78.
 
+### M1 follow-ups: xG sub-models
+Magnus 8 splits each shot attempt into a chain: not blocked → on target → not frozen →
+goal. Our xG is the last step for unblocked shots (equivalently, the product of the middle
+three), and that stays the talent-neutral xG. The other steps become small companion
+models, built when something downstream needs them:
+
+| Model | Predicts | Needed by | When |
+|---|---|---|---|
+| **Frozen puck** | P(goalie freezes \| shot on goal) | M3 goalie ratings | before M3 goalies |
+| **Block** | P(blocked \| attempt); the NHL records the block location, not the shot origin, so the origin is estimated | shots-on-goal props, shooter "gets it through" skill | with props |
+| **On target** | P(on goal \| unblocked) | shots-on-goal props | with props |
+
+Why the frozen-puck model comes first: under neutral xG, a goalie who gives up rebounds
+faces more xG, so his GSAx credits him for the rebounds he allowed. Magnus 8 finds a real
+trade-off between freezing and stopping (layer correlation −0.28). These companions use
+the same talent-neutral features. They never feed back into xG.
+
 ## M2: Game-state data model (stints, lineups, game logs)
 
 The tables everything else stands on. All are derived from data we already store.
@@ -103,22 +122,56 @@ goalies. **Inputs to the talent priors, never to xG:**
 All ratings are fit on data before date *D* and saved as daily snapshots
 `ratings/{date}/...`. That makes history pages and backtests fall out naturally.
 
-- **Skater impact.** Regularized (ridge or Bayesian) regression on stints, the
-  standard RAPM setup, by state: EV offense, EV defense (xG and goal rates per 60),
-  PP offense, PK defense. Priors come from the previous season's estimate, so early
-  season ratings are stable. Time-decayed weighting.
-- **Finishing.** Shooter goals above xG, heavily shrunk. This is small for team
-  totals but central for goal props later.
+- **Skater impact (Magnus 9 design).** Ridge regression on stints (the RAPM setup),
+  weighted by duration. The response is xG per 60 for and against. Every player gets an
+  offence term and a defence term. Fit separately for EV (5v5) and ST (5v4, 5v3, 4v3:
+  PP offence = PK defence).
+  - **Context fit jointly, as separate terms.** These are the layer-separated context
+    effects, but estimated net of who was on the ice instead of in a later step:
+    - zone start: OZ/NZ/DZ/on-the-fly, by second 0-34 after the faceoff, smoothed;
+    - score state × period × home/away, by minute, smoothed;
+    - rest (well-rested / normal / back-to-back), offence and defence;
+    - head coach: overall, plus score-specific and protecting-a-third-period-lead terms,
+      heavily penalized;
+    - the post-penalty 5v5 window.
+  - **Constraints:** each group of terms sums to zero (skaters, zones, rest, coaches).
+  - **Priors:** last season's estimate, aged by an age curve. Prior tightness depends on
+    age: players change most when young and old, least around 24. New players start
+    *below* average (Magnus 9 uses −10% offence, +10% defence relative to league average),
+    not at zero.
+  - **Updating:** the fit is closed form, β = (XᵀWX + Λ + K)⁻¹(XᵀWY + Λβ₀), so the
+    daily point-in-time refits are cheap. Season-to-season priors replace time-decay
+    weighting: newer data counts most, older data is never thrown away.
+  - **Diagnostics:** player residuals (actual on-ice minus predicted) should not repeat
+    year to year (Magnus 9: about 0.02); if they do, something is missing from the model.
+    Also report teammate-quality and opposition-quality spreads.
+- **Finishing and goaltending, one joint model.** Per unblocked shot, a logistic GLM
+  with offset logit(neutral xG), plus shrunk shooter and goalie terms. Each term's prior
+  is last season's estimate with weight ∝ √(last season's shots), with a floor for
+  rookies. So shooters are adjusted for the goalies they faced, and goalies for the
+  shooters. The fitted probability is the talent-adjusted xG used by the simulator and
+  goal props. Neutral xG stays unchanged. Small for team totals, central for goal props.
+- **Assist share (our "xA").** Public play-by-play has no passes, so there is no
+  per-shot xA. Instead, given a goal with this unit on the ice, model each player's
+  probability of the primary and the secondary assist, shrunk toward position averages.
+  Feeds goal attribution in M4/props.
 - **Penalties.** Penalty drawing and taking rates per player. These drive PP and PK
   time in the simulator.
-- **Goalies.** Goals saved above expected per shot, with strong shrinkage (a
-  goalie's save skill is noisy over a few hundred shots), age curve, workload and
-  back-to-back effects. Goalies are the starting pitchers of this model.
+- **Goalies.** Two parts, both strongly shrunk (a goalie's save skill is noisy over a
+  few hundred shots):
+  - save skill from the joint finishing/goaltending model;
+  - rebound control (freezes above expected, from the frozen-puck model).
+
+  Plus age curve, workload and back-to-back effects. Goalies are the starting pitchers of
+  this model.
 - **Line chemistry.** Hypothesis to test, not assumed: do known units (a trio or
   pair) outperform the sum of their individual ratings, out of sample? If they do,
   add a shrunk unit term. If not, the additive model plus deployment is the answer.
-- **Team context.** Home ice, rest, travel, schedule density, fitted as
-  adjustments to scoring rates.
+- **Team context.** Home ice, rest and score effects come from the joint skater fit
+  above. Travel and schedule density are added the same way if they earn their place.
+  **Expect small effects:** in Magnus 9, teammates matter far more than competition, and
+  even-strength rest effects are nearly invisible, but penalty-kill fatigue is much larger
+  than power-play fatigue. So we fit context sizes; we don't hand-set them.
 
 **Products unlocked:** power rankings (lineup-weighted team strength), player
 and goalie ratings, rating history charts.
@@ -229,7 +282,9 @@ Pages:
 ## Later: player props
 
 Goals, assists, points: reuse M4 simulations and attribute goals and assists by
-on-ice share, finishing, and playmaking rates from M3. Needs a prop odds feed.
+on-ice share, talent-adjusted finishing, and assist shares from M3. Shots-on-goal props
+also need the block and on-target companion models (M1 follow-ups) plus shooter terms
+for each step. Needs a prop odds feed.
 
 ---
 
@@ -250,4 +305,21 @@ on-ice share, finishing, and playmaking rates from M3. Needs a prop odds feed.
 | Historical odds for backtests (none in the bucket today) | free archived closing lines (e.g. sportsbookreviewsonline, coverage ends ~2021-22) · paid historical API (e.g. The Odds API, ~2020+) · forward-only capture | Archive for 2015-2022 plus start Pinnacle capture now. Check licensing and ToS first |
 | Projected lineups and starting goalies | external line-combination and starting-goalie sites (check robots/ToS) · team and beat-reporter feeds · NHL API only (late) | Decide in M5. Start capturing *something* soon, because history of projections is useful for measuring M5 |
 | Odds storage | `tmw-nhl-data/odds/` · shared `tmw-sportsbook-data/nhl/` | Shared bucket if the scraper already writes there, otherwise this bucket |
-| Rating method | ridge RAPM · Bayesian hierarchical (slower, gives uncertainty) | Ridge first, Bayesian if the simulator needs rating uncertainty |
+| Rating method | ridge RAPM · Bayesian hierarchical (slower, gives uncertainty) | **Decided:** ridge with season-to-season priors (Magnus 9 style). The same closed form gives a posterior covariance, (XᵀWX + Λ + K)⁻¹, if the simulator needs rating uncertainty |
+
+## References
+- HockeyViz, *Magnus 8 xG*: https://hockeyviz.com/txt/xg8. The four-step chain
+  (block / miss / freeze / goal), penalized shooter/setter/goalie/coach terms, and
+  shot-count-weighted priors.
+- HockeyViz, *Magnus 9 EV*: https://hockeyviz.com/txt/magnus9EV. Stint ridge regression
+  on xG rate maps, aged priors, zone/score/venue/rest/coach terms, zero-sum and smoothness
+  penalties.
+- HockeyViz, *Magnus 9 ST*: https://hockeyviz.com/txt/magnus9ST. The 5v4/5v3/4v3 version;
+  PK fatigue matters more than PP fatigue.
+- HockeyViz, *Scorer bias*: https://hockeyviz.com/txt/scorerBias. Arena adjustment
+  (done in M1).
+
+Deliberately not adopted:
+- hex-grid shot maps (we need scalar rates);
+- rush/cycle classes (our sequence features already cover them);
+- talent or coach terms inside xG (it must stay talent-neutral).
