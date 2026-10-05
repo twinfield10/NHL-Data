@@ -84,6 +84,22 @@ games, and inferred lines match published lines in at least 85% of sampled games
 
 ## M3: Ratings (players, goalies, team context)
 
+**Layer separation (agreed 2026-10-05).** xG measures the chance and stays
+talent-neutral. Talent is performance *relative to expected*, in two parts:
+- how many and how good chances a player or team creates and allows (xG for/against
+  per 60);
+- how well they convert or stop them (finishing = goals − xG; goaltending = goals
+  saved above expected, GSAx).
+
+Context (rest, travel, home ice, referees, starter) is a separate adjustment in the game
+model. The simulator combines all three, so each factor's effect on a given game is
+visible and explainable. Talent estimates are shrunk toward priors by reliability:
+over/under-performing xG is mostly noise in small samples, especially for shooters and
+goalies. **Inputs to the talent priors, never to xG:**
+- team win % and records (as baselines for the xG-based ratings to beat);
+- NHL EDGE player tracking (shot speed → finishing; skating and zone time → xG
+  generation and suppression).
+
 All ratings are fit on data before date *D* and saved as daily snapshots
 `ratings/{date}/...`. That makes history pages and backtests fall out naturally.
 

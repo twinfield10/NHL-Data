@@ -16,6 +16,29 @@ from nhl.transform.shifts import on_ice, parse_shifts
 logger = logging.getLogger(__name__)
 
 
+def build_game_parts(store: Store, season: int, game_id: int) -> tuple[pl.DataFrame, pl.DataFrame]:
+    """Parse one game's raw files into (events with on-ice players, merged shifts).
+
+    Args:
+        store: S3 store.
+        season: 8-digit season id.
+        game_id: NHL game id.
+
+    Returns:
+        ``(events, shifts)``; both empty if the raw play-by-play is missing. Shifts carry
+        ``game_id`` and ``season`` and are empty when the game has no shift chart.
+    """
+    pbp = store.get_json_gz(keys.raw_pbp(season, game_id))
+    if pbp is None:
+        return pl.DataFrame(), pl.DataFrame()
+    events = parse_events(pbp)
+    raw_shifts = store.get_json_gz(keys.raw_shifts(season, game_id)) or {}
+    shifts = parse_shifts(raw_shifts, roster_from_pbp(pbp))
+    events = events.join(on_ice(events, shifts), on="event_idx", how="left")
+    shifts = shifts.with_columns(pl.lit(game_id, pl.Int64).alias("game_id"), pl.lit(season, pl.Int32).alias("season"))
+    return events, shifts.select("game_id", "season", "player_id", "team_id", "period", "start", "end", "is_goalie")
+
+
 def build_game(store: Store, season: int, game_id: int) -> pl.DataFrame:
     """Parse one game's raw files into events with on-ice players attached.
 
@@ -27,13 +50,7 @@ def build_game(store: Store, season: int, game_id: int) -> pl.DataFrame:
     Returns:
         The game's event rows (empty if the raw play-by-play is missing).
     """
-    pbp = store.get_json_gz(keys.raw_pbp(season, game_id))
-    if pbp is None:
-        return pl.DataFrame()
-    events = parse_events(pbp)
-    raw_shifts = store.get_json_gz(keys.raw_shifts(season, game_id)) or {}
-    shifts = parse_shifts(raw_shifts, roster_from_pbp(pbp))
-    return events.join(on_ice(events, shifts), on="event_idx", how="left")
+    return build_game_parts(store, season, game_id)[0]
 
 
 def build_season(store: Store, start_year: int, workers: int = 8) -> pl.DataFrame:
@@ -54,19 +71,23 @@ def build_season(store: Store, start_year: int, workers: int = 8) -> pl.DataFram
 
     failures: dict[int, str] = {}
 
-    def safe(gid: int) -> pl.DataFrame | None:
+    def safe(gid: int) -> tuple[pl.DataFrame, pl.DataFrame] | None:
         try:
-            return build_game(store, season, gid)
+            return build_game_parts(store, season, gid)
         except Exception as exc:  # noqa: BLE001 - one malformed game must not sink the season
             failures[gid] = repr(exc)
             logger.warning("game %s failed to parse: %r", gid, exc)
             return None
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        frames = [f for f in pool.map(safe, game_ids) if f is not None and not f.is_empty()]
+        parts = [p for p in pool.map(safe, game_ids) if p is not None and not p[0].is_empty()]
 
-    events = pl.concat(frames, how="diagonal_relaxed").sort("game_id", "event_idx")
+    events = pl.concat([e for e, _ in parts], how="diagonal_relaxed").sort("game_id", "event_idx")
+    shift_frames = [s for _, s in parts if not s.is_empty()]
     store.put_parquet(keys.events(season), events)
+    if shift_frames:
+        shifts = pl.concat(shift_frames, how="vertical_relaxed").sort("game_id", "player_id", "period", "start")
+        store.put_parquet(keys.shifts(season), shifts)
     _log_quality(season, events, len(game_ids), failures)
     return events
 
