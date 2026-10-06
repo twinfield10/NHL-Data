@@ -290,6 +290,17 @@ def cmd_backtest_pregame(args: argparse.Namespace) -> None:
     print(backtest.write_report(results, backtest.lineup_accuracy(store, seasons), Path(args.report)))
 
 
+def cmd_evaluate_betting(args: argparse.Namespace) -> None:
+    """M6: model vs market on history (information test, blend, bets at the open)."""
+    from pathlib import Path
+
+    from nhl.betting import evaluate
+    from nhl.storage.s3 import Store
+
+    seasons = [config.season_id(y) for y in config.parse_seasons(args.seasons)]
+    print(evaluate.run(Store(), seasons, Path(args.report)))
+
+
 def cmd_backtest_sim(args: argparse.Namespace) -> None:
     """Backtest the game simulator and write the M4 report."""
     from pathlib import Path
@@ -538,6 +549,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--sims", type=int, default=1000)
     p.add_argument("--report", default="docs/reports/m5-pregame-backtest.md")
     p.set_defaults(func=cmd_backtest_pregame)
+
+    p = sub.add_parser("evaluate-betting", help="M6: model vs closing market, blend, bets at the open")
+    p.add_argument("--seasons", default="2021-2025")
+    p.add_argument("--report", default="docs/reports/m6-model-vs-market.md")
+    p.set_defaults(func=cmd_evaluate_betting)
 
     p = sub.add_parser("game-state", help="stints, lineups, goalie starts, coaches, game logs (M2)")
     p.add_argument("--seasons", default=_default_seasons())

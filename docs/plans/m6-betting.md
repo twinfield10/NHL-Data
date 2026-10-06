@@ -1,6 +1,6 @@
 # Plan: M6 — odds, pricing and betting
 
-**Status:** planned 2026-10-06 (decisions in §7); not started.
+**Status:** phases A (lines), B (devig) and a first D (model vs market) built 2026-10-06; **the gate is not passed**. See [Results](#results-2026-10-06). C (score matrix) and E (live) open.
 **Depends on:** captured odds (`external/odds/...`: LowVig, 4Casters, ESPN-listed books live;
 SBR archive and ESPN history), M4 simulator, M5 pregame inputs (`pregame/prices`, and the
 `pregame` variant of `predictions/pregame_backtest`).
@@ -151,3 +151,29 @@ CLI: `nhl build-lines`, `nhl evaluate-betting`, `nhl edges`, `nhl record-bet`, `
 | C | Score matrices in the simulator; pregame backtest re-run storing them | prices match existing columns |
 | D | Information test, blend, betting simulation at the open | report: CLV on 2020+ |
 | E | `nhl edges`, ledger, nightly grading | runs on today's slate |
+
+## Results (2026-10-06)
+Code: `src/nhl/betting/` (`lines.py`, `devig.py`, `evaluate.py`), `nhl evaluate-betting`,
+[report](../reports/m6-model-vs-market.md). The lines table is built in memory for now
+(not yet stored at `odds/lines/`).
+
+- **Lines:** closing prices for every game 2015-16..2025-26 in all three markets. 2,707
+  bad history rows dropped, mostly ESPN 2022-23 closes with line and price swapped, so that
+  season uses ESPN's last pregame quote.
+- **Devig:** the method barely matters; per market the four methods are within 0.00015 log
+  loss on 14k closes. Chosen: power (ML), multiplicative (puck line), Shin (totals). The
+  close slightly overprices home teams (0.543 vs 0.538) and unders.
+- **Model vs close (honest `pregame` prices, 2021-26):**
+  - pooled, the model looks informative beside the close (moneyline coefficient 0.35 ± 0.12,
+    puck line 0.26 ± 0.11, totals 0.43 ± 0.11);
+  - **but out of sample a rolling blend is slightly worse than the close alone** (−0.0005
+    to −0.0007 log loss in every market). The pooled effect doesn't hold season to season.
+  - **Betting at the open: CLV ≈ 0** over 2,844 bets (moneyline +0.2% with 51% beating
+    the close, puck line −0.3%, totals −0.65%). ROI +1.6% is noise.
+- With the M4 actual-lineup prices, moneyline bets showed +2.7% CLV: knowing the starter
+  before the market does. The gap is the value of early starter information; M5's
+  confirmations (phase D there) can only capture it live.
+- **Conclusion:** the model is about as good as the close but not better, so the site must
+  not flag bets yet. Next accuracy work belongs in the model (the M4 calibration and
+  2025-26 gaps, team terms, goalie terms) and in timing: bets placed when news (starters,
+  lines) lands before the market moves, which only forward paper trading can measure.
