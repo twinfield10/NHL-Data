@@ -11,8 +11,9 @@
    same line) and by ROI on results.
 
 Model prices come from the simulator's market columns (``p_home_win``,
-``p_home_minus_1_5``, ``p_away_minus_1_5``, ``p_over_{4.5..7.5}``). Totals on whole numbers
-(push possible) wait for the score matrix (phase C) and are left out, counted.
+``p_home_minus_1_5``, ``p_away_minus_1_5``, ``p_over_{4.5..7.5}``), or, where the history
+has score matrices (M6 phase C), at the exact book line: a whole-number total is priced as
+P(over | no push), which is what a devigged book price means.
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ from scipy.optimize import minimize
 
 from nhl.betting import devig
 from nhl.betting import lines as lines_mod
+from nhl.sim import markets
 from nhl.storage import keys
 from nhl.storage.s3 import Store
 
@@ -72,16 +74,37 @@ def market_probs(lines: pl.DataFrame, points: tuple[str, ...]) -> pl.DataFrame:
     ])
 
 
+def attach_model(rows: pl.DataFrame, prices: pl.DataFrame) -> pl.DataFrame:
+    """``rows`` (``game_id, market, line``) with ``p_model`` (side 1, given no push) and
+    ``p_push``. With score matrices every line is priced exactly (a 6.0 total included);
+    otherwise only the simulator's fixed lines (:func:`model_probs`) match."""
+    if "score_matrix" not in prices.columns:
+        return rows.join(model_probs(prices), on=["game_id", "market", "line"], how="inner", nulls_equal=True).with_columns(
+            pl.lit(0.0).alias("p_push"))
+    with_m = prices.filter(pl.col("score_matrix").is_not_null())
+    without = prices.filter(pl.col("score_matrix").is_null())
+    out = []
+    if without.height:
+        out.append(attach_model(rows.filter(pl.col("game_id").is_in(without["game_id"].implode())), without.drop("score_matrix")))
+    mats = with_m.select("game_id", "score_matrix")
+    for (market,), part in rows.join(mats, on="game_id", how="inner").partition_by("market", as_dict=True).items():
+        m = part["score_matrix"].to_numpy()
+        lines_ = None if market == "moneyline" else part["line"].to_numpy()
+        win, push = markets.line_probs(m, market, lines_)
+        p = np.where(push < 1, win / np.maximum(1 - push, 1e-9), 0.5)
+        out.append(part.drop("score_matrix").with_columns(pl.Series("p_model", p), pl.Series("p_push", push)))
+    return pl.concat(out) if out else rows.with_columns(pl.lit(None, dtype=pl.Float64).alias("p_model"), pl.lit(None, dtype=pl.Float64).alias("p_push"))
+
+
 def dataset(lines: pl.DataFrame, prices: pl.DataFrame, scores: pl.DataFrame) -> pl.DataFrame:
     """Closing consensus joined to the model at the same line, graded: ``game_id, season,
     market, line, p_market, p_model, y`` (pushes and unpriced lines dropped, counted)."""
-    close = market_probs(lines, ("close", "last"))
-    j = close.join(model_probs(prices), on=["game_id", "market", "line"], how="left", nulls_equal=True)
-    missing = j.filter(pl.col("p_model").is_null() & pl.col("game_id").is_in(prices["game_id"].implode()))
-    if missing.height:
-        logger.info("closing lines without a model price (whole-number totals etc.): %s",
-                    dict(missing.group_by("market").len().iter_rows()))
-    graded = lines_mod.grade(j.filter(pl.col("p_model").is_not_null()), scores)
+    close = market_probs(lines, ("close", "last")).filter(pl.col("game_id").is_in(prices["game_id"].implode()))
+    j = attach_model(close, prices)
+    missing = close.height - j.height
+    if missing:
+        logger.info("closing lines without a model price (whole-number totals without score matrices): %d", missing)
+    graded = lines_mod.grade(j, scores)
     return graded.filter(pl.col("y").is_not_null()).rename({"p_fair": "p_market"})
 
 
@@ -171,7 +194,7 @@ def simulate_bets(lines: pl.DataFrame, prices: pl.DataFrame, scores: pl.DataFram
         .group_by("game_id", "market", "line").agg(pl.col("price_1").max(), pl.col("price_2").max(), pl.len().alias("open_books"))
     )
     cand = (
-        open_cons.join(model_probs(prices), on=["game_id", "market", "line"], how="inner", nulls_equal=True)
+        attach_model(open_cons, prices)
         .join(best, on=["game_id", "market", "line"], how="inner", nulls_equal=True)
         .join(close_cons, on=["game_id", "market"], how="left")
     )
@@ -184,11 +207,12 @@ def simulate_bets(lines: pl.DataFrame, prices: pl.DataFrame, scores: pl.DataFram
         p1 = _sigmoid(z)
         for side, p, price in ((1, p1, part["price_1"].to_numpy()), (2, 1 - p1, part["price_2"].to_numpy())):
             d = devig.decimal(price)
-            ev = p * d - 1
+            no_push = 1 - part["p_push"].to_numpy()
+            ev = no_push * (p * d - 1)  # a push returns the stake
             take = ev >= min_edge[market]
             if not take.any():
                 continue
-            kelly = np.clip(KELLY_FRACTION * ev / (d - 1), 0, MAX_BET)
+            kelly = np.clip(KELLY_FRACTION * (p * d - 1) / (d - 1), 0, MAX_BET)
             sel = part.filter(pl.Series(take))
             same_line = (sel["close_line"].is_null() & sel["line"].is_null()) | (sel["close_line"] == sel["line"])
             p_close = sel["p_close"].to_numpy() if side == 1 else 1 - sel["p_close"].to_numpy()
@@ -244,6 +268,11 @@ def load_prices(store: Store, seasons: list[int]) -> tuple[pl.DataFrame, dict[in
     actual-lineup backtest (labelled, since it knows the lineup and starter)."""
     frames, used = [], {}
     for season in seasons:
+        hist = store.get_parquet(keys.pregame_history(season))
+        if hist is not None:
+            frames.append(hist)
+            used[season] = "pregame + score matrix"
+            continue
         pg = store.get_parquet(keys.pregame_backtest(season))
         if pg is not None:
             frames.append(pg.filter(pl.col("variant") == "pregame"))
@@ -256,35 +285,46 @@ def load_prices(store: Store, seasons: list[int]) -> tuple[pl.DataFrame, dict[in
     return pl.concat(frames, how="diagonal_relaxed"), used
 
 
-def write_report(path: Path, used: dict[int, str], info: pl.DataFrame, oos: pl.DataFrame, bets: pl.DataFrame) -> str:
-    """Markdown report of the information test, the out-of-sample blend and the bet simulation."""
+#: Seasonal stretches evaluated separately (2026-10-06: the model trails the close in April
+#: and the playoffs, and matches or beats it November-February).
+SEGMENTS = {"all games": None, "Nov-Feb": (11, 12, 1, 2)}
+
+
+def evaluate_segment(lines: pl.DataFrame, prices: pl.DataFrame, scores: pl.DataFrame) -> dict[str, pl.DataFrame]:
+    data = dataset(lines, prices, scores)
+    return {"info": information_test(data), "oos": blend_out_of_sample(data),
+            "bets": simulate_bets(lines, prices, scores, data)}
+
+
+def write_report(path: Path, used: dict[int, str], segments: dict[str, dict[str, pl.DataFrame]]) -> str:
+    """Markdown report: per segment, the information test, the out-of-sample blend and the
+    bet simulation."""
     def table(df: pl.DataFrame) -> list[str]:
         cols = df.columns
-        fmt = lambda v: f"{v:.4f}" if isinstance(v, float) else str(v)
+        fmt = lambda v: f"{v:.4f}" if isinstance(v, float) else str(v)  # noqa: E731
         return ["| " + " | ".join(cols) + " |", "|" + "---|" * len(cols),
                 *["| " + " | ".join(fmt(v) for v in r) + " |" for r in df.iter_rows()]]
     lines = [
         "# M6 model vs market",
         "",
         "Model prices by season: " + ", ".join(f"{s}: {v}" for s, v in sorted(used.items())) + ". "
-        "Only `pregame` prices are honest; `actual (M4)` knows the lineup and starter, which the "
-        "opening line doesn't.",
-        "",
-        "## Information test (closing consensus vs model, pooled and by season)",
-        "",
-        *table(info.filter(pl.col("season") == "all")),
-        "",
-        "## Out of sample: rolling blend vs the closing market",
-        "",
-        "Positive `gain` would mean the blend beats the close on later seasons.",
-        "",
-        *table(oos),
-        "",
-        "## Betting at the open (¼ Kelly, 2% cap, best non-outlier price)",
-        "",
-        *(table(bet_summary(bets)) if not bets.is_empty() else ["No bets."]),
+        "Only pregame prices are honest; `actual (M4)` knows the lineup and starter, which the "
+        "opening line doesn't. With score matrices every closing line is priced exactly "
+        "(whole-number totals as P(over | no push)).",
         "",
     ]
+    for label, seg in segments.items():
+        bets = seg["bets"]
+        lines += [
+            f"## {label}", "",
+            "### Information test (closing consensus vs model, pooled)", "",
+            *table(seg["info"].filter(pl.col("season") == "all")), "",
+            "### Out of sample: rolling blend vs the closing market", "",
+            "Positive `gain` means the blend beats the close on later seasons.", "",
+            *table(seg["oos"]), "",
+            "### Betting at the open (¼ Kelly, 2% cap, best non-outlier price)", "",
+            *(table(bet_summary(bets)) if not bets.is_empty() else ["No bets."]), "",
+        ]
     text = "\n".join(lines)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text)
@@ -292,9 +332,14 @@ def write_report(path: Path, used: dict[int, str], info: pl.DataFrame, oos: pl.D
 
 
 def run(store: Store, seasons: list[int], report: Path) -> str:
-    """Build lines, evaluate model vs market for ``seasons`` and write the report."""
+    """Build lines, evaluate model vs market for ``seasons`` per :data:`SEGMENTS`, write the report."""
     lines = pl.concat([lines_mod.build(store, s) for s in seasons])
     prices, used = load_prices(store, seasons)
-    scores = store.read_parquet_required(keys.GAMES).filter(pl.col("is_final")).select("game_id", "home_score", "away_score")
-    data = dataset(lines, prices, scores)
-    return write_report(report, used, information_test(data), blend_out_of_sample(data), simulate_bets(lines, prices, scores, data))
+    games = store.read_parquet_required(keys.GAMES).filter(pl.col("is_final"))
+    scores = games.select("game_id", "home_score", "away_score")
+    segments = {}
+    for label, months in SEGMENTS.items():
+        keep = games if months is None else games.filter(pl.col("game_date").dt.month().is_in(list(months)))
+        seg_lines = lines.filter(pl.col("game_id").is_in(keep["game_id"].implode()))
+        segments[label] = evaluate_segment(seg_lines, prices, scores)
+    return write_report(report, used, segments)

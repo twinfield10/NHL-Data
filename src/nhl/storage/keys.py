@@ -270,3 +270,8 @@ def pregame_freshness(day: date, stamp: str) -> str:
 def pregame_latest(day: date) -> str:
     """Pointer to the newest pregame run for a date (JSON with its stamp)."""
     return f"pregame/latest/{day.isoformat()}.json"
+
+
+def pregame_history(season: int) -> str:
+    """Honest pregame prices with score matrices per game (M6 history; pregame variant)."""
+    return f"predictions/pregame_history/{season}.parquet"

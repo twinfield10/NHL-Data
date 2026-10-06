@@ -75,8 +75,9 @@ def poisson_baseline(store: Store, season: int, games: pl.DataFrame) -> pl.DataF
 def run_season(store: Store, season: int, n_sims: int = 1000, scale: float | None = None,
                sigma: float | None = None, pace: float | None = None, snapshots: list[date] | None = None,
                prepared: tuple | None = None, team_prior_h: float | None = None,
-               team_fin_prior_g: float | None = None) -> pl.DataFrame:
-    """Per-game prices, baseline and outcome for one season (``prepared`` = (inputs, constants))."""
+               team_fin_prior_g: float | None = None, matrix: bool = False) -> pl.DataFrame:
+    """Per-game prices, baseline and outcome for one season (``prepared`` = (inputs, constants)).
+    ``matrix`` adds each game's score matrix (:func:`nhl.sim.markets.score_matrix`)."""
     if prepared is None:
         c = sim_constants.estimate(store, season)
         inp = inputs.build_season(store, season, c, snapshots)
@@ -85,6 +86,9 @@ def run_season(store: Store, season: int, n_sims: int = 1000, scale: float | Non
     res = engine.simulate(inp, c, season, n_sims=n_sims, scale=scale, sigma=sigma, pace=pace, team_prior_h=team_prior_h,
                           team_fin_prior_g=team_fin_prior_g)
     priced = pl.concat([inp.games, markets.prices(res)], how="horizontal")
+    if matrix:
+        priced = priced.with_columns(pl.Series("score_matrix", markets.score_matrix(res),
+                                               dtype=pl.Array(pl.Float32, markets.MATRIX_SIZE)))
     base = poisson_baseline(store, season, inp.games)
     shootout = (pl.col("season_type") == "R") & (pl.col("last_period") == 5)
     return priced.join(base, on="game_id", how="left").with_columns(

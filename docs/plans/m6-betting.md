@@ -1,6 +1,6 @@
 # Plan: M6 — odds, pricing and betting
 
-**Status:** phases A (lines), B (devig) and a first D (model vs market) built 2026-10-06; **the gate is not passed**. See [Results](#results-2026-10-06). C (score matrix) and E (live) open.
+**Status:** phases A-D built 2026-10-06. With 10 seasons of honest prices and exact-line pricing, **November-February moneylines pass a first gate** (CLV +1.0% ± 0.4%, positive in both eras); totals fail. See [Phase C/D results](#phase-cd-results-2026-10-06). E (live paper trading) is next.
 **Depends on:** captured odds (`external/odds/...`: LowVig, 4Casters, ESPN-listed books live;
 SBR archive and ESPN history), M4 simulator, M5 pregame inputs (`pregame/prices`, and the
 `pregame` variant of `predictions/pregame_backtest`).
@@ -185,3 +185,35 @@ Code: `src/nhl/betting/` (`lines.py`, `devig.py`, `evaluate.py`), `nhl evaluate-
   not flag bets yet. Next accuracy work belongs in the model (the M4 calibration and
   2025-26 gaps, team terms, goalie terms) and in timing: bets placed when news (starters,
   lines) lands before the market moves, which only forward paper trading can measure.
+
+## Phase C/D results (2026-10-06)
+**Phase C.** Each simulated game stores its score matrix (P(home = i, away = j, ended in
+regulation / OT / shootout), i, j ≤ 12; `nhl.sim.markets.score_matrix`), so any line is priced
+exactly; a whole-number total is P(over | no push), comparable with a devigged price.
+`nhl pregame-history` writes honest pregame prices with matrices for 2016-17..2025-26
+(`predictions/pregame_history/`, ~7 min per season), including the goalie-candidate fix,
+same-day rating snapshots and replacement-level defaults. On 2021-26 moneyline log loss
+moved by ≤ 0.0003 from the M5 run, as expected.
+
+**Phase D, 10 seasons** (`nhl evaluate-betting`, [report](../reports/m6-model-vs-market.md)):
+
+| | moneyline | puck line | totals |
+|---|---|---|---|
+| Blend vs close, out of sample, all games | +0.0005 | −0.0002 | +0.0008 |
+| Blend vs close, out of sample, Nov-Feb | **+0.0009** | +0.0003 | **+0.0013** |
+| CLV at the open, Nov-Feb (bets) | **+0.99% ± 0.40%** (1,621) | +0.27% ± 0.23% (557) | **−0.95% ± 0.34%** (1,211) |
+| CLV at the open, all games | +0.26% ± 0.30% (2,636) | +1.40% ± 0.31% (319, 2023-26 only) | −1.03% ± 0.22% (1,991) |
+
+- **Hold-out check.** Nov-Feb was chosen after looking at 2021-26, so 2016-21 is the honest
+  test: moneyline CLV there is **+1.1%** (444 bets) vs +0.96% in 2021-26 (1,177); the
+  out-of-sample blend gain +0.0005 vs +0.0013. Same sign, smaller in the hold-out. Totals CLV
+  is negative in both eras (−1.7%, −0.4%).
+- **ROI** is +6-11% on moneyline bets but noisy (2016-21: +5.9% ± 5.2%). CLV is the metric.
+- **Reading:** mid-season moneylines are the one place the model reliably moves toward the
+  close. For totals, the model's opening-line edges are the wrong way: the market moves
+  against them. Don't bet totals at the open.
+- **Caveats:** 2016-22 opening prices are the SBR consensus (not one bettable book); the edge
+  thresholds and ¼ Kelly weren't tuned; ~1% CLV is thin after real-world limits and line
+  shopping. Forward paper trading is the real test.
+- **Next (phase E):** `nhl edges` and the paper ledger, flagging **Nov-Feb moneylines only**
+  at first, graded on live CLV against our own captured closes.

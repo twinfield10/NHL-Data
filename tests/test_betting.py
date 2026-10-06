@@ -96,3 +96,23 @@ def test_fit_logit_recovers_coefficients_and_model_probs_shape():
     assert mp.height == 3 + len(E.TOTAL_LINES)
     home_plus = mp.filter((pl.col("market") == "puckline") & (pl.col("line") == 1.5))["p_model"][0]
     assert abs(home_plus - 0.8) < 1e-12  # home +1.5 wins unless the away side wins by 2+
+
+
+def test_attach_model_prices_whole_number_totals_from_score_matrix():
+    from nhl.betting import evaluate as E
+    from nhl.sim import markets as M
+
+    k = M.MAX_GOALS + 1
+    m = np.zeros((1, M.MATRIX_SIZE), dtype=np.float32)
+    # 40% 4-2 (total 6, home by 2), 35% 3-2 (total 5), 25% 2-3 in OT (total 5).
+    m[0, 0 * k * k + 4 * k + 2] = 0.40
+    m[0, 0 * k * k + 3 * k + 2] = 0.35
+    m[0, 1 * k * k + 2 * k + 3] = 0.25
+    prices = pl.DataFrame({"game_id": [7], "score_matrix": [m[0]]}, schema={"game_id": pl.Int64, "score_matrix": pl.Array(pl.Float32, M.MATRIX_SIZE)})
+    rows = pl.DataFrame({"game_id": [7, 7, 7, 7], "market": ["moneyline", "puckline", "total", "total"], "line": [None, -1.5, 6.0, 5.5]})
+    out = E.attach_model(rows, prices).sort("market", "line")
+    got = {(r["market"], r["line"]): (r["p_model"], r["p_push"]) for r in out.iter_rows(named=True)}
+    assert abs(got[("moneyline", None)][0] - 0.75) < 1e-6
+    assert abs(got[("puckline", -1.5)][0] - 0.40) < 1e-6
+    assert abs(got[("total", 6.0)][1] - 0.40) < 1e-6 and got[("total", 6.0)][0] < 1e-6  # over 6.0 never wins; 40% push
+    assert abs(got[("total", 5.5)][0] - 0.40) < 1e-6 and got[("total", 5.5)][1] == 0

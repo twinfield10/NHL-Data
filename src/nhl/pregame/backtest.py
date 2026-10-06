@@ -74,28 +74,36 @@ def mixture(probs: pl.DataFrame, games: pl.DataFrame, top: int = 2) -> list[tupl
 
 def _priced(store: Store, season: int, games: pl.DataFrame, dep: pl.DataFrame, starts: pl.DataFrame,
             c: dict, snapshots: list[date], history: pl.DataFrame, n_sims: int,
-            team_res: dict | None = None) -> pl.DataFrame:
+            team_res: dict | None = None, matrix: bool = False) -> pl.DataFrame:
     inp = inputs.build_inputs(store, season, games, dep, starts, c, snapshots, history=history, team_res=team_res)
-    return sim_backtest.run_season(store, season, n_sims=n_sims, prepared=(inp, c))
+    return sim_backtest.run_season(store, season, n_sims=n_sims, prepared=(inp, c), matrix=matrix)
 
 
 def _mixed(store: Store, season: int, games: pl.DataFrame, dep: pl.DataFrame, pairs: list[tuple[pl.DataFrame, np.ndarray]],
-           c: dict, snapshots: list[date], history: pl.DataFrame, n_sims: int, team_res: dict) -> pl.DataFrame:
-    base, acc = None, None
+           c: dict, snapshots: list[date], history: pl.DataFrame, n_sims: int, team_res: dict,
+           matrix: bool = False) -> pl.DataFrame:
+    base, acc, acc_m = None, None, None
     weights = games.select("game_id")
     for i, (starts, w) in enumerate(pairs):
-        r = _priced(store, season, games, dep, starts, c, snapshots, history, n_sims, team_res)
+        r = _priced(store, season, games, dep, starts, c, snapshots, history, n_sims, team_res, matrix)
         wcol = r.select("game_id").join(weights.with_columns(pl.Series("w", w)), on="game_id", how="left", maintain_order="left")["w"].to_numpy()
         part = r.select(PRICE_COLS).to_numpy() * wcol[:, None]
+        part_m = r["score_matrix"].to_numpy() * wcol[:, None] if matrix else None
         if base is None:
-            base, acc = r, part
+            base, acc, acc_m = r, part, part_m
         else:
             acc = acc + part
-    return base.with_columns(*[pl.Series(col, acc[:, j]) for j, col in enumerate(PRICE_COLS)])
+            acc_m = acc_m + part_m if matrix else None
+    out = base.with_columns(*[pl.Series(col, acc[:, j]) for j, col in enumerate(PRICE_COLS)])
+    if matrix:
+        out = out.with_columns(pl.Series("score_matrix", acc_m.astype(np.float32), dtype=base.schema["score_matrix"]))
+    return out
 
 
-def run_season(store: Store, season: int, n_sims: int = 1000, snapshots: list[date] | None = None) -> pl.DataFrame:
-    """All four variants for one season, stacked with a ``variant`` column."""
+def run_season(store: Store, season: int, n_sims: int = 1000, snapshots: list[date] | None = None,
+               variants: tuple[str, ...] = VARIANTS, matrix: bool = False) -> pl.DataFrame:
+    """The requested variants for one season, stacked with a ``variant`` column; ``matrix``
+    stores each game's score matrix (for pricing any book line, M6)."""
     snapshots = snapshots if snapshots is not None else inputs.snapshot_dates(store)
     c = sim_constants.estimate(store, season)
     games = store.read_parquet_required(keys.GAMES).filter((pl.col("season") == season) & pl.col("is_final"))
@@ -110,12 +118,13 @@ def run_season(store: Store, season: int, n_sims: int = 1000, snapshots: list[da
     dep_proj = lineups.project(store, targets, span)
     pairs = mixture(starter_probs(store, season), games)
 
-    out = {
-        "actual": _priced(store, season, games, dep_actual, starts_actual, c, snapshots, history, n_sims, team_res),
-        "lineup": _priced(store, season, games, dep_proj, starts_actual, c, snapshots, history, n_sims, team_res),
-        "goalie": _mixed(store, season, games, dep_actual, pairs, c, snapshots, history, n_sims, team_res),
-        "pregame": _mixed(store, season, games, dep_proj, pairs, c, snapshots, history, n_sims, team_res),
+    build = {
+        "actual": lambda: _priced(store, season, games, dep_actual, starts_actual, c, snapshots, history, n_sims, team_res, matrix),
+        "lineup": lambda: _priced(store, season, games, dep_proj, starts_actual, c, snapshots, history, n_sims, team_res, matrix),
+        "goalie": lambda: _mixed(store, season, games, dep_actual, pairs, c, snapshots, history, n_sims, team_res, matrix),
+        "pregame": lambda: _mixed(store, season, games, dep_proj, pairs, c, snapshots, history, n_sims, team_res, matrix),
     }
+    out = {v: build[v]() for v in variants}
     return pl.concat([r.with_columns(pl.lit(v).alias("variant")) for v, r in out.items()], how="diagonal_relaxed")
 
 
@@ -129,6 +138,20 @@ def run(store: Store, seasons: list[int], n_sims: int = 1000) -> pl.DataFrame:
             v: round(sim_backtest.summarize(r.filter(pl.col("variant") == v))["logloss_sim"], 4) for v in VARIANTS
         })
     return pl.concat(frames)
+
+
+def run_history(store: Store, seasons: list[int], n_sims: int = 1000) -> list[int]:
+    """Honest pregame prices with score matrices per season, for M6 (``pregame`` variant only):
+    writes :func:`keys.pregame_history`. Returns the seasons written."""
+    snapshots = inputs.snapshot_dates(store)
+    done = []
+    for season in seasons:
+        r = run_season(store, season, n_sims, snapshots, variants=("pregame",), matrix=True)
+        store.put_parquet(keys.pregame_history(season), r)
+        logger.info("%s: pregame history %d games, moneyline log loss %.4f", season, r.height,
+                    sim_backtest.summarize(r)["logloss_sim"])
+        done.append(season)
+    return done
 
 
 def summary(results: pl.DataFrame) -> pl.DataFrame:

@@ -290,6 +290,15 @@ def cmd_backtest_pregame(args: argparse.Namespace) -> None:
     print(backtest.write_report(results, backtest.lineup_accuracy(store, seasons), Path(args.report)))
 
 
+def cmd_pregame_history(args: argparse.Namespace) -> None:
+    """M6: honest pregame prices with score matrices for past seasons."""
+    from nhl.pregame import backtest
+    from nhl.storage.s3 import Store
+
+    seasons = [config.season_id(y) for y in config.parse_seasons(args.seasons)]
+    print(backtest.run_history(Store(), seasons, n_sims=args.sims))
+
+
 def cmd_pregame(args: argparse.Namespace) -> None:
     """M5: project lineups and starters, price today's games, write pregame snapshots."""
     from datetime import date
@@ -600,6 +609,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--report", default="docs/reports/m5-pregame-backtest.md")
     p.set_defaults(func=cmd_backtest_pregame)
 
+    p = sub.add_parser("pregame-history", help="M6: honest pregame prices with score matrices for past seasons")
+    p.add_argument("--seasons", default="2016-2025")
+    p.add_argument("--sims", type=int, default=1000)
+    p.set_defaults(func=cmd_pregame_history)
+
     p = sub.add_parser("pregame", help="M5: project lineups/starters and price today's games (snapshots)")
     p.add_argument("--date", help="game date (default: today, Eastern)")
     p.add_argument("--sims", type=int, default=4000)
@@ -612,7 +626,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=cmd_evaluate_deployment)
 
     p = sub.add_parser("evaluate-betting", help="M6: model vs closing market, blend, bets at the open")
-    p.add_argument("--seasons", default="2021-2025")
+    p.add_argument("--seasons", default="2016-2025")
     p.add_argument("--report", default="docs/reports/m6-model-vs-market.md")
     p.set_defaults(func=cmd_evaluate_betting)
 
