@@ -246,3 +246,30 @@ On 2016-2019 with both team terms on, at strength 1.2 (1.3 was worse everywhere)
   many one-goal regulation finishes; σ can only trade one for the other. The fix is the
   late-game item above: per-minute 3rd-period score effects.
 
+### Late-game score effects (2026-10-06)
+**What changed.** The per-period additive score terms were replaced with 5v5 multipliers by
+the team's lead (−2..+2) × game state:
+- states: period 1, period 2, and the 3rd period by time left (20-10, 10-5, 5-2, 2-0 min);
+- estimated from the three prior seasons, controlling for quality (team season 5v5 GF/60 ×
+  opponent GA/60);
+- each cell shrunk with 30 expected goals, and the grid normalised to an exposure-weighted
+  mean of 1.
+
+**Data (2016-2025, multiplier on expected 5v5 scoring).**
+- Tied games tighten late: 0.95 (3rd, 20-10) → 0.87 (10-5) → 0.76 (5-2) → 0.70 (last 2 min).
+- Leading by one sits back: 0.83 (10-5), 0.68 (5-2).
+- The 2nd period runs 15-20% above the 1st (the long change).
+
+**Result (test seasons):**
+
+| Metric | Before | After | Actual |
+|---|---|---|---|
+| Moneyline log loss | 0.6615 | 0.6613 | |
+| Puck line | 0.6110 | 0.6107 | |
+| 2+ goal margins | 58.2% | 59.1% | 59.7% |
+| OT rate | 20.9% | 20.9% | 22.4% |
+
+The OT shortfall is unchanged, so its cause is elsewhere. Next suspect: late equalizers
+with the goalie pulled (extra-attacker scoring and pull timing), which decide how many
+one-goal games end tied.
+

@@ -10,7 +10,9 @@ arrays of shape (games, sims). Each step:
    returns after any goal, and the hazard for the new deficit applies again.
 2. **Rates.** The goal rate for the state:
    - an empty net: the extra-attacker or empty-net rate;
-   - even: 5v5 (+ score effect by lead and period), 4v4 or 3v3;
+   - even: 5v5 × the score-state multiplier for the lead (−2..+2) and game-state bucket
+     (periods 1-2, then the 3rd by time left; :func:`nhl.sim.constants._score_state_multipliers`),
+     4v4 or 3v3;
    - otherwise the power-play / short-handed rates (a two-man advantage scales the PP
      rate up).
 3. **Events.** At most one goal per step, and penalties at each team's rate (not while
@@ -183,9 +185,13 @@ def simulate(inputs: SeasonInputs, constants: dict, season: int, n_sims: int = 1
     en_goals = np.zeros(shape, np.int16)
     pulled_s = np.zeros(shape, np.int32)
 
+    # 5v5 score effects by lead and game-state bucket (empirical, quality-controlled); the
+    # older per-period additive EV score terms are the fallback.
+    state_mult = np.array(constants["score_state_mult"]) if "score_state_mult" in constants else None
     for t in range(0, REGULATION_S, DT):
         period = t // 1200
         remaining = REGULATION_S - t
+        bucket_idx = period if period < 2 else (2 if remaining > 600 else 3 if remaining > 300 else 4 if remaining > 120 else 5)
         active = {s: (timers[s] > 0).sum(axis=0) for s in ("home", "away")}
         n = {s: np.clip(5 - active[s], 3, 5) for s in ("home", "away")}
         lead_h = (hs - as_).astype(np.int32)
@@ -204,8 +210,10 @@ def simulate(inputs: SeasonInputs, constants: dict, season: int, n_sims: int = 1
 
         def even_rate(side: str, lead: np.ndarray) -> np.ndarray:
             k = n[side]
-            sc = score_terms[np.clip(lead, -3, 3) + 3, period]
-            five = np.maximum(r[f"5v5_{side}"] + sc, 0.05)
+            if state_mult is not None:
+                five = r[f"5v5_{side}"] * state_mult[np.clip(lead, -2, 2) + 2, bucket_idx]
+            else:
+                five = np.maximum(r[f"5v5_{side}"] + score_terms[np.clip(lead, -3, 3) + 3, period], 0.05)
             return np.where(k == 5, five, np.where(k == 4, r[f"4v4_{side}"], r[f"3v3_{side}"]))
 
         rates = {}

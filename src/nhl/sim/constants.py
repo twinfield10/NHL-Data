@@ -95,6 +95,62 @@ def _score_time_share(stints: pl.DataFrame) -> list[list[float]]:
     return grid
 
 
+#: 5v5 game-state buckets for score effects: periods 1 and 2, then the 3rd by seconds remaining.
+STATE_BUCKETS = ("p1", "p2", "p3_20_10", "p3_10_5", "p3_5_2", "p3_2_0")
+STATE_PRIOR_GOALS = 30.0
+
+
+def _state_bucket(period: pl.Expr, remaining: pl.Expr) -> pl.Expr:
+    return (
+        pl.when(period == 1).then(0).when(period == 2).then(1)
+        .when(remaining > 600).then(2).when(remaining > 300).then(3).when(remaining > 120).then(4).otherwise(5)
+    )
+
+
+def _score_state_multipliers(stints: pl.DataFrame, team_logs: pl.DataFrame) -> list[list[float]]:
+    """5v5 goal-rate multipliers by the team's lead (−2..+2) and game-state bucket.
+
+    Exposure controls for team quality: team's season 5v5 goals/60 × opponent's season 5v5
+    goals-against/60 ÷ league, times the time in the state. Each cell is shrunk toward 1
+    with ``STATE_PRIOR_GOALS`` expected goals. Late in tied games scoring drops to ~0.7×
+    (teams play for the point), which is what produces overtime.
+    """
+    five = team_logs.filter(pl.col("strength") == "5v5").join(
+        stints.select("game_id", "season").unique(), on="game_id", how="semi"
+    )
+    games_season = stints.select("game_id", "season").unique()
+    rates = five.join(games_season, on="game_id").group_by("season", "team_id").agg(
+        (pl.col("gf").sum() / (pl.col("toi_s").sum() / 3600)).alias("gf60"),
+        (pl.col("ga").sum() / (pl.col("toi_s").sum() / 3600)).alias("ga60"),
+    )
+    league = float(five["gf"].sum() / (five["toi_s"].sum() / 3600))
+    s = stints.filter(
+        pl.col("valid_personnel") & (pl.col("period") <= 3) & (pl.col("home_n") == 5) & (pl.col("away_n") == 5)
+        & pl.col("home_goalie").is_not_null() & pl.col("away_goalie").is_not_null()
+    ).with_columns(_state_bucket(pl.col("period"), REGULATION_S - pl.col("start_s")).alias("bucket"))
+    lead = (pl.col("home_score").cast(pl.Int16) - pl.col("away_score").cast(pl.Int16)).clip(-2, 2)
+    parts = []
+    for own, opp, sign in (("home", "away", 1), ("away", "home", -1)):
+        part = s.select(
+            "season", "bucket", (lead * sign).alias("lead"), pl.col(f"{own}_gf").alias("g"), "duration_s",
+            pl.col(f"{own}_team_id").alias("team_id"), pl.col(f"{opp}_team_id").alias("opp_id"),
+        ).join(rates.select("season", "team_id", "gf60"), on=["season", "team_id"]).join(
+            rates.select("season", pl.col("team_id").alias("opp_id"), "ga60"), on=["season", "opp_id"]
+        )
+        parts.append(part.with_columns((pl.col("gf60") * pl.col("ga60") / league * pl.col("duration_s") / 3600).alias("e")))
+    t = pl.concat(parts).group_by("lead", "bucket").agg(pl.col("g").sum(), pl.col("e").sum())
+    grid = [[1.0] * len(STATE_BUCKETS) for _ in range(5)]
+    weight = [[0.0] * len(STATE_BUCKETS) for _ in range(5)]
+    for lead_v, bucket, g, e in t.iter_rows():
+        grid[int(lead_v) + 2][int(bucket)] = float((g + STATE_PRIOR_GOALS) / (e + STATE_PRIOR_GOALS))
+        weight[int(lead_v) + 2][int(bucket)] = float(e)
+    # Normalise to an exposure-weighted mean of 1: the grid reshapes *when* goals come
+    # (by score and time), not how many; the scoring level is set elsewhere.
+    total = sum(sum(row) for row in weight)
+    mean = sum(grid[i][j] * weight[i][j] for i in range(5) for j in range(len(STATE_BUCKETS))) / total
+    return [[v / mean for v in row] for row in grid]
+
+
 def _previous_context(store: Store, season: int) -> dict[str, float]:
     """EV context terms (home, rest, score, coaches, …) from the last rating snapshot of the
     previous season: fully estimated, and known before ``season`` starts. In-season
@@ -333,6 +389,7 @@ def estimate(store: Store, season: int) -> dict:
         **_rates(stints, regular_ot), "pull": _pulls(stints), "pull_hazard": _pull_hazard(stints),
         "pull_bucket_s": PULL_BUCKET_S, **_penalties(events, team_logs),
         "score_time_share": _score_time_share(stints), "ev_context": _previous_context(store, season),
+        "score_state_mult": _score_state_multipliers(stints, team_logs),
         **_playoff_factors(store, start),
         **_penalty_states(
             pl.concat([stints, _playoff_stints(store, start)], how="diagonal_relaxed").unique(["game_id", "stint_id"]),
