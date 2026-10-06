@@ -89,13 +89,43 @@ def _penalty_length(rng: np.random.Generator, constants: dict, shape: tuple[int,
 STRENGTH_SCALE = 1.2
 PACE_SCALE = 1.0
 GAME_SIGMA = 0.3
+#: Team-level term: a team's running 5v5 residual (actual − rating-predicted xG) per hour,
+#: shrunk with TEAM_PRIOR_H hours of zero evidence, added to its offence (and to the
+#: opponent's offence via its defence residual). 0 hours of shrinkage = off.
+TEAM_PRIOR_H = 30.0  # 2016-19 tuning: off 0.6773, 100 h 0.6772, 30 h 0.6770; out of sample 0.6633 -> 0.6615
+#: Team defence beyond xG and the goalie: the running (goals against − talent-adjusted
+#: expected) ratio, shrunk with TEAM_FIN_PRIOR_G expected goals of zero evidence, multiplies
+#: the opponent's 5v5 goals. 0 = off. (Team *offence* beyond its shooters doesn't persist.)
+TEAM_FIN_PRIOR_G = 500.0  # tuned on 2016-2019: off 0.6773, 1000 0.6769, 500 0.6765, 250 0.6766
 _LEAGUE_KEYS = {"5v5": "goals60_5v5", "pp": "goals60_pp", "sh": "goals60_sh", "4v4": "goals60_4v4", "3v3": "goals60_3v3"}
 
 
-def _calibrated_rates(inputs: SeasonInputs, constants: dict, scale: float, pace: float, sigma: float,
-                      rng: np.random.Generator, n_sims: int) -> dict[str, np.ndarray]:
-    """(G, N) rates after the pace / strength / game-shock calibration (empty-net rates untouched)."""
+def team_term(inputs: SeasonInputs, prior_h: float, fin_prior_g: float = 0.0) -> dict[str, np.ndarray]:
+    """Per game and side, the multiplier on 5v5 goals from the shrunk team residuals:
+    xG residuals (``prior_h``) and the opponent's defensive goals residual (``fin_prior_g``)."""
     g = inputs.games.height
+    out = {"home": np.ones(g), "away": np.ones(g)}
+    tr = inputs.team_res
+    if tr is None:
+        return out
+    for side, opp in (("home", "away"), ("away", "home")):
+        if prior_h:
+            off = tr[f"off_{side}"] / (tr[f"hours_{side}"] + prior_h)
+            dfn = tr[f"def_{opp}"] / (tr[f"hours_{opp}"] + prior_h)
+            xg = inputs.xg60_5v5[side]
+            out[side] = out[side] * np.clip((xg + off + dfn) / xg, 0.6, 1.6)
+        if fin_prior_g and f"fin_def_{opp}" in tr:
+            out[side] = out[side] * np.clip(1 + tr[f"fin_def_{opp}"] / (tr[f"fin_xdef_{opp}"] + fin_prior_g), 0.7, 1.4)
+    return out
+
+
+def _calibrated_rates(inputs: SeasonInputs, constants: dict, scale: float, pace: float, sigma: float,
+                      rng: np.random.Generator, n_sims: int, team_prior_h: float = 0.0,
+                      team_fin_prior_g: float = 0.0) -> dict[str, np.ndarray]:
+    """(G, N) rates after the team term and the pace / strength / game-shock calibration
+    (empty-net rates untouched)."""
+    g = inputs.games.height
+    team = team_term(inputs, team_prior_h, team_fin_prior_g)
     z = rng.normal(0.0, sigma, (g, n_sims)) if sigma > 0 else np.zeros((g, n_sims))
     out = {}
     # Centre on the level-adjusted league rate, so the pace scale shrinks team differences
@@ -103,8 +133,9 @@ def _calibrated_rates(inputs: SeasonInputs, constants: dict, scale: float, pace:
     level = inputs.level if inputs.level is not None else np.ones(g)
     for state, league_key in _LEAGUE_KEYS.items():
         league = constants[league_key] * level
-        xh = np.log(np.maximum(inputs.goals60[f"{state}_home"], 1e-6) / league)
-        xa = np.log(np.maximum(inputs.goals60[f"{state}_away"], 1e-6) / league)
+        th, ta = (team["home"], team["away"]) if state in ("5v5", "4v4", "3v3") else (1.0, 1.0)
+        xh = np.log(np.maximum(inputs.goals60[f"{state}_home"] * th, 1e-6) / league)
+        xa = np.log(np.maximum(inputs.goals60[f"{state}_away"] * ta, 1e-6) / league)
         m, d = (xh + xa) / 2, (xh - xa) / 2
         out[f"{state}_home"] = league[:, None] * np.exp((pace * m + scale * d)[:, None] + z / 2)
         out[f"{state}_away"] = league[:, None] * np.exp((pace * m - scale * d)[:, None] - z / 2)
@@ -114,14 +145,17 @@ def _calibrated_rates(inputs: SeasonInputs, constants: dict, scale: float, pace:
 
 
 def simulate(inputs: SeasonInputs, constants: dict, season: int, n_sims: int = 1000, seed: int = 7,
-             scale: float | None = None, sigma: float | None = None, pace: float | None = None) -> SimResult:
+             scale: float | None = None, sigma: float | None = None, pace: float | None = None,
+             team_prior_h: float | None = None, team_fin_prior_g: float | None = None) -> SimResult:
     """Simulate every game in ``inputs`` ``n_sims`` times."""
     rng = np.random.default_rng(seed)
     g = inputs.games.height
     shape = (g, n_sims)
     pace = PACE_SCALE if pace is None else pace
     r = _calibrated_rates(inputs, constants, STRENGTH_SCALE if scale is None else scale, pace,
-                          GAME_SIGMA if sigma is None else sigma, rng, n_sims)
+                          GAME_SIGMA if sigma is None else sigma, rng, n_sims,
+                          TEAM_PRIOR_H if team_prior_h is None else team_prior_h,
+                          TEAM_FIN_PRIOR_G if team_fin_prior_g is None else team_fin_prior_g)
     league_pen = constants["penalty_rate60"]
     home_pen = constants.get("penalty_home_factor", 1.0)
     pen = {

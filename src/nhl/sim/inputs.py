@@ -50,6 +50,9 @@ class SeasonInputs:
     score_terms: np.ndarray  # (7 leads, 3 periods) EV score effect on goals/60, centred
     xg60_5v5: dict[str, np.ndarray]  # for diagnostics
     level: np.ndarray | None = None  # per-game league scoring level (already in goals60)
+    # Team residual evidence to date (before each game): Σ(actual − rating-predicted) 5v5 xG
+    # and 5v5 hours, for each side's offence and defence. See :func:`team_residuals`.
+    team_res: dict[str, np.ndarray] | None = None
 
 
 def snapshot_dates(store: Store) -> list[date]:
@@ -139,6 +142,7 @@ def build_season(store: Store, season: int, constants: dict, snapshots: list[dat
         score_terms=_score_terms(constants),
         xg60_5v5={s: table[f"xg60_5v5_{s}"].to_numpy() for s in ("home", "away")},
         level=level,
+        team_res={**team_residuals(store, season, table), **team_finishing_residuals(store, season, table, snapshots)},
     )
 
 
@@ -215,6 +219,104 @@ def scoring_level(games: pl.DataFrame, table: pl.DataFrame, constants: dict) -> 
          / constants["goals_per_game_lookback"]).alias("level")
     )
     return lvl["level"].to_numpy()
+
+
+def team_residuals(store: Store, season: int, table: pl.DataFrame) -> dict[str, np.ndarray]:
+    """Running team-level residuals: what the team did at 5v5 beyond its player ratings.
+
+    For each earlier game of the season, offence residual = actual 5v5 xGF − the rating-based
+    prediction for that game (``xg60_5v5`` × 5v5 hours); defence residual = actual 5v5 xGA −
+    the opponent's prediction. Summed over the team's games strictly before each game's
+    date, with the 5v5 hours. The engine turns them into a shrunk team term. Captures
+    system, chemistry and form not in the player ratings.
+
+    Returns:
+        ``{"off_home", "def_home", "off_away", "def_away", "hours_home", "hours_away"}``
+        aligned with ``table``.
+    """
+    logs = store.read_parquet_required(keys.team_game_logs(season)).filter(pl.col("strength") == "5v5").select(
+        "game_id", "team_id", "xgf", "xga", (pl.col("toi_s") / 3600).alias("h")
+    )
+    pred = pl.concat([
+        table.select("game_id", "game_date", pl.col("home_team_id").alias("team_id"),
+                     pl.col("xg60_5v5_home").alias("pf"), pl.col("xg60_5v5_away").alias("pa")),
+        table.select("game_id", "game_date", pl.col("away_team_id").alias("team_id"),
+                     pl.col("xg60_5v5_away").alias("pf"), pl.col("xg60_5v5_home").alias("pa")),
+    ])
+    r = pred.join(logs, on=["game_id", "team_id"], how="inner").with_columns(
+        (pl.col("xgf") - pl.col("pf") * pl.col("h")).alias("ro"), (pl.col("xga") - pl.col("pa") * pl.col("h")).alias("rd")
+    )
+    daily = r.group_by("team_id", "game_date").agg(pl.col("ro", "rd", "h").sum()).sort("game_date").with_columns(
+        *[(pl.col(c).cum_sum().over("team_id") - pl.col(c)).alias(f"{c}_td") for c in ("ro", "rd", "h")]
+    ).select("team_id", "game_date", "ro_td", "rd_td", "h_td")
+    out = {}
+    for side in ("home", "away"):
+        j = table.select("game_date", pl.col(f"{side}_team_id").alias("team_id")).join(
+            daily, on=["team_id", "game_date"], how="left"
+        ).with_columns(pl.col("ro_td", "rd_td", "h_td").fill_null(0.0))
+        out[f"off_{side}"], out[f"def_{side}"], out[f"hours_{side}"] = (
+            j["ro_td"].to_numpy(), j["rd_td"].to_numpy(), j["h_td"].to_numpy()
+        )
+    return out
+
+
+def team_finishing_residuals(store: Store, season: int, table: pl.DataFrame, snapshots: list[date]) -> dict[str, np.ndarray]:
+    """Running team residuals of 5v5 **goals** against talent-adjusted expected goals.
+
+    Each past shot's expected value is the finishing model's probability (xG + intercept +
+    defenseman effect + shooter + goalie terms) from the latest rating snapshot before
+    that game, so shooter and goalie form already known then isn't counted again. Summed
+    per team over games strictly before each game's date:
+    * ``fin_off_{side}``: goals for − expected (team finishing beyond its shooters);
+    * ``fin_def_{side}``: goals against − expected (team defence beyond xG and its goalie);
+    * ``fin_n_{side}``: expected goals (for + against) / 2, the evidence weight.
+    Split-half persistence (2012-2025, after full-season player talent): offence about 0,
+    defence 0.13 (0.12 road-only).
+    """
+    from nhl.ratings import finishing as fin_model
+
+    shots = fin_model.load_shots(store, season).join(
+        store.read_parquet_required(keys.xg_predictions(season)).select("game_id", "event_idx", "strength_state"),
+        on=["game_id", "event_idx"],
+    ).filter(pl.col("strength_state") == "5v5")
+    ev = store.read_parquet_required(keys.events(season)).select("game_id", "event_idx", "event_team_id", "home_team_id", "away_team_id")
+    shots = shots.join(ev, on=["game_id", "event_idx"]).with_columns(
+        pl.col("game_date").map_elements(lambda d: _latest_before(snapshots, d), return_dtype=pl.Date).alias("snap")
+    )
+    parts = []
+    for (snap,), part in shots.filter(pl.col("snap").is_not_null()).partition_by("snap", as_dict=True).items():
+        terms = store.read_parquet_required(f"ratings/{snap.isoformat()}/finishing.parquet")
+        if "intercept" not in terms.columns:
+            continue
+        fit = fin_model.Fit(
+            intercept=float(terms["intercept"][0]),
+            terms=terms.select("role", "player_id", "mean", (1 / pl.col("sd") ** 2).alias("precision")),
+            defense=float(terms["defense"][0]),
+        )
+        parts.append(part.with_columns(pl.Series("p", fin_model.predict(fit, part))))
+    if not parts:
+        return {}
+    d = pl.concat(parts).with_columns(
+        pl.when(pl.col("event_team_id") == pl.col("home_team_id")).then(pl.col("away_team_id")).otherwise(pl.col("home_team_id")).alias("opp"),
+        (pl.col("is_goal") - pl.col("p")).alias("r"),
+    )
+    off = d.group_by(pl.col("event_team_id").alias("team_id"), "game_date").agg(pl.col("r").sum().alias("ro"), pl.col("p").sum().alias("po"))
+    dfn = d.group_by(pl.col("opp").alias("team_id"), "game_date").agg(pl.col("r").sum().alias("rd"), pl.col("p").sum().alias("pd"))
+    daily = off.join(dfn, on=["team_id", "game_date"], how="full", coalesce=True).with_columns(
+        pl.col("ro", "po", "rd", "pd").fill_null(0.0)
+    ).sort("game_date").with_columns(
+        *[(pl.col(c_).cum_sum().over("team_id") - pl.col(c_)).alias(f"{c_}_td") for c_ in ("ro", "rd", "po", "pd")]
+    )
+    out = {}
+    for side in ("home", "away"):
+        j = table.select("game_date", pl.col(f"{side}_team_id").alias("team_id")).join(
+            daily.select("team_id", "game_date", "ro_td", "rd_td", "po_td", "pd_td"), on=["team_id", "game_date"], how="left"
+        ).with_columns(pl.col("ro_td", "rd_td", "po_td", "pd_td").fill_null(0.0))
+        out[f"fin_off_{side}"] = j["ro_td"].to_numpy()
+        out[f"fin_def_{side}"] = j["rd_td"].to_numpy()
+        out[f"fin_xoff_{side}"] = j["po_td"].to_numpy()
+        out[f"fin_xdef_{side}"] = j["pd_td"].to_numpy()
+    return out
 
 
 def _score_terms(constants: dict) -> np.ndarray:

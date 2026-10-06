@@ -137,10 +137,9 @@ Backtest of 2016-17..2025-26: 13,187 games, 1,000 simulations each. Calibration 
     Linesmen show no effect.
 
 **Findings / next accuracy work (ranked)**
-1. **A team-level signal is missing.** A blend fitted on the training seasons, of
-   simulator and Poisson (team xG to date) log-odds with weights 0.83 and 0.41, cuts test
-   log loss from 0.6634 to 0.6611. This confirms the M3 open item: add a shrunk
-   team-level term, or blend, and re-test.
+1. ~~A team-level signal is missing.~~ **Resolved with team terms (2026-10-05)**; see
+   [Team terms](#team-terms-2026-10-05). Out of sample: 0.6634 → 0.6615, against 0.6611 for
+   the blend.
 2. **Late-game dynamics.** OT is 1.3 points low and 2+ margins 1.7 points low together:
    too many one-goal regulation finishes. Score effects are per period; Magnus 9 uses
    per-minute terms, and tied-late conservatism is a known effect. Add 3rd-period
@@ -153,4 +152,79 @@ Backtest of 2016-17..2025-26: 13,187 games, 1,000 simulations each. Calibration 
    season. Monitor before reacting.
 5. **Not modelled:** shootout skill, penalties in OT, 5v3 detail beyond a scale factor, and
    in-game goalie changes.
+
+## Tested and rejected: team style matchups (2026-10-05)
+**Question.** Do teams that generate certain kinds of chances (rush, off turnovers, off
+faceoff wins, rebounds, cycle) score more against teams vulnerable to them, beyond each
+team's overall xG for and against?
+
+**Method.**
+- 5v5 shots are classified by the play before them:
+  - rebound: `is_rebound`;
+  - rush: `is_rush_play`;
+  - turnover: opponent giveaway or own takeaway ≤5 s before;
+  - faceoff: faceoff win ≤5 s before;
+  - cycle: everything else.
+- For each type, a Poisson model of team-game xG = league × attacker × defender × arena,
+  shrunk; the arena terms absorb scorer bias.
+- Fit on games before Jan 1, scored on 5v5 goals for the rest of the season, 2016-17..2025-26
+  (Poisson deviance).
+
+**Results.**
+- **About half the apparent style is arena scorer bias.** Split-half persistence of a team's
+  rush / turnover / faceoff xG falls from 0.64 / 0.52 / 0.62 (all games) to 0.38 / 0.31 /
+  0.36 (road games only). Each arena's share of shots tagged as rush varies by about 47%
+  between arenas, turnovers by about 30%.
+- **No matchup interaction.** The full model (Σ over types of attacker × defender) and a
+  separable one (attacker's overall style × defender's overall style) differ by ±0.02
+  deviance at every shrinkage level.
+- **No separable style value either.** Type-decomposed team ratings first appeared to beat
+  aggregate ones (−103 deviance), but only because the aggregate model was over-shrunk:
+  tuned (λ 15 instead of 200), the aggregate model scores 14,802 against 14,808 for the
+  best type-decomposed one.
+
+**Conclusion.** With play-by-play chance types, team style adds nothing to goal prediction
+beyond overall xG for and against. Revisit only with tracking-based chance types (true
+rushes, passes, zone entries), which the NHL doesn't publish at shot level.
+
+## Team terms (2026-10-05)
+**Where the signal was.** A blend test on the out-of-sample seasons added features to the
+simulator's log-odds one at a time:
+- the team's 5v5 xG differential to date: 0.6633 → **0.6612**, the whole gain;
+- special-teams xG: 0.6629;
+- goal differential: 0.6625;
+- last-10 xG differential: 0.6616.
+
+So the player ratings, shrunk toward their priors, credit too little of a team's realised
+5v5 xG. That's system, chemistry or in-season change.
+
+**What went in** (`nhl.sim.engine.team_term`; both from the residuals in `nhl.sim.inputs`):
+- **xG team term.** A team's running 5v5 xG for and against, minus what its ratings predicted
+  for those games, per hour, shrunk with 30 hours of zero evidence. Multiplies its 5v5 goal
+  rates; the opponent's defence residual counts too.
+- **Defence goals term.** A team's running 5v5 goals against, minus the talent-adjusted
+  expectation (shooter and goalie terms from the snapshot in force at each game), shrunk
+  with 500 expected goals. Multiplies the opponent's 5v5 goals.
+- Both were tuned on 2016-2019 only.
+
+**Team finishing and defence beyond the players** (split-half persistence 2012-2025, after
+full-season player talent):
+- offence ≈ 0 (−0.02 all games, 0.03 road): finishing talent lives in the shooters;
+- defence 0.13 (0.12 road): some teams allow better chances than xG and their goalie
+  explain, plausibly the passes public xG can't see. Worth about 0.0004 log loss in-sample
+  and about 0 out of sample, but it improves calibration a little.
+
+**Result (test seasons 2020-21..2025-26, 7,945 games):**
+
+| Metric | Before | After |
+|---|---|---|
+| Moneyline log loss (Poisson 0.6686) | 0.6634 | 0.6615 |
+| Puck line | 0.6124 | 0.6110 |
+| Over 5.5 | 0.6827 | 0.6824 |
+| Over 6.5 | 0.6842 | 0.6840 |
+
+The remaining calibration miss is in the top bin, and it's *under*confidence: favourites
+predicted at 74.8% win 78.3% (about 2 SE). The game shock (σ 0.3) probably pulls heavy
+favourites toward 50%. Next: test a smaller shock for lopsided games, or tune σ jointly
+with the team terms.
 
