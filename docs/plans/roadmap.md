@@ -240,9 +240,11 @@ pregame pipeline reprices a game within minutes of a confirmed change.
 
 ## M6: Odds, pricing and betting
 
-- **Odds capture.** Reuse the Pinnacle tooling in `SportsbookScrapers` and Rebirtha
-  for NHL: snapshots into `s3://tmw-nhl-data/odds/...` (or the shared sportsbook
-  bucket), one table across many books, opening and closing lines.
+Detailed plan: [m6-betting.md](m6-betting.md).
+
+- **Odds capture (built).** LowVig, 4Casters and the ESPN-listed books, polled into
+  `s3://tmw-nhl-data/external/odds/...` as transitions; history from the SBR archive
+  (2010-2022) and ESPN (2019 on). **No Pinnacle** (owner's rule).
 - **Pricing.** Remove the vig (devig) to get the market's fair price. Edge is the
   model probability minus the fair probability for each market and side. Stakes use
   fractional Kelly with a minimum edge and maximum exposure.
@@ -304,9 +306,9 @@ for each step. Needs a prop odds feed.
 
 | Decision | Options | Recommendation |
 |---|---|---|
-| Historical odds for backtests (none in the bucket today) | free archived closing lines (e.g. sportsbookreviewsonline, coverage ends ~2021-22) · paid historical API (e.g. The Odds API, ~2020+) · forward-only capture | Archive for 2015-2022 plus start Pinnacle capture now. Check licensing and ToS first |
+| Historical odds for backtests | archived closing lines · paid historical API · forward-only capture | **Decided:** SBR archive (to 2022-23) plus ESPN history (2019 on); live capture from LowVig, 4Casters and ESPN-listed books. No Pinnacle |
 | Projected lineups and starting goalies | external line-combination and starting-goalie sites (check robots/ToS) · team and beat-reporter feeds · NHL API only (late) | Decide in M5. Start capturing *something* soon, because history of projections is useful for measuring M5 |
-| Odds storage | `tmw-nhl-data/odds/` · shared `tmw-sportsbook-data/nhl/` | Shared bucket if the scraper already writes there, otherwise this bucket |
+| Odds storage | `tmw-nhl-data/odds/` · shared `tmw-sportsbook-data/nhl/` | **Decided:** this bucket, `external/odds/` |
 | Rating method | ridge RAPM · Bayesian hierarchical (slower, gives uncertainty) | **Decided:** ridge with season-to-season priors (Magnus 9 style). The same closed form gives a posterior covariance, (XᵀWX + Λ + K)⁻¹, if the simulator needs rating uncertainty |
 
 ## References
