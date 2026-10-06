@@ -1,6 +1,6 @@
 # Plan: M5 — pregame inputs (projected lineups and starting goalies)
 
-**Status:** phases A (inputs refactor), B (starter model, bar passed) and C (projected lineups, pregame backtest) done 2026-10-06; D-E open.
+**Status:** phases A-D done 2026-10-06 (inputs refactor; starter model, bar passed; projected lineups and pregame backtest; live pregame pipeline). E (forward calibration) waits for ~300 settled team-games.
 **Depends on:** M2 (`rosters`, `lineups`, `goalie_starts`, `player_game_logs`, `coaches`),
 M3 snapshots, M4 (`sim/inputs.py`, `engine.py`), `schedule_context`, and the external
 sources already captured: DailyFaceoff goalies and lines, source tweets, ESPN injuries,
@@ -194,6 +194,46 @@ stays on hold for the scheduler design.
 
 **Transactions** join `nhl poll --what` (they're built but not polled today).
 
+**Result (phase D, 2026-10-06).** `nhl pregame` (`src/nhl/pregame/price.py`) and
+`nhl poll --reprice`:
+- **Today's slate in ~15 s:** lineups as of now (ESPN return dates, transactions,
+  DailyFaceoff lines), starter probabilities with DailyFaceoff overrides, prices mixed over
+  starter pairs, three snapshots under `pregame/{lineups,goalies,prices}/{date}/{stamp}`.
+- **DailyFaceoff lines:** listed players' shares are pulled halfway to their slot's typical
+  share (F1-F4, D1-D3, PP1/2, PK1/2, from M2 lines 2024-26). The first validator flagged 11
+  of 32 versions on 2026-10-06; both causes were our reading of DFO's conventions, fixed
+  the same day:
+  - **"f4 has 2/3; dressed 11F/6D" (COL, DET, LAK, NSH, TBL):** DFO's `d4` group is the
+    seventh defenseman. All five dressed 11F/7D in their last game and every `d4` player
+    dressed. f4 of two plus a `d4` is now a complete 11F/7D lineup.
+  - **"active + IR" (8 players):** DFO's injury list includes day-to-day players still
+    expected to play (7 of 8 tagged `dtd`). Such a player is now **questionable**, not a
+    conflict: he stays in the lineup unless ESPN rules him out past the game (Lilleberg: ESPN
+    out until 10/13 while DFO still had him on d2). Only a player in two EV groups
+    invalidates a version.
+  - **Game-time decisions:** a questionable player whom ESPN lists day-to-day, or one DFO
+    flags as a game-time decision, is priced at `GTD_P_DRESSED` = 0.75: his deployment is
+    split 75/25 with the likeliest replacement (`source = gtd_backup`, `p_dressed` on both
+    rows). Owner's starting value, to be measured in phase E.
+  - **Goalies:** a starter candidate ESPN rules out for the game (IR / Out past the game
+    date) is dropped and the rest renormalised (Annunen, NSH, IR until 10/13).
+
+  After the fixes, all 31 teams' next lineups on 10/6-10/8 are 12F/6D (26) or 11F/7D (5):
+  7 game-time decisions, 4 fills (ESPN outs: Lilleberg, Kane, Veleno, and one shortfall).
+- **Goalie candidates fix:** a goalie whose latest appearance was for another team is no
+  longer a candidate (season-boundary leftovers, e.g. a departed starter still listed). The
+  starter model improved in every season; 2025-26 log loss 0.708 → 0.696.
+- **Forward-only inputs:** each team's latest head coach; referee crews from Scouting the
+  Refs and the NHL right-rail (~40 minutes before puck drop, `nhl poll --what officials`),
+  through an as-of crew factor that reproduces history exactly.
+- **Repricing:** `nhl poll --reprice` reruns `pregame` in the same run when goalies,
+  lines, injuries, transactions or officials wrote new rows (odds don't move model prices).
+  Transactions are now a poll target. No cron installed.
+- **Open:** the pollers report row counts, not which games changed, so a change for another
+  date also reprices today (harmless, ~15 s). Early-season model-vs-market gaps of 8-9
+  points on a few games (TOR, DET, CHI on 10/6) are more likely priors than edges, given
+  M6's finding that the model doesn't beat the close.
+
 ## 7. Decisions (owner, 2026-10-06)
 1. **Fill policy:** the most recent available player at the position, flagged low
    confidence; a placeholder only when there's none.
@@ -226,4 +266,4 @@ CLI: `nhl train-starters`, `nhl pregame`, `nhl backtest-pregame`.
 | B | Starter model + baseline | beats baseline on 2025-26 |
 | C | Default lineup + absences; pregame backtest with lineups and the mixture | report written |
 | D | DFO reconciliation, `nhl pregame`, poll → reprice, officials check, transactions polling | runs on today's slate |
-| E | Forward calibration of DFO statuses and line agreement | after ~300 team-games |
+| E | Forward calibration of DFO statuses (Confirmed/Likely), line agreement, and the game-time-decision rate (is 0.75 right? by source: DFO flag vs DFO injury list + ESPN day-to-day) | after ~300 team-games |

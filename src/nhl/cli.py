@@ -290,6 +290,19 @@ def cmd_backtest_pregame(args: argparse.Namespace) -> None:
     print(backtest.write_report(results, backtest.lineup_accuracy(store, seasons), Path(args.report)))
 
 
+def cmd_pregame(args: argparse.Namespace) -> None:
+    """M5: project lineups and starters, price today's games, write pregame snapshots."""
+    from datetime import date
+
+    from nhl.pregame import price
+    from nhl.storage.s3 import Store
+
+    out = price.run(Store(), date.fromisoformat(args.date) if args.date else None, n_sims=args.sims, write=not args.no_write)
+    if out is not None:
+        print(out.prices.select("game_id", "home_team_id", "away_team_id", "p_home_win", "p_home_minus_1_5",
+                                "p_away_minus_1_5", "p_over_5.5", "p_over_6.5"))
+
+
 def cmd_evaluate_betting(args: argparse.Namespace) -> None:
     """M6: model vs market on history (information test, blend, bets at the open)."""
     from pathlib import Path
@@ -349,7 +362,9 @@ def cmd_update(args: argparse.Namespace) -> None:
     cmd_ratings(argparse.Namespace(backfill=None, as_of=None, every=7))
 
 
-POLL_TARGETS = ("odds", "goalies", "lines", "injuries")
+POLL_TARGETS = ("odds", "goalies", "lines", "injuries", "transactions", "officials")
+#: Targets whose changes move pregame prices (odds don't: the model never reads them).
+REPRICE_TARGETS = ("goalies", "lines", "injuries", "transactions", "officials")
 
 
 def minutes_to_next_game(games, now: datetime | None = None) -> float | None:
@@ -381,10 +396,13 @@ def minutes_to_next_game(games, now: datetime | None = None) -> float | None:
 
 
 def cmd_poll(args: argparse.Namespace) -> None:
-    """Poll third-party sources (odds, starting goalies, lines, injuries) once.
+    """Poll third-party sources (odds, starting goalies, lines, injuries, transactions,
+    officials) once.
 
     With ``--window N`` the poll only runs when a game starts within N minutes, so cron
-    can fire every few minutes and the pollers only work near puck drop.
+    can fire every few minutes and the pollers only work near puck drop. With
+    ``--reprice``, any change to a source in :data:`REPRICE_TARGETS` reruns ``nhl pregame``
+    for today's games in the same run.
     """
     from nhl.ingest.http import SourceUnavailable
     from nhl.storage import keys
@@ -421,6 +439,14 @@ def cmd_poll(args: argparse.Namespace) -> None:
                 from nhl.sources import espn_injuries
 
                 results[target] = str(espn_injuries.poll_injuries(store))
+            elif target == "transactions":
+                from nhl.sources import transactions
+
+                results[target] = str(transactions.poll_transactions(store))
+            elif target == "officials":
+                from nhl.sources import officials
+
+                results[target] = str(officials.poll_assignments(store, games) + officials.poll_right_rail(store, games))
             else:
                 raise ValueError(f"unknown poll target {target!r}; choose from {POLL_TARGETS}")
         except SourceUnavailable as exc:  # refusals are skips, not failures
@@ -430,6 +456,16 @@ def cmd_poll(args: argparse.Namespace) -> None:
             results[target] = f"FAILED ({exc!r})"
             failed = True
     print(" | ".join(f"{k}: {v}" for k, v in results.items()))
+    changed = [k for k in REPRICE_TARGETS if results.get(k, "").isdigit() and int(results[k]) > 0]
+    if args.reprice and changed:
+        from nhl.pregame import price
+
+        try:
+            out = price.run(store)
+            print(f"repriced after {', '.join(changed)}: {0 if out is None else out.prices.height} games")
+        except Exception:  # noqa: BLE001 - a failed reprice is reported, polls already stored
+            logging.exception("reprice failed")
+            failed = True
     if failed:
         sys.exit(1)
 
@@ -489,10 +525,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--version", default=None)
     p.set_defaults(func=cmd_score_xg)
 
-    p = sub.add_parser("poll", help="poll odds / starting goalies / lines / injuries once")
+    p = sub.add_parser("poll", help="poll odds / goalies / lines / injuries / transactions / officials once")
     p.add_argument("--what", default="all", help=f"comma list of {', '.join(POLL_TARGETS)} or 'all'")
     p.add_argument("--window", type=int, default=None,
                    help="only run if a game starts within this many minutes")
+    p.add_argument("--reprice", action="store_true", help="rerun `nhl pregame` when a lineup/goalie/officials source changed")
     p.set_defaults(func=cmd_poll)
 
     p = sub.add_parser("xg-monitor", help="season-to-date xG calibration by strength state")
@@ -549,6 +586,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--sims", type=int, default=1000)
     p.add_argument("--report", default="docs/reports/m5-pregame-backtest.md")
     p.set_defaults(func=cmd_backtest_pregame)
+
+    p = sub.add_parser("pregame", help="M5: project lineups/starters and price today's games (snapshots)")
+    p.add_argument("--date", help="game date (default: today, Eastern)")
+    p.add_argument("--sims", type=int, default=4000)
+    p.add_argument("--no-write", action="store_true", help="don't write snapshots")
+    p.set_defaults(func=cmd_pregame)
 
     p = sub.add_parser("evaluate-betting", help="M6: model vs closing market, blend, bets at the open")
     p.add_argument("--seasons", default="2021-2025")

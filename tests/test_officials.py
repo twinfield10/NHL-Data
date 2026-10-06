@@ -183,3 +183,56 @@ def test_replacement_records_removal_then_poll_is_idempotent(games):
     stored = pl.concat([stored, fresh])
     again = off.with_removals(swapped.with_columns(pl.lit(later.replace(hour=21)).alias("captured_at")), stored)
     assert new_transitions(stored, again, off.ASSIGNMENT_KEYS, off.ASSIGNMENT_VALUES).is_empty()
+
+
+class _MemStore:
+    """Just enough of :class:`nhl.storage.s3.Store` for transition writes."""
+
+    def __init__(self) -> None:
+        self.data: dict[str, pl.DataFrame] = {}
+
+    def get_parquet(self, key: str) -> pl.DataFrame | None:
+        return self.data.get(key)
+
+    def put_parquet(self, key: str, df: pl.DataFrame) -> str:
+        self.data[key] = df
+        return key
+
+
+class _RightRailClient:
+    def __init__(self) -> None:
+        self.calls: list[str] = []
+
+    def get_json(self, url: str, params=None) -> dict:
+        self.calls.append(url)
+        return load_json("right_rail_2026020039.json")
+
+
+def test_right_rail_poll_only_near_puck_drop_and_records_swaps(games):
+    """VGK@VAN at 22:00 ET: polled 30 minutes before, the right-rail's crew replaces the post's."""
+    from datetime import timedelta
+
+    from nhl.storage import keys
+
+    slate = games.with_columns(
+        pl.lit(False).alias("is_final"),
+        pl.when(pl.col("game_id") == 2026020039).then(pl.lit("2026-10-04T22:00:00")).otherwise(pl.lit("2026-10-04T19:00:00")).alias("start_time_et"),
+    )
+    store = _MemStore()
+    page = load_text("str_2026-10-04.html")
+    store.data[keys.ref_assignments(20262027)] = off.normalize_assignments(
+        off.parse_assignment_post(page), games, date(2026, 10, 4), CAPTURED
+    )
+    client = _RightRailClient()
+    eastern = off.EASTERN
+    now = datetime(2026, 10, 4, 21, 30, tzinfo=eastern)
+    written = off.poll_right_rail(store, slate, client=client, now=now)
+    assert len(client.calls) == 1 and client.calls[0].endswith("/2026020039/right-rail")  # 19:00 games already started
+    rows = store.data[keys.ref_assignments(20262027)].filter(pl.col("game_id") == 2026020039).sort("captured_at")
+    latest = rows.group_by("official_id").last()
+    assert written == 2
+    assert latest.filter(pl.col("official_id") == "kiel-murchison")["is_assigned"].to_list() == [True]
+    assert latest.filter(pl.col("official_id") == "andrew-smith")["is_assigned"].to_list() == [False]
+    # Early afternoon: no game starts within the window, so nothing is fetched.
+    assert off.poll_right_rail(store, slate, client=client, now=now - timedelta(hours=6)) == 0
+    assert len(client.calls) == 1

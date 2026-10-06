@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 import numpy as np
 import polars as pl
@@ -141,3 +141,151 @@ def test_lineup_placeholder_when_nobody_available_and_normalise():
     sums = dep.group_by("team_id").agg(pl.col("s5", "spp", "spk", "sshot").sum()).row(0, named=True)
     assert np.isclose(sums["s5"], 5) and np.isclose(sums["spp"], 5) and np.isclose(sums["spk"], 4) and np.isclose(sums["sshot"], 1)
     assert L.lineup_shape(dep)["shape"][0] == "12F6D"
+
+
+def _dfo(valid: bool, groups: dict, complete: set, out: set = frozenset()):
+    from datetime import datetime, timezone
+
+    from nhl.pregame import lineups as L
+
+    return L.DfoVersion(datetime(2026, 10, 6, 15, tzinfo=timezone.utc), valid, None if valid else "f4 has 2/3",
+                        groups, complete, set(out))
+
+
+def test_dfo_valid_version_sets_lineup_and_slot_shares():
+    L, ix = _lineup_fixture([])
+    groups = {f"f{i}": [(3 * i - 2, "C"), (3 * i - 1, "L"), (3 * i, "R")] for i in range(1, 5)}
+    groups["f4"] = [(10, "C"), (11, "L"), (13, "R")]  # 13 replaces 12
+    groups.update({f"d{i}": [(19 + 2 * i, "D"), (20 + 2 * i, "D")] for i in range(1, 4)})
+    groups["pp1"] = [(1, "C"), (2, "L"), (3, "R"), (21, "D"), (4, "C")]
+    ix.dfo = {1: ([datetime(2026, 10, 6, 15, tzinfo=timezone.utc)], [_dfo(True, groups, set(groups))])}
+    rows = L.project_team_game(ix, 1, 999, date(2026, 10, 7), L.morning(date(2026, 10, 7)))
+    by = {r["player_id"]: r for r in rows}
+    assert 13 in by and 12 not in by and len(rows) == 18
+    assert by[13]["slot"] == "f4" and by[1]["slot"] == "f1" and by[1]["pp_unit"] == 1 and by[5]["pp_unit"] is None
+    # Shares pulled halfway toward the slot: an f1 forward gains on an f4 forward with equal history.
+    assert by[4]["s5"] > by[10]["s5"]
+
+
+def test_dfo_invalid_version_uses_complete_groups_and_fills_shortfall():
+    L, ix = _lineup_fixture([])
+    # Only d1 is usable; DFO lists player 2 on IR. The lineup keeps the projection elsewhere and
+    # fills 2's forward slot with the recent scratch (13).
+    groups = {"d1": [(25, "D"), (26, "D")], "f4": [(10, "C"), (11, "L")]}
+    ix.dfo = {1: ([datetime(2026, 10, 6, 15, tzinfo=timezone.utc)], [_dfo(False, groups, {"d1"}, out={2})])}
+    rows = L.project_team_game(ix, 1, 999, date(2026, 10, 7), L.morning(date(2026, 10, 7)))
+    by = {r["player_id"]: r for r in rows}
+    assert len(rows) == 18 and 2 not in by and 13 in by and by[13]["source"] == "fill"
+    assert by[25]["slot"] == "d1" and by[25]["source"] == "dfo"
+
+
+def test_dfo_goalie_override_redistributes_and_adds_unknown_goalie():
+    from nhl.pregame import price as P
+    from nhl.storage import keys
+
+    class Mem:
+        def __init__(self, data):
+            self.data = data
+
+        def get_parquet(self, key):
+            return self.data.get(key)
+
+        def read_parquet_required(self, key):
+            return self.data[key]
+
+    as_of = datetime(2026, 10, 6, 18, tzinfo=timezone.utc)
+    probs = pl.DataFrame({"game_id": [1, 1, 1, 2, 2], "team_id": [10, 10, 10, 20, 20],
+                          "player_id": [A, B, None, A + 1, B + 1], "p_start": [0.6, 0.3, 0.1, 0.7, 0.3]})
+    dfo = pl.DataFrame({
+        "game_id": [1, 1, 2], "team": ["TOR", "TOR", "BOS"], "player_id": [A, B, C],
+        "status": ["Likely", "Confirmed", "Likely"],
+        "captured_at": [as_of.replace(hour=12), as_of.replace(hour=15), as_of.replace(hour=19)],  # BOS report comes after as_of
+    })
+    teams = pl.DataFrame({"team_id": [10, 20], "team_abbr": ["TOR", "BOS"]})
+    out = P.apply_dfo_goalies(probs, Mem({keys.dailyfaceoff_goalies(20262027): dfo, keys.TEAMS: teams}), 20262027, as_of)
+    tor = out.filter(pl.col("team_id") == 10)
+    p = dict(zip(tor["player_id"].to_list(), tor["p_start"].to_list()))
+    assert abs(p[B] - 0.98) < 1e-12  # the latest TOR report (Confirmed B) wins
+    assert abs(p[A] - 0.02 * 0.6 / 0.7) < 1e-12 and abs(sum(p.values()) - 1) < 1e-12
+    assert out.filter(pl.col("team_id") == 20)["source"].to_list() == ["model", "model"]  # not known yet
+    # A named goalie who isn't a candidate is added.
+    dfo2 = dfo.with_columns(pl.lit(as_of.replace(hour=10)).alias("captured_at"))
+    out2 = P.apply_dfo_goalies(probs, Mem({keys.dailyfaceoff_goalies(20262027): dfo2, keys.TEAMS: teams}), 20262027, as_of)
+    bos = out2.filter(pl.col("team_id") == 20)
+    assert C in bos["player_id"].to_list() and abs(bos["p_start"].sum() - 1) < 1e-12
+    assert abs(bos.filter(pl.col("player_id") == C)["p_start"][0] - 0.85) < 1e-12
+
+
+def _full_dfo_groups():
+    groups = {f"f{i}": [(3 * i - 2, "C"), (3 * i - 1, "L"), (3 * i, "R")] for i in range(1, 5)}
+    groups.update({f"d{i}": [(19 + 2 * i, "D"), (20 + 2 * i, "D")] for i in range(1, 4)})
+    return groups
+
+
+def test_questionable_player_stays_espn_out_player_is_replaced():
+    # DailyFaceoff has 21 (d1) and 4 (f2) in slots and on its injury list. ESPN: 21 out until
+    # 10/13 (ESPN wins: replaced), 4 day-to-day (a game-time decision: 75/25 with a backup).
+    L, ix = _lineup_fixture([
+        _ev(21, "out", (2026, 10, 6), until=date(2026, 10, 13), cause="espn:Out"),
+        _ev(4, "dtd", (2026, 10, 6), until=date(2026, 10, 8), cause="espn:Day-To-Day"),
+    ])
+    groups = _full_dfo_groups()
+    version = _dfo(True, groups, set(groups))
+    version.questionable = {21, 4}
+    ix.dfo = {1: ([datetime(2026, 10, 6, 15, tzinfo=timezone.utc)], [version])}
+    rows = L.project_team_game(ix, 1, 999, date(2026, 10, 7), L.morning(date(2026, 10, 7)))
+    by = {r["player_id"]: r for r in rows}
+    assert 21 not in by
+    assert by[4]["p_dressed"] == L.GTD_P_DRESSED and "game-time decision" in by[4]["issues"]
+    backup = next(r for r in rows if r["source"] == "gtd_backup")
+    assert backup["p_dressed"] == 1 - L.GTD_P_DRESSED and backup["slot"] == "f2"
+    assert abs(backup["s5"] / by[4]["s5"] - (1 - L.GTD_P_DRESSED) / L.GTD_P_DRESSED) < 1e-12
+    dep = L.normalise(pl.DataFrame(rows, schema_overrides={"player_id": pl.Int64}))
+    assert L.lineup_shape(dep)["regular"].all()  # the backup doesn't count toward the shape
+    assert np.isclose(dep["s5"].sum(), 5.0)
+
+
+def test_questionable_without_espn_dtd_plays_normally():
+    L, ix = _lineup_fixture([])
+    groups = _full_dfo_groups()
+    version = _dfo(True, groups, set(groups))
+    version.questionable = {4}
+    ix.dfo = {1: ([datetime(2026, 10, 6, 15, tzinfo=timezone.utc)], [version])}
+    rows = L.project_team_game(ix, 1, 999, date(2026, 10, 7), L.morning(date(2026, 10, 7)))
+    assert {r["p_dressed"] for r in rows} == {1.0} and len(rows) == 18
+
+
+def test_dfo_index_reads_d4_as_seventh_defenseman():
+    from nhl.pregame import lineups as L
+
+    t = datetime(2026, 10, 6, 15, tzinfo=timezone.utc)
+    rows = []
+    for g, members in {**{f"f{i}": [(3 * i - 2, "c"), (3 * i - 1, "lw"), (3 * i, "rw")] for i in range(1, 4)},
+                       "f4": [(10, "c"), (11, "lw")], **{f"d{i}": [(19 + 2 * i, "ld"), (20 + 2 * i, "rd")] for i in range(1, 4)},
+                       "d4": [(27, "ld")], "ir": [(12, "rw")]}.items():
+        for pid, pos in members:
+            rows.append({"team_id": 1, "updated_at": t, "captured_at": t, "category": "oi" if g == "ir" else "ev", "group": g,
+                         "position": pos, "player_id": pid, "injury_status": "ir" if g == "ir" else None,
+                         "game_time_decision": False, "conflict": False, "questionable": False,
+                         "group_complete": g != "ir", "lineup_shape": "11F7D", "issues": None, "is_valid": True})
+    version = L._dfo_index(pl.DataFrame(rows))[1][1][0]
+    assert "d4" in version.complete and version.out == {12}
+    L_, ix = _lineup_fixture([])
+    ix.dfo = {1: ([t], [version])}
+    out = L.project_team_game(ix, 1, 999, date(2026, 10, 7), L.morning(date(2026, 10, 7)))
+    dep = L.normalise(pl.DataFrame(out, schema_overrides={"player_id": pl.Int64}))
+    assert L.lineup_shape(dep)["shape"][0] == "11F7D"
+
+
+def test_drop_injured_goalies_renormalises():
+    from nhl.pregame import price as P
+
+    probs = pl.DataFrame({"game_id": [1, 1, 1], "team_id": [10, 10, 10], "player_id": [A, B, None], "p_start": [0.2, 0.7, 0.1]})
+    events = pl.DataFrame({
+        "team_id": [10, 10], "player_id": [B, A], "known_at": [datetime(2026, 10, 5, tzinfo=timezone.utc)] * 2,
+        "kind": ["out", "out"], "until": [date(2026, 10, 13), date(2026, 10, 6)], "cause": ["espn:Injured Reserve", "espn:Out"],
+        "injury": [True, True],
+    })
+    out = P.drop_injured_goalies(probs, events, date(2026, 10, 6), datetime(2026, 10, 6, 18, tzinfo=timezone.utc))
+    assert B not in out["player_id"].to_list()  # out past the game; A's return date is the game day: kept
+    assert abs(out["p_start"].sum() - 1) < 1e-12 and abs(out.filter(pl.col("player_id") == A)["p_start"][0] - 2 / 3) < 1e-12

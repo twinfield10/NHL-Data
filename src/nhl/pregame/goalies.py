@@ -185,6 +185,7 @@ def candidate_features(tg: pl.DataFrame, dressed: pl.DataFrame, apps: pl.DataFra
             pl.col("streak").cast(pl.Float64).clip(0, 10),
         )
     )
+    cand = _still_with_team(cand, dressed, tg)
     cand = _goalie_history(cand, apps)
     cand = cand.with_columns(
         pl.lit(0.0).alias("is_other"),
@@ -209,6 +210,20 @@ def candidate_features(tg: pl.DataFrame, dressed: pl.DataFrame, apps: pl.DataFra
     )
     out = pl.concat([cand.select(other.columns + [f for f in FEATURES if f != "is_other"]), other], how="diagonal_relaxed")
     return out.with_columns(pl.col(f).cast(pl.Float64).fill_null(0.0) for f in FEATURES).sort("game_date", "game_id", "team_id", "is_other", "player_id")
+
+
+def _still_with_team(cand: pl.DataFrame, dressed: pl.DataFrame, tg: pl.DataFrame) -> pl.DataFrame:
+    """Drop candidates whose most recent dressing before the game was for another team
+    (traded, signed elsewhere, claimed): mostly season-boundary leftovers."""
+    last = (
+        dressed.join(tg.select("game_id", "team_id", "game_date"), on=["game_id", "team_id"])
+        .select("player_id", "game_date", pl.col("team_id").alias("last_team"))
+        .sort("game_date")
+    )
+    j = cand.with_row_index("_row").sort("game_date").join_asof(
+        last, on="game_date", by="player_id", strategy="backward", allow_exact_matches=False, check_sortedness=False,
+    )
+    return j.filter(pl.col("last_team").is_null() | (pl.col("last_team") == pl.col("team_id"))).sort("_row").drop("_row", "last_team")
 
 
 def _goalie_history(cand: pl.DataFrame, apps: pl.DataFrame) -> pl.DataFrame:

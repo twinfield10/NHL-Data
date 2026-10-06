@@ -229,16 +229,27 @@ def referee_factors(store: Store, season: int) -> pl.DataFrame:
     ref_games = officials.select("game_id", "official_id").join(gpp, on="game_id").join(expected, on="game_id").with_columns(
         (pl.col("pp") - pl.col("expected")).alias("resid")
     )
-    daily = ref_games.group_by("official_id", "game_date").agg(pl.col("resid").sum(), pl.len().alias("n")).sort("game_date")
-    daily = daily.with_columns(
-        (pl.col("resid").cum_sum().over("official_id") - pl.col("resid")).alias("resid_before"),
-        (pl.col("n").cum_sum().over("official_id") - pl.col("n")).alias("n_before"),
-    ).with_columns((pl.col("resid_before") / (pl.col("n_before") + REF_PRIOR_GAMES)).alias("dev"))
+    daily = ref_games.group_by("official_id", "game_date").agg(pl.col("resid").sum(), pl.len().cast(pl.Float64).alias("n"))
     league = prior_mean
-    target = officials.join(games.filter(pl.col("season") == season), on="game_id").join(
-        daily.select("official_id", "game_date", "dev"), on=["official_id", "game_date"], how="left"
-    )
+    # Games to price: officials from the NHL API, plus referees assigned ahead of games that
+    # don't have them yet (upcoming games; Scouting the Refs).
+    crews = pl.concat([officials.select("game_id", "official_id"), _assigned_referees(store, season, officials)])
+    target = sum_before(
+        crews.join(games.filter(pl.col("season") == season).select("game_id", "game_date"), on="game_id"),
+        daily, ["resid", "n"], by="official_id",
+    ).with_columns((pl.col("resid_td") / (pl.col("n_td") + REF_PRIOR_GAMES)).alias("dev"))
     return target.group_by("game_id").agg((1 + pl.col("dev").fill_null(0.0).sum() / league).alias("ref_factor"))
+
+
+def _assigned_referees(store: Store, season: int, officials: pl.DataFrame) -> pl.DataFrame:
+    """``game_id, official_id`` of referees currently assigned to games without API officials."""
+    assigned = store.get_parquet(keys.ref_assignments(season))
+    if assigned is None or assigned.is_empty():
+        return pl.DataFrame(schema={"game_id": pl.Int64, "official_id": pl.String})
+    latest = assigned.filter(pl.col("role") == "referee").sort("captured_at").group_by("game_id", "official_id").last()
+    return latest.filter(pl.col("is_assigned") & ~pl.col("game_id").is_in(officials["game_id"].unique().implode())).select(
+        "game_id", "official_id"
+    )
 
 
 def sum_before(left: pl.DataFrame, daily: pl.DataFrame, cols: list[str], by: str | None = None) -> pl.DataFrame:

@@ -544,3 +544,45 @@ def poll_assignments(
             part = with_removals(part, store.get_parquet(key))
             written += append_transitions(store, key, part, ASSIGNMENT_KEYS, ASSIGNMENT_VALUES)
     return written
+
+
+#: The NHL right-rail lists officials only ~25-35 minutes before puck drop (measured 2026-10-05).
+RIGHT_RAIL_WINDOW_MIN = 40
+
+
+def poll_right_rail(store: Store, games: pl.DataFrame, client: NHLClient | None = None,
+                    now: datetime | None = None, window_min: int = RIGHT_RAIL_WINDOW_MIN) -> int:
+    """Last-minute officials check: the NHL right-rail for games starting within ``window_min``.
+
+    Catches late swaps after Scouting the Refs posts. Officials found are stored as
+    assignment transitions (``post_url = "nhl:right-rail"``) in ``keys.ref_assignments``,
+    with removals for anyone no longer listed, so the pregame crew factor picks them up.
+
+    Returns:
+        Rows written.
+    """
+    client = client or NHLClient()
+    captured_at = utcnow()
+    now_et = (now or captured_at).astimezone(EASTERN).replace(tzinfo=None)
+    start = pl.col("start_time_et").str.to_datetime(strict=False)
+    soon = games.filter(
+        ~pl.col("is_final") & (start >= now_et - timedelta(minutes=5)) & (start <= now_et + timedelta(minutes=window_min))
+    )
+    written = 0
+    for game in soon.iter_rows(named=True):
+        try:
+            found = normalize_officials(fetch_right_rail(client, game["game_id"]), game["game_id"], game["season"], game["game_date"])
+        except SourceUnavailable as exc:
+            logger.warning("right-rail %s skipped: %s", game["game_id"], exc)
+            continue
+        if found.is_empty():
+            continue
+        rows = found.select(
+            "game_id", "season", "game_date", pl.lit(game["home_abbr"]).alias("home_abbr"), pl.lit(game["away_abbr"]).alias("away_abbr"),
+            "role", "official_id", "official_name", "sweater_number", pl.lit(True).alias("is_assigned"),
+            pl.lit("nhl:right-rail").alias("post_url"), pl.lit(None, dtype=pl.Datetime("us", "UTC")).alias("post_published_at"),
+            pl.lit(None, dtype=pl.Datetime("us", "UTC")).alias("post_modified_at"), pl.lit(captured_at).alias("captured_at"),
+        ).cast(ASSIGNMENT_SCHEMA)
+        key = keys.ref_assignments(int(game["season"]))
+        written += append_transitions(store, key, with_removals(rows, store.get_parquet(key)), ASSIGNMENT_KEYS, ASSIGNMENT_VALUES)
+    return written

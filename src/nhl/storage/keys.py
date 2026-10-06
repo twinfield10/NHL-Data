@@ -240,3 +240,18 @@ def starter_model(season: int) -> str:
 def pregame_backtest(season: int) -> str:
     """Per-game prices under actual / projected lineups and starters (M5 backtest)."""
     return f"predictions/pregame_backtest/{season}.parquet"
+
+
+def pregame_lineups(day: date, stamp: str) -> str:
+    """Projected lineups snapshot for a game date, one per pregame run."""
+    return f"pregame/lineups/{day.isoformat()}/{stamp}.parquet"
+
+
+def pregame_goalies(day: date, stamp: str) -> str:
+    """Starting-goalie probabilities snapshot for a game date."""
+    return f"pregame/goalies/{day.isoformat()}/{stamp}.parquet"
+
+
+def pregame_prices(day: date, stamp: str) -> str:
+    """Market prices (starter mixture) snapshot for a game date."""
+    return f"pregame/prices/{day.isoformat()}/{stamp}.parquet"

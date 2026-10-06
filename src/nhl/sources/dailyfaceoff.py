@@ -423,10 +423,11 @@ GROUP_EXPECTED: dict[str, int] = {
 }
 EV_GROUPS: tuple[str, ...] = ("f1", "f2", "f3", "f4", "d1", "d2", "d3", "g")
 FORWARD_GROUPS: tuple[str, ...] = ("f1", "f2", "f3", "f4")
-DEFENSE_GROUPS: tuple[str, ...] = ("d1", "d2", "d3")
+#: ``d4`` is DailyFaceoff's seventh defenseman: with two forwards on f4 it is an 11F/7D lineup.
+DEFENSE_GROUPS: tuple[str, ...] = ("d1", "d2", "d3", "d4")
 INJURY_GROUPS: tuple[str, ...] = ("ir",)
 VALIDATION_COLUMNS: tuple[str, ...] = (
-    "group_size", "group_expected", "group_complete", "conflict", "lineup_shape", "issues", "is_valid",
+    "group_size", "group_expected", "group_complete", "conflict", "questionable", "lineup_shape", "issues", "is_valid",
 )
 
 
@@ -438,6 +439,14 @@ def _is_active(category: str | None, group: str | None) -> bool:
 def _validate_version(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Structural checks for one published (team, updated_at) version. Flags, never fixes.
 
+    * **Shape:** f1-f4 of 3 and d1-d3 of 2; f4 with 2 is complete when ``d4`` holds a seventh
+      defenseman (11F/7D, as teams dress it). The shape counts f1-f4 and d1-d4.
+    * **Conflict** (invalidates): a player in two even-strength groups.
+    * **Questionable** (doesn't invalidate): a player in an active slot who is also on the
+      injury list or carries an injury status. DailyFaceoff's injury list includes day-to-day
+      players who are still expected to play, so this is "questionable", not a contradiction;
+      :mod:`nhl.pregame.lineups` settles it with ESPN.
+
     Args:
         rows: The version's line rows (dicts with category, group, player fields).
 
@@ -445,11 +454,14 @@ def _validate_version(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         The rows with :data:`VALIDATION_COLUMNS` filled in.
     """
     sizes: Counter[str] = Counter(r["group"] for r in rows if r["category"] != "oi")
+    expected = dict(GROUP_EXPECTED)
+    if sizes["d4"] == 1 and sizes["f4"] == 2:
+        expected["f4"] = 2
     issues: list[str] = []
-    for group, expected in GROUP_EXPECTED.items():
-        if sizes[group] != expected:
-            issues.append(f"{group} missing" if sizes[group] == 0 else f"{group} has {sizes[group]}/{expected}")
-    incomplete = any(sizes[g] != GROUP_EXPECTED[g] for g in EV_GROUPS)
+    for group, n in expected.items():
+        if sizes[group] != n:
+            issues.append(f"{group} missing" if sizes[group] == 0 else f"{group} has {sizes[group]}/{n}")
+    incomplete = any(sizes[g] != expected[g] for g in EV_GROUPS)
 
     def ident(r: dict[str, Any]) -> Any:
         return r["df_player_id"] if r["df_player_id"] is not None else norm_name(r["player_name"])
@@ -461,23 +473,14 @@ def _validate_version(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             active.setdefault(ident(r), set()).add(r["group"])
         if r["group"] in INJURY_GROUPS or r["category"] == "oi":
             injured.add(ident(r))
-    conflicted: dict[Any, list[str]] = {}
-    for r in rows:
-        pid = ident(r)
-        if pid not in active:
-            continue
-        reasons = conflicted.setdefault(pid, [])
-        if pid in injured:
-            reasons.append("active+IR")
-        if r["injury_status"] and _is_active(r["category"], r["group"]):
-            reasons.append(f"active+{r['injury_status']}")
-        if len(active[pid]) > 1:
-            reasons.append("in " + "+".join(sorted(active[pid])))
     names = {ident(r): r["player_name"] for r in rows}
-    bad = {pid for pid, reasons in conflicted.items() if reasons}
-    for pid in bad:
-        last = (names[pid] or "?").split(" ")[-1]
-        issues += [f"{last} {reason}" for reason in dict.fromkeys(conflicted[pid])]
+    doubled = {pid for pid, groups in active.items() if len(groups) > 1}
+    tagged = {ident(r) for r in rows if r["injury_status"] and _is_active(r["category"], r["group"])}
+    questionable = {pid for pid in active if pid in injured or pid in tagged}
+    for pid in doubled:
+        issues.append(f"{(names[pid] or '?').split(' ')[-1]} in {'+'.join(sorted(active[pid]))}")
+    for pid in questionable:
+        issues.append(f"{(names[pid] or '?').split(' ')[-1]} active+injury list")
 
     forwards = sum(sizes[g] for g in FORWARD_GROUPS)
     defense = sum(sizes[g] for g in DEFENSE_GROUPS)
@@ -485,17 +488,18 @@ def _validate_version(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     if shape == "irregular":
         issues.append(f"dressed {forwards}F/{defense}D")
     summary = "; ".join(issues) or None
-    is_valid = not incomplete and not bad
+    is_valid = not incomplete and not doubled and shape != "irregular"
     out = []
     for r in rows:
-        expected = GROUP_EXPECTED.get(r["group"]) if r["category"] != "oi" else None
+        exp = expected.get(r["group"]) if r["category"] != "oi" else None
         size = sizes[r["group"]] if r["category"] != "oi" else None
         out.append({
             **r,
             "group_size": size,
-            "group_expected": expected,
-            "group_complete": (size == expected) if expected is not None else None,
-            "conflict": ident(r) in bad,
+            "group_expected": exp,
+            "group_complete": (size == exp) if exp is not None else None,
+            "conflict": ident(r) in doubled,
+            "questionable": ident(r) in questionable,
             "lineup_shape": shape,
             "issues": summary,
             "is_valid": is_valid,
@@ -506,11 +510,12 @@ def _validate_version(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 def validate_lines(lines: pl.DataFrame) -> pl.DataFrame:
     """Add structural-validation columns to line rows, per (team, updated_at) version.
 
-    Rules (flag, never impute): group sizes vs :data:`GROUP_EXPECTED`; dressed shape from
-    f1–f4 / d1–d3 counts ("12F6D", "11F7D" or "irregular"); a player active in f*/d*/g who
-    is also listed on IR (or has an injury status, or sits in two EV groups) is a
-    ``conflict``. ``is_valid`` = every EV group (f1–f4, d1–d3, g) complete and no conflicts.
-    ``issues`` summarizes everything flagged, e.g. ``"f4 has 2/3; Lilleberg active+IR"``.
+    Rules (flag, never impute) are in :func:`_validate_version`: group sizes vs
+    :data:`GROUP_EXPECTED` (f4 of 2 plus a ``d4`` is 11F/7D); dressed shape ("12F6D",
+    "11F7D" or "irregular"); a player in two EV groups is a ``conflict``; an active player
+    also on the injury list is ``questionable``. ``is_valid`` = every EV group complete, a
+    regular shape and no conflicts. ``issues`` summarizes everything flagged, e.g.
+    ``"Lilleberg active+injury list"``.
 
     Idempotent: existing validation columns are recomputed.
 
@@ -531,6 +536,7 @@ VALIDATION_SCHEMA: dict[str, pl.DataType] = {
     "group_expected": pl.Int32(),
     "group_complete": pl.Boolean(),
     "conflict": pl.Boolean(),
+    "questionable": pl.Boolean(),
     "lineup_shape": pl.String(),
     "issues": pl.String(),
     "is_valid": pl.Boolean(),

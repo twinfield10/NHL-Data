@@ -275,18 +275,20 @@ def test_no_removals_without_history():
 
 
 # --------------------------------------------------------------------------- line validation
-def test_tbl_version_flags_incomplete_f4_and_lilleberg(lines):
+def test_tbl_version_is_11f7d_with_lilleberg_questionable(lines):
+    """f4 of two plus a d4 defenseman is an 11F/7D lineup (TBL dressed 11F/7D on 10/3);
+    Lilleberg is in d2 and on the injury list (day-to-day): questionable, not a conflict."""
     f4 = lines.filter(pl.col("group") == "f4")
-    assert f4["group_size"].to_list() == [2, 2] and f4["group_expected"].to_list() == [3, 3]
-    assert not f4["group_complete"].any()
+    assert f4["group_size"].to_list() == [2, 2] and f4["group_expected"].to_list() == [2, 2]
+    assert f4["group_complete"].all()
     assert lines.filter(pl.col("group") == "f1")["group_complete"].all()
     lil = lines.filter(pl.col("player_name") == "Emil Lilleberg")
-    assert lil["conflict"].all() and lil.height == 2           # d2 row and ir row
-    assert not lines.filter(pl.col("player_name") == "Brayden Point")["conflict"].any()
+    assert lil["questionable"].all() and not lil["conflict"].any() and lil.height == 2  # d2 row and ir row
+    assert not lines.filter(pl.col("player_name") == "Brayden Point")["questionable"].any()
     issues = lines["issues"][0]
-    assert "f4 has 2/3" in issues and "Lilleberg active+IR" in issues
-    assert lines["lineup_shape"][0] == "irregular"             # 11 forwards, 6 D
-    assert not lines["is_valid"].any()
+    assert "Lilleberg active+injury list" in issues and "f4" not in issues
+    assert lines["lineup_shape"][0] == "11F7D"
+    assert lines["is_valid"].all()
     assert lines.filter(pl.col("group") == "ir")["group_expected"].null_count() == 3
 
 
@@ -337,7 +339,12 @@ def test_validation_flags_pp4_irregular_and_double_ev():
     combos = _clean_lineup()
     combos["players"][0] = {**combos["players"][0], "injuryStatus": "dtd"}
     out = df.normalize_lines(combos, CAPTURED)
-    assert "1 active+dtd" in out["issues"][0] and not out["is_valid"].any()
+    assert "1 active+injury list" in out["issues"][0] and out["is_valid"].all()   # questionable, still valid
+    assert out.filter(pl.col("df_player_id") == 1)["questionable"].all()
+    combos = _clean_lineup()
+    combos["players"] = [p for p in combos["players"] if not (p["groupIdentifier"] == "f4" and p["playerId"] == 12)]
+    out = df.normalize_lines(combos, CAPTURED)   # f4 of two without a d4: incomplete, irregular
+    assert "f4 has 2/3" in out["issues"][0] and out["lineup_shape"][0] == "irregular" and not out["is_valid"].any()
 
 
 def test_validate_lines_is_idempotent(lines):
