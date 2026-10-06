@@ -116,3 +116,79 @@ def test_attach_model_prices_whole_number_totals_from_score_matrix():
     assert abs(got[("puckline", -1.5)][0] - 0.40) < 1e-6
     assert abs(got[("total", 6.0)][1] - 0.40) < 1e-6 and got[("total", 6.0)][0] < 1e-6  # over 6.0 never wins; 40% push
     assert abs(got[("total", 5.5)][0] - 0.40) < 1e-6 and got[("total", 5.5)][1] == 0
+
+
+class _Mem:
+    def __init__(self, data=None):
+        self.data = dict(data or {})
+        self.bytes = {}
+
+    def get_parquet(self, key):
+        return self.data.get(key)
+
+    def read_parquet_required(self, key):
+        return self.data[key]
+
+    def put_parquet(self, key, df):
+        self.data[key] = df
+
+    def list_keys(self, prefix):
+        return sorted(k for k in self.data if k.startswith(prefix))
+
+
+def _edges(rows):
+    from datetime import date, datetime, timezone
+
+    base = {"game_date": date(2026, 10, 6), "line": None, "book": "LowVig", "price": -110.0, "p_model_side": 0.6,
+            "p_market_side": 0.5, "p": 0.55, "pregame_stamp": "S", "as_of": datetime(2026, 10, 6, 18, tzinfo=timezone.utc),
+            "tier": "unvalidated", "qualifies": True}
+    return pl.DataFrame([{**base, **r} for r in rows])
+
+
+def test_stakes_respect_bet_game_and_day_caps():
+    from nhl.betting import edges as E
+
+    e = _edges([
+        {"game_id": 1, "market": "moneyline", "side": 1, "kelly": 0.05, "flagged": True},   # 5 u -> capped at 2
+        {"game_id": 1, "market": "puckline", "side": 1, "kelly": 0.03, "flagged": True},    # 3 u -> 2; game 4 u -> 3
+        {"game_id": 2, "market": "moneyline", "side": 2, "kelly": 0.01, "flagged": True},   # 1 u
+        {"game_id": 3, "market": "total", "side": 1, "kelly": 0.04, "flagged": False},      # track only: 0
+    ])
+    out = E._stakes(e, _Mem(), e["game_date"][0]).sort("game_id", "market")
+    st = dict(zip(zip(out["game_id"], out["market"]), out["stake_units"]))
+    assert st[(1, "moneyline")] == 1.5 and st[(1, "puckline")] == 1.5 and st[(2, "moneyline")] == 1.0 and st[(3, "total")] == 0.0
+    # Day cap: 8 u already in the ledger leaves 2 u for these 4 u.
+    from nhl.betting import ledger
+    from nhl.storage import keys
+    row = {c: None for c in ledger.SCHEMA} | {"bet_id": "x", "kind": "paper", "game_id": 9, "game_date": e["game_date"][0],
+                                              "market": "moneyline", "side": 1, "stake_units": 8.0, "tier": "unvalidated"}
+    prior = pl.DataFrame([row], schema=ledger.SCHEMA)
+    capped = E._stakes(e, _Mem({keys.BETS_LEDGER: prior}), e["game_date"][0])
+    assert abs(capped["stake_units"].sum() - 2.0) < 0.02
+
+
+def test_ledger_paper_once_then_grade_clv_and_result():
+    from datetime import date, datetime, timezone
+
+    from nhl.betting import ledger
+    from nhl.storage import keys
+
+    store = _Mem({keys.GAMES: pl.DataFrame({"game_id": [2026020044], "season": [20262027], "is_final": [True],
+                                            "game_date": [date(2026, 10, 6)], "home_score": [3], "away_score": [2]})})
+    e = _edges([{"game_id": 2026020044, "market": "moneyline", "side": 1, "price": 110.0, "stake_units": 1.0, "edge": 0.05}])
+    assert ledger.add_paper(store, e) == 1 and ledger.add_paper(store, e) == 0  # same game/market/side: once
+    # Closing consensus: home 55% fair, captured live.
+    t = datetime(2026, 10, 6, 22, tzinfo=timezone.utc)
+    live = pl.DataFrame({"game_id": [2026020044] * 2, "book": ["LowVig"] * 2, "market": ["moneyline"] * 2, "point": ["close"] * 2,
+                         "line": [None, None], "price_1": [-125.0, -125.0], "price_2": [105.0, 105.0], "captured_at": [t, t],
+                         "source": ["live"] * 2, "season": [20262027] * 2}, schema_overrides={"line": pl.Float64, "season": pl.Int32})
+    import nhl.betting.lines as L
+    orig = L.build
+    L.build = lambda store_, season: live
+    try:
+        assert ledger.grade(store) == 1
+    finally:
+        L.build = orig
+    row = ledger.load(store).row(0, named=True)
+    assert row["result"] == "win" and abs(row["pnl_units"] - 1.1) < 1e-9
+    assert row["p_close"] > 0.5 and abs(row["clv"] - (row["p_close"] * 2.1 - 1)) < 1e-9

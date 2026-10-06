@@ -7,3 +7,5 @@
 
 acquire_lock || exit 0
 run_with_timeout "${PREGAME_TIMEOUT:-900}" nhl pregame
+# Edges against the latest odds; new flagged bets go to the paper ledger.
+run_with_timeout 600 nhl edges || echo "edges failed (non-fatal)"

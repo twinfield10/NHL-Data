@@ -275,3 +275,18 @@ def pregame_latest(day: date) -> str:
 def pregame_history(season: int) -> str:
     """Honest pregame prices with score matrices per game (M6 history; pregame variant)."""
     return f"predictions/pregame_history/{season}.parquet"
+
+
+# --- betting (M6) -------------------------------------------------------------------------
+
+BETS_LEDGER = "bets/ledger.parquet"
+
+
+def blend_model() -> str:
+    """Model/market blend coefficients per market and season segment (JSON)."""
+    return "models/betting/blend.json"
+
+
+def betting_edges(day: date, stamp: str) -> str:
+    """Live edges snapshot for a game date, one per `nhl edges` run."""
+    return f"pregame/edges/{day.isoformat()}/{stamp}.parquet"

@@ -145,7 +145,8 @@ def build(store: Store, season: int, games: pl.DataFrame, dep: pl.DataFrame, pro
     out = games.select(
         "game_id", "game_date", pl.col("start_utc").alias("start_time"),
         pl.col("home_team_id").cast(pl.Int64), pl.col("away_team_id").cast(pl.Int64),
-    ).join(prices.drop("game_date", "home_team_id", "away_team_id", "as_of", strict=False), on="game_id", how="left")
+    ).join(prices.drop("game_date", "home_team_id", "away_team_id", "as_of", "stamp", "score_matrix", strict=False),
+           on="game_id", how="left")
     for side in ("home", "away"):
         per_team = top.join(flags, on=["game_id", "team_id"], how="full", coalesce=True).join(teams, on="team_id", how="left")
         out = out.join(

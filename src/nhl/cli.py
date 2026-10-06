@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import re
 import sys
 from datetime import date, datetime
 
@@ -299,6 +300,49 @@ def cmd_pregame_history(args: argparse.Namespace) -> None:
     print(backtest.run_history(Store(), seasons, n_sims=args.sims))
 
 
+def cmd_fit_blend(args: argparse.Namespace) -> None:
+    """M6: fit the model/market blend on the pregame history."""
+    from nhl.betting import blend
+    from nhl.storage.s3 import Store
+
+    out = blend.fit(Store(), [config.season_id(y) for y in config.parse_seasons(args.seasons)])
+    for market, segs in out["markets"].items():
+        for seg, f in segs.items():
+            print(f"{market:9s} {seg:7s} market {f['coef'][1]:.3f}  model {f['coef'][2]:.3f}  (n={f['n']})")
+
+
+def cmd_edges(args: argparse.Namespace) -> None:
+    """M6: edges and stakes for today's games from the latest pregame snapshot and odds."""
+    from datetime import date
+
+    from nhl.betting import edges
+    from nhl.storage.s3 import Store
+
+    e = edges.run(Store(), date.fromisoformat(args.date) if args.date else None, write=not args.no_write)
+    print(edges.render(e))
+
+
+def cmd_record_bet(args: argparse.Namespace) -> None:
+    """M6: record a bet you placed (graded with the paper bets)."""
+    from nhl.betting import ledger
+    from nhl.storage.s3 import Store
+
+    side = {"home": 1, "over": 1, "away": 2, "under": 2}[args.side]
+    bet_id = ledger.record_real(Store(), args.game_id, args.market, side, args.price, args.units, args.book,
+                                line=args.line, note=args.note)
+    print(f"recorded {bet_id}")
+
+
+def cmd_grade_bets(args: argparse.Namespace) -> None:
+    """M6: grade finished bets (CLV against our captured close, result, units) and summarise."""
+    from nhl.betting import ledger
+    from nhl.storage.s3 import Store
+
+    store = Store()
+    print(f"graded {ledger.grade(store)} bets")
+    print(ledger.summary(store))
+
+
 def cmd_pregame(args: argparse.Namespace) -> None:
     """M5: project lineups and starters, price today's games, write pregame snapshots."""
     from datetime import date
@@ -479,14 +523,26 @@ def cmd_poll(args: argparse.Namespace) -> None:
             failed = True
     print(" | ".join(f"{k}: {v}" for k, v in results.items()))
     changed = [k for k in REPRICE_TARGETS if results.get(k, "").isdigit() and int(results[k]) > 0]
+    repriced = False
     if args.reprice and changed:
         from nhl.pregame import price
 
         try:
             out = price.run(store)
+            repriced = out is not None
             print(f"repriced after {', '.join(changed)}: {0 if out is None else out.prices.height} games")
         except Exception:  # noqa: BLE001 - a failed reprice is reported, polls already stored
             logging.exception("reprice failed")
+            failed = True
+    odds_moved = "odds" in results and any(int(n) > 0 for n in re.findall(r"\b(\d+)\b", results["odds"]))
+    if args.edges and (repriced or odds_moved):
+        from nhl.betting import edges
+
+        try:
+            e = edges.run(store)
+            print(f"edges: {0 if e.is_empty() else int(e['flagged'].sum())} flagged")
+        except Exception:  # noqa: BLE001 - reported; polls and prices are already stored
+            logging.exception("edges failed")
             failed = True
     if failed:
         sys.exit(1)
@@ -552,6 +608,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--window", type=int, default=None,
                    help="only run if a game starts within this many minutes")
     p.add_argument("--reprice", action="store_true", help="rerun `nhl pregame` when a lineup/goalie/officials source changed")
+    p.add_argument("--edges", action="store_true", help="recompute edges (and paper bets) after a reprice or an odds change")
     p.set_defaults(func=cmd_poll)
 
     p = sub.add_parser("xg-monitor", help="season-to-date xG calibration by strength state")
@@ -613,6 +670,29 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--seasons", default="2016-2025")
     p.add_argument("--sims", type=int, default=1000)
     p.set_defaults(func=cmd_pregame_history)
+
+    p = sub.add_parser("fit-blend", help="M6: fit the model/market blend on the pregame history")
+    p.add_argument("--seasons", default="2016-2025")
+    p.set_defaults(func=cmd_fit_blend)
+
+    p = sub.add_parser("edges", help="M6: edges and stakes for today's games (adds new paper bets)")
+    p.add_argument("--date", help="game date (default: today, Eastern)")
+    p.add_argument("--no-write", action="store_true", help="don't snapshot or touch the ledger")
+    p.set_defaults(func=cmd_edges)
+
+    p = sub.add_parser("record-bet", help="M6: record a bet you placed")
+    p.add_argument("game_id", type=int)
+    p.add_argument("market", choices=["moneyline", "puckline", "total"])
+    p.add_argument("side", choices=["home", "away", "over", "under"])
+    p.add_argument("price", type=float, help="American odds, e.g. -115 or +130")
+    p.add_argument("units", type=float, help="stake in units (bankroll = 100)")
+    p.add_argument("book")
+    p.add_argument("--line", type=float, help="puck line (home handicap, e.g. -1.5) or total")
+    p.add_argument("--note")
+    p.set_defaults(func=cmd_record_bet)
+
+    p = sub.add_parser("grade-bets", help="M6: grade finished bets and print the ledger summary")
+    p.set_defaults(func=cmd_grade_bets)
 
     p = sub.add_parser("pregame", help="M5: project lineups/starters and price today's games (snapshots)")
     p.add_argument("--date", help="game date (default: today, Eastern)")

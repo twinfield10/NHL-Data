@@ -1,6 +1,6 @@
 # Plan: M6 — odds, pricing and betting
 
-**Status:** phases A-D built 2026-10-06. With 10 seasons of honest prices and exact-line pricing, **November-February moneylines pass a first gate** (CLV +1.0% ± 0.4%, positive in both eras); totals fail. See [Phase C/D results](#phase-cd-results-2026-10-06). E (live paper trading) is next.
+**Status:** phases A-D built 2026-10-06. With 10 seasons of honest prices and exact-line pricing, **November-February moneylines pass a first gate** (CLV +1.0% ± 0.4%, positive in both eras); totals fail. See [Phase C/D results](#phase-cd-results-2026-10-06). **Phase E (live betting) built 2026-10-06**: see [Phase E](#phase-e-live-betting-2026-10-06).
 **Depends on:** captured odds (`external/odds/...`: LowVig, 4Casters, ESPN-listed books live;
 SBR archive and ESPN history), M4 simulator, M5 pregame inputs (`pregame/prices`, and the
 `pregame` variant of `predictions/pregame_backtest`).
@@ -217,3 +217,28 @@ moved by ≤ 0.0003 from the M5 run, as expected.
   shopping. Forward paper trading is the real test.
 - **Next (phase E):** `nhl edges` and the paper ledger, flagging **Nov-Feb moneylines only**
   at first, graded on live CLV against our own captured closes.
+
+## Phase E: live betting (2026-10-06)
+The owner wants to bet now, in every month, not only where the backtest passes. Decisions:
+stakes in **units** (bankroll 100 u); **¼ Kelly everywhere**, capped at 2 u per bet,
+3 u per game, 10 u per day; **totals tracked only** (paper-traded, never flagged).
+
+- **Blend** (`nhl fit-blend`, `models/betting/blend.json`): p = σ(c + a·logit(market) +
+  b·logit(model)) per market and segment, on 2016-26 pregame history vs the close.
+  Model weight b: moneyline 0.59 Nov-Feb / 0.32 other months; puck line 0.52 / 0.07;
+  totals 0.62 / 0.32. So October edges lean on the market and are fewer and smaller.
+- **Edges** (`nhl edges`, `src/nhl/betting/edges.py`): latest pregame snapshot (with score
+  matrix) against every captured book's latest price; model at the exact line, market =
+  consensus (or the book's own price at an off-consensus line), books more than 3 points
+  off the consensus skipped as bad quotes; best book per side; flagged when the edge is
+  ≥ 2% (moneyline) or ≥ 3% (puck line). **Tiers:** `validated` (Nov-Feb moneyline),
+  `unvalidated` (other moneylines, puck lines), `track_only` (totals).
+- **Ledger** (`bets/ledger.parquet`, `src/nhl/betting/ledger.py`): a paper bet the first
+  time a (game, market, side) is flagged; `nhl record-bet` for real bets; `nhl grade-bets`
+  (nightly) fills the closing consensus from our own captures, CLV, result and units, and
+  prints CLV and ROI by kind, tier and market.
+- **Schedule:** edges after every reprice and every odds change, the morning slate, nightly
+  grading (see `docs/scheduler.md`).
+- **First live flag (2026-10-06):** FLA moneyline −107 at LowVig, edge +2.2%, 0.58 u,
+  unvalidated (model 56%, market 51%, blend 53%).
+- **Watch:** CLV by tier after ~200 graded bets per tier; refit the blend after each season.

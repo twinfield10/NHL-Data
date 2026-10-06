@@ -153,7 +153,7 @@ def starter_probs(store: Store, season: int, day: date, games: pl.DataFrame, as_
 
 def price(store: Store, season: int, games: pl.DataFrame, dep: pl.DataFrame, probs: pl.DataFrame,
           n_sims: int = N_SIMS) -> pl.DataFrame:
-    """Market probabilities for ``games``, mixed over starter pairs."""
+    """Market probabilities and score matrices for ``games``, mixed over starter pairs."""
     c = sim_constants.estimate(store, season)
     snapshots = inputs.snapshot_dates(store)
     coaches = latest_coaches(store, season, games)
@@ -162,21 +162,25 @@ def price(store: Store, season: int, games: pl.DataFrame, dep: pl.DataFrame, pro
     if completed.height:
         dep_a, starts_a = inputs.actual_deployment(store, season)
         history = inputs.rate_table(store, season, completed, dep_a, starts_a, c, snapshots)
-    team_res, acc, base = None, None, None
+    team_res, acc, acc_m, base = None, None, None, None
     for starts, w in mixture(probs.select("game_id", "team_id", "player_id", "p_start"), games):
         inp = inputs.build_inputs(store, season, games, dep, starts, c, snapshots, coaches=coaches,
                                   history=history, team_res=team_res)
         team_res = inp.team_res
-        res = markets.prices(engine.simulate(inp, c, season, n_sims=n_sims))
+        sim = engine.simulate(inp, c, season, n_sims=n_sims)
+        res = markets.prices(sim)
         weight = inp.games.select("game_id").join(games.select("game_id").with_columns(pl.Series("w", w)), on="game_id",
                                                   how="left", maintain_order="left")["w"].to_numpy()
         part = res.select(PRICE_COLS).to_numpy() * weight[:, None]
+        part_m = markets.score_matrix(sim) * weight[:, None]
         acc = part if acc is None else acc + part
+        acc_m = part_m if acc_m is None else acc_m + part_m
         base = inp.games
     if base is None:
         return pl.DataFrame()
     return base.select("game_id", "game_date", "home_team_id", "away_team_id").with_columns(
-        *[pl.Series(col, acc[:, j]) for j, col in enumerate(PRICE_COLS)]
+        *[pl.Series(col, acc[:, j]) for j, col in enumerate(PRICE_COLS)],
+        pl.Series("score_matrix", acc_m.astype("float32"), dtype=pl.Array(pl.Float32, markets.MATRIX_SIZE)),
     )
 
 
