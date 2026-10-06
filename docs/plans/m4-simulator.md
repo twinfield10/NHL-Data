@@ -269,7 +269,16 @@ the team's lead (−2..+2) × game state:
 | 2+ goal margins | 58.2% | 59.1% | 59.7% |
 | OT rate | 20.9% | 20.9% | 22.4% |
 
-The OT shortfall is unchanged, so its cause is elsewhere. Next suspect: late equalizers
-with the goalie pulled (extra-attacker scoring and pull timing), which decide how many
-one-goal games end tied.
+The OT shortfall is unchanged, so its cause is elsewhere.
+
+**Diagnosis** (2022-2025 regular season, the simulator's margin at 5:00 / 2:00 left vs
+actual):
+- **The late game is right.** P(OT | tied at 2:00) is 87.2% vs 88.0% actual;
+  P(OT | one-goal at 2:00) 14.7% vs 13.9%.
+- **The gap starts earlier.** With 5:00 left the simulator has slightly fewer close games
+  (tied 18.3% vs 18.9%, one-goal 30.7% vs 32.3%) and more 2+ goal games (51.1% vs 48.8%).
+  That's the game shock spreading games mid-game.
+- **Net:** OT 20.8% vs 21.5% in these seasons. Lowering σ closes it but costs puck-line
+  accuracy (see the σ table), so it's left as a known trade-off.
+  `SimResult.margin_5min` / `margin_2min` keep the diagnostic.
 

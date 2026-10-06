@@ -54,6 +54,8 @@ class SimResult:
     ended: np.ndarray  # 0 regulation, 1 overtime, 2 shootout
     en_goals: np.ndarray  # (G, N) goals into an empty net (diagnostic)
     pulled_s: np.ndarray  # (G, N) seconds with a goalie pulled (diagnostic)
+    margin_5min: np.ndarray | None = None  # (G, N) home − away with 5:00 left (diagnostic)
+    margin_2min: np.ndarray | None = None  # (G, N) home − away with 2:00 left (diagnostic)
 
 
 def _pull_thresholds(rng: np.random.Generator, constants: dict, shape: tuple[int, int]) -> np.ndarray:
@@ -192,6 +194,10 @@ def simulate(inputs: SeasonInputs, constants: dict, season: int, n_sims: int = 1
         period = t // 1200
         remaining = REGULATION_S - t
         bucket_idx = period if period < 2 else (2 if remaining > 600 else 3 if remaining > 300 else 4 if remaining > 120 else 5)
+        if remaining == 300:
+            margin_5 = (hs - as_).copy()
+        if remaining == 120:
+            margin_2 = (hs - as_).copy()
         active = {s: (timers[s] > 0).sum(axis=0) for s in ("home", "away")}
         n = {s: np.clip(5 - active[s], 3, 5) for s in ("home", "away")}
         lead_h = (hs - as_).astype(np.int32)
@@ -291,4 +297,5 @@ def simulate(inputs: SeasonInputs, constants: dict, season: int, n_sims: int = 1
         hs += tied & home_wins
         as_ += tied & ~home_wins
         ended = np.where(tied, np.where(playoff, 1, 2), ended).astype(np.int8)
-    return SimResult(home=hs, away=as_, ended=ended, en_goals=en_goals, pulled_s=pulled_s)
+    return SimResult(home=hs, away=as_, ended=ended, en_goals=en_goals, pulled_s=pulled_s,
+                     margin_5min=margin_5, margin_2min=margin_2)
