@@ -297,10 +297,11 @@ def cmd_pregame(args: argparse.Namespace) -> None:
     from nhl.pregame import price
     from nhl.storage.s3 import Store
 
+    from nhl.pregame import slate
+
     out = price.run(Store(), date.fromisoformat(args.date) if args.date else None, n_sims=args.sims, write=not args.no_write)
     if out is not None:
-        print(out.prices.select("game_id", "home_team_id", "away_team_id", "p_home_win", "p_home_minus_1_5",
-                                "p_away_minus_1_5", "p_over_5.5", "p_over_6.5"))
+        print(slate.render(out.slate, out.freshness))
 
 
 def cmd_evaluate_betting(args: argparse.Namespace) -> None:

@@ -283,6 +283,20 @@ Pages:
 - **Game recaps:** xG timeline and who was on the ice.
 - **Model performance:** calibration and CLV tracker.
 
+## Later: late-season and playoff accuracy (owner, 2026-10-06)
+
+The honest pregame model matches or slightly beats the closing line from November to
+February but trails it in April (+0.0115 log loss) and the playoffs (+0.0097), where the
+market spreads teams much further apart (see [m6-betting.md](m6-betting.md)). To dig into
+once the model is more final. Hypotheses to test:
+- **More injuries, more new players** late in the season. Measure the share of ice time
+  going to low-rated or unrated players by month. Replacement-level defaults for unrated
+  players (2026-10-06) are a first step.
+- **Motivation:** tanking for draft-lottery odds, and teams that have clinched (or nearly)
+  resting players. This needs standings context per team and date; M7's playoff and lottery
+  odds are the natural input for a motivation term.
+- **Playoffs:** the model is 1.4 points low on home teams; check the playoff home factor.
+
 ## Later: player props
 
 Goals, assists, points: reuse M4 simulations and attribute goals and assists by

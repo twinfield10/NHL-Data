@@ -7,8 +7,9 @@
    ``Confirmed`` / ``Likely`` reports (:func:`apply_dfo_goalies`);
 3. prices each likely starter pair with the M4 engine and averages the markets with weight
    P(home starter) × P(away starter);
-4. writes three snapshots (never overwritten), keyed by date and run time:
-   ``pregame/lineups/{date}/{stamp}.parquet``, ``pregame/goalies/...``, ``pregame/prices/...``.
+4. writes snapshots (never overwritten), keyed by date and run ``stamp``: lineups, goalies,
+   prices, the one-row-per-game slate and input freshness, plus a ``latest`` pointer. The
+   layout is the site's data contract; see :mod:`nhl.pregame.slate`.
 
 Forward-only inputs: each team's most recent head coach, and the referees assigned so far
 (Scouting the Refs); with no assignment the crew factor is neutral.
@@ -23,7 +24,7 @@ from zoneinfo import ZoneInfo
 
 import polars as pl
 
-from nhl.pregame import goalies, lineups
+from nhl.pregame import goalies, lineups, slate
 from nhl.pregame.backtest import PRICE_COLS, mixture
 from nhl.sim import constants as sim_constants
 from nhl.sim import engine, inputs, markets
@@ -45,10 +46,13 @@ class Pregame:
     """One pregame run's outputs."""
 
     as_of: datetime
+    stamp: str
     games: pl.DataFrame
     lineups: pl.DataFrame
     goalies: pl.DataFrame
     prices: pl.DataFrame
+    slate: pl.DataFrame  # one row per game: the date -> game_id summary (see nhl.pregame.slate)
+    freshness: pl.DataFrame
 
 
 def upcoming(store: Store, day: date, as_of: datetime) -> pl.DataFrame:
@@ -184,6 +188,8 @@ def run(store: Store, day: date | None = None, as_of: datetime | None = None, n_
         logger.info("pregame %s: no games left to price", day)
         return None
     season = int(games["season"][0])
+    st = stamp(as_of)
+    fresh = slate.freshness(store, season, as_of)
     targets = pl.concat([games.select("game_id", pl.col(f"{s}_team_id").cast(pl.Int64).alias("team_id"), "game_date")
                          for s in ("home", "away")])
     span = [season - 10001, season]
@@ -192,13 +198,14 @@ def run(store: Store, day: date | None = None, as_of: datetime | None = None, n_
     dep = lineups.project(store, targets, span, as_of=as_of, events=events)
     probs = starter_probs(store, season, day, games, as_of, events)
     prices = price(store, season, games, dep, probs, n_sims)
-    out = Pregame(as_of, games, dep.with_columns(pl.lit(as_of).alias("as_of")),
-                  probs.with_columns(pl.lit(as_of).alias("as_of")), prices.with_columns(pl.lit(as_of).alias("as_of")))
+    tag = [pl.lit(as_of).alias("as_of"), pl.lit(st).alias("stamp")]
+    rows = slate.build(store, season, games, dep, probs, prices, fresh, as_of, st)
+    out = Pregame(as_of, st, games, dep.with_columns(*tag), probs.with_columns(*tag), prices.with_columns(*tag), rows, fresh)
     if write:
-        st = stamp(as_of)
         store.put_parquet(keys.pregame_lineups(day, st), out.lineups)
         store.put_parquet(keys.pregame_goalies(day, st), out.goalies)
         store.put_parquet(keys.pregame_prices(day, st), out.prices)
+        slate.write(store, day, st, rows, fresh)
     shapes = lineups.lineup_shape(dep)
     irregular = shapes.filter(~pl.col("regular"))
     if irregular.height:

@@ -255,3 +255,18 @@ def pregame_goalies(day: date, stamp: str) -> str:
 def pregame_prices(day: date, stamp: str) -> str:
     """Market prices (starter mixture) snapshot for a game date."""
     return f"pregame/prices/{day.isoformat()}/{stamp}.parquet"
+
+
+def pregame_slate(day: date, stamp: str) -> str:
+    """Slate summary for a game date: one row per game (grain date -> game_id)."""
+    return f"pregame/slate/{day.isoformat()}/{stamp}.parquet"
+
+
+def pregame_freshness(day: date, stamp: str) -> str:
+    """Age of every pregame input at run time."""
+    return f"pregame/freshness/{day.isoformat()}/{stamp}.parquet"
+
+
+def pregame_latest(day: date) -> str:
+    """Pointer to the newest pregame run for a date (JSON with its stamp)."""
+    return f"pregame/latest/{day.isoformat()}.json"

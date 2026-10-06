@@ -289,3 +289,78 @@ def test_drop_injured_goalies_renormalises():
     out = P.drop_injured_goalies(probs, events, date(2026, 10, 6), datetime(2026, 10, 6, 18, tzinfo=timezone.utc))
     assert B not in out["player_id"].to_list()  # out past the game; A's return date is the game day: kept
     assert abs(out["p_start"].sum() - 1) < 1e-12 and abs(out.filter(pl.col("player_id") == A)["p_start"][0] - 2 / 3) < 1e-12
+
+
+class _SlateStore:
+    """In-memory stand-in for the S3 store (keys -> frames / bytes)."""
+
+    def __init__(self, data: dict):
+        self.data = data
+        self.bytes: dict = {}
+
+    def get_parquet(self, key):
+        return self.data.get(key)
+
+    def read_parquet_required(self, key):
+        return self.data[key]
+
+    def list_keys(self, prefix):
+        return [k for k in self.data if k.startswith(prefix)]
+
+    def put_parquet(self, key, df):
+        self.data[key] = df
+
+    def put_bytes(self, key, data, content_type=None):
+        self.bytes[key] = data
+
+
+def test_freshness_flags_stale_and_missing_sources():
+    from nhl.pregame import slate
+    from nhl.storage import keys
+
+    season, now = 20262027, datetime(2026, 10, 6, 18, tzinfo=timezone.utc)
+    cap = lambda h: pl.DataFrame({"captured_at": [now - timedelta(hours=h)]})  # noqa: E731
+    store = _SlateStore({
+        keys.dailyfaceoff_goalies(season): cap(1), keys.dailyfaceoff_lines(season): cap(30),
+        keys.injuries(season): cap(2), keys.transactions(season): cap(3),
+        f"{keys.odds_live_prefix(season)}lowvig.parquet": cap(0.5),
+        "ratings/2026-10-05/ev.parquet": pl.DataFrame(),
+        keys.GAMES: pl.DataFrame({"season": [season], "is_final": [True], "game_date": [date(2026, 10, 5)]}),
+        keys.player_game_logs(season): pl.DataFrame({"game_date": [date(2026, 10, 5)]}),
+    })
+    f = slate.freshness(store, season, now)
+    stale = dict(zip(f["source"], f["stale"]))
+    assert stale["dailyfaceoff_lines"] and stale["ref_assignments"]  # 30 h old; never captured
+    assert not stale["dailyfaceoff_goalies"] and not stale["odds"] and not stale["ratings"] and not stale["game_state"]
+
+
+def test_slate_is_one_row_per_game_and_writes_latest_pointer():
+    import json
+
+    from nhl.pregame import slate
+    from nhl.storage import keys
+
+    as_of = datetime(2026, 10, 6, 18, tzinfo=timezone.utc)
+    games = pl.DataFrame({"game_id": [1, 2], "game_date": [date(2026, 10, 6)] * 2, "start_utc": [as_of + timedelta(hours=5)] * 2,
+                          "home_team_id": [10, 30], "away_team_id": [20, 40]})
+    dep = pl.DataFrame({"game_id": [1, 1, 2, 2], "team_id": [10, 20, 30, 40], "source": ["dfo", "fill", "last_game", "gtd_backup"],
+                        "issues": ["", "x out", "", "backup"]})
+    probs = pl.DataFrame({"game_id": [1, 1, 1, 2, 2], "team_id": [10, 10, 20, 30, 40], "player_id": [A, B, C, A + 1, B + 1],
+                          "p_start": [0.9, 0.1, 1.0, 1.0, 1.0], "dfo_status": ["Confirmed", None, None, None, None]})
+    prices = pl.DataFrame({"game_id": [1, 2], "game_date": [date(2026, 10, 6)] * 2, "home_team_id": [10, 30], "away_team_id": [20, 40],
+                           "p_home_win": [0.6, 0.45], "mean_home_goals": [3.1, 2.8], "mean_away_goals": [2.7, 3.0]})
+    store = _SlateStore({
+        keys.TEAMS: pl.DataFrame({"team_id": [10, 20, 30, 40], "team_abbr": ["TOR", "BOS", "NYR", "NJD"]}),
+        keys.PLAYERS: pl.DataFrame({"player_id": [A, B, C, A + 1, B + 1], "player_name": ["a", "b", "c", "d", "e"]}),
+    })
+    fresh = pl.DataFrame({"source": ["odds"], "last_update": [as_of], "age_hours": [30.0], "max_age_hours": [6.0],
+                          "stale": [True], "note": [""]})
+    rows = slate.build(store, 20262027, games, dep, probs, prices, fresh, as_of, "STAMP")
+    assert rows.height == 2 and rows["game_id"].to_list() == [1, 2]
+    r = rows.row(0, named=True)
+    assert r["home_starter"] == "a" and r["home_starter_p"] == 0.9 and r["home_alt_starter"] == "b"
+    assert r["away_fills"] == 1 and r["stale_inputs"] == "odds" and r["stamp"] == "STAMP"
+    assert rows.row(1, named=True)["away_game_time_decisions"] == 1
+    slate.write(store, date(2026, 10, 6), "STAMP", rows, fresh)
+    assert json.loads(store.bytes[keys.pregame_latest(date(2026, 10, 6))])["stamp"] == "STAMP"
+    assert "TOR" in slate.render(rows, fresh) and "STALE INPUTS: odds" in slate.render(rows, fresh)

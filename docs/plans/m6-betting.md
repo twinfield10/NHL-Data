@@ -173,6 +173,14 @@ Code: `src/nhl/betting/` (`lines.py`, `devig.py`, `evaluate.py`), `nhl evaluate-
 - With the M4 actual-lineup prices, moneyline bets showed +2.7% CLV: knowing the starter
   before the market does. The gap is the value of early starter information; M5's
   confirmations (phase D there) can only capture it live.
+- **By stretch of season (honest pregame prices, moneyline, 2021-26; model minus close log
+  loss):** Nov-Feb **−0.0007** (the model slightly *beats* the close, 3,891 games); October
+  +0.0047; March +0.0048; **April +0.0115; playoffs +0.0097**. Late in the season and in the
+  playoffs the market spreads teams much further than the model (mean |p − 0.5| 0.124 vs
+  0.104 in April; playoffs 0.086 vs 0.067, and the model is 1.4 points low on home teams).
+  Likely causes: motivation (tanking, resting, races), deadline rosters, playoff home ice.
+  The overall gap is mostly these stretches, so the next M6 test is a **Nov-Feb-only** gate,
+  and the late-season and playoff gaps are M4/M3 work.
 - **Conclusion:** the model is about as good as the close but not better, so the site must
   not flag bets yet. Next accuracy work belongs in the model (the M4 calibration and
   2025-26 gaps, team terms, goalie terms) and in timing: bets placed when news (starters,

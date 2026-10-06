@@ -389,12 +389,46 @@ def _score_terms(constants: dict) -> np.ndarray:
     return (out - (out * shares).sum()) * constants["goals_per_xg_5v5"]
 
 
+#: Players missing from a rating snapshot (debuts, call-ups, pregame placeholders, an unknown
+#: starting goalie) get replacement-level terms, not league average: the mean term of
+#: low-usage players in the same snapshot (below these thresholds). Set False to restore 0.
+REPLACEMENT_LEVEL = True
+REPLACEMENT_EV_TOI_S = 20_000
+REPLACEMENT_ST_TOI_S = 2_000
+REPLACEMENT_SHOTS = 100
+REPLACEMENT_GOALIE_SHOTS = 1_000
+
+
+def replacement_levels(ev: pl.DataFrame, st: pl.DataFrame, fin: pl.DataFrame) -> dict[str, float]:
+    """Replacement-level terms from one snapshot (see :data:`REPLACEMENT_LEVEL`).
+
+    Low-usage skaters are below average at both ends (2024-25: EV offence about −0.06,
+    defence +0.015, i.e. more allowed); low-shot goalies allow more than average.
+    """
+    if not REPLACEMENT_LEVEL:
+        return {k: 0.0 for k in ("o_ev", "d_ev", "o_st", "d_st", "shoot", "goalie")}
+
+    def mean(frame: pl.DataFrame, default: float = 0.0) -> float:
+        return float(frame["mean"].mean()) if frame.height else default
+
+    goalies = fin.filter(pl.col("role") == "goalie")
+    low_g = goalies.filter(pl.col("shots") < REPLACEMENT_GOALIE_SHOTS)
+    return {
+        "o_ev": mean(ev.filter((pl.col("side") == "O") & (pl.col("toi_s") < REPLACEMENT_EV_TOI_S))),
+        "d_ev": mean(ev.filter((pl.col("side") == "D") & (pl.col("toi_s") < REPLACEMENT_EV_TOI_S))),
+        "o_st": mean(st.filter((pl.col("side") == "O") & (pl.col("toi_s") < REPLACEMENT_ST_TOI_S))),
+        "d_st": mean(st.filter((pl.col("side") == "D") & (pl.col("toi_s") < REPLACEMENT_ST_TOI_S))),
+        "shoot": mean(fin.filter((pl.col("role") == "shooter") & (pl.col("shots") < REPLACEMENT_SHOTS))),
+        "goalie": mean(low_g if low_g.height else goalies),
+    }
+
+
 def _rates_for(store: Store, snap: date, games: pl.DataFrame, dep: pl.DataFrame, starts: pl.DataFrame,
                rest: pl.DataFrame, coaches: pl.DataFrame, c: dict) -> pl.DataFrame:
     """Rates for the games that use snapshot ``snap``."""
     base = f"ratings/{snap.isoformat()}/"
-    ev = store.read_parquet_required(base + "ev.parquet").select("player_id", "side", "mean")
-    st = store.read_parquet_required(base + "st.parquet").select("player_id", "side", "mean")
+    ev = store.read_parquet_required(base + "ev.parquet").select("player_id", "side", "mean", "toi_s")
+    st = store.read_parquet_required(base + "st.parquet").select("player_id", "side", "mean", "toi_s")
     ctx = c["ev_context"]  # previous season's full-season context terms (point-in-time)
     fin = store.read_parquet_required(base + "finishing.parquet")
     pen = store.read_parquet_required(base + "penalties.parquet")
@@ -404,6 +438,7 @@ def _rates_for(store: Store, snap: date, games: pl.DataFrame, dep: pl.DataFrame,
     pen_w = pen.pivot(on="kind", index="player_id", values="rate")
     league_taken = float((pen.filter(pl.col("kind") == "taken")["rate"]).mean())
     league_drawn = float((pen.filter(pl.col("kind") == "drawn")["rate"]).mean())
+    repl = replacement_levels(ev, st, fin)
 
     gids = games["game_id"].implode()
     d = (
@@ -414,7 +449,7 @@ def _rates_for(store: Store, snap: date, games: pl.DataFrame, dep: pl.DataFrame,
         .join(st.filter(pl.col("side") == "D").select("player_id", pl.col("mean").alias("d_st")), on="player_id", how="left")
         .join(shooters, on="player_id", how="left")
         .join(pen_w, on="player_id", how="left")
-        .with_columns(pl.col("o_ev", "d_ev", "o_st", "d_st", "shoot").fill_null(0.0),
+        .with_columns(*[pl.col(k).fill_null(repl[k]) for k in ("o_ev", "d_ev", "o_st", "d_st", "shoot")],
                       pl.col("taken").fill_null(league_taken), pl.col("drawn").fill_null(league_drawn))
     )
     team = d.group_by("game_id", "team_id").agg(
@@ -424,7 +459,7 @@ def _rates_for(store: Store, snap: date, games: pl.DataFrame, dep: pl.DataFrame,
         ((pl.col("s5") * pl.col("taken")).sum() / (pl.col("s5").sum() * league_taken)).alias("take_f"),
         ((pl.col("s5") * pl.col("drawn")).sum() / (pl.col("s5").sum() * league_drawn)).alias("draw_f"),
     ).join(starts, on=["game_id", "team_id"], how="left").join(goalies, on="starter", how="left").with_columns(
-        pl.col("goalie").fill_null(0.0)
+        pl.col("goalie").fill_null(repl["goalie"])
     )
     league_dshare = float(team["dshare"].mean())
     g = games

@@ -234,6 +234,22 @@ stays on hold for the scheduler design.
   points on a few games (TOR, DET, CHI on 10/6) are more likely priors than edges, given
   M6's finding that the model doesn't beat the close.
 
+**Additions (2026-10-06, after phase D):**
+- **Input freshness:** every pregame run reports each input's last capture and age against a
+  limit (DailyFaceoff goalies 6 h, lines 24 h, ESPN injuries 12 h, transactions 24 h,
+  referee assignments 24 h, odds 6 h, rating snapshot and game state 36 h), logs stale ones
+  and lists them on every slate row. The first run caught 25-hour-old odds, so the "market"
+  column was yesterday's line.
+- **Slate summary and site contract:** one row per game per run (grain date → `game_id`),
+  `pregame/slate/{date}/{stamp}`, with the detail in that stamp's lineups / goalies / prices
+  files and a `pregame/latest/{date}.json` pointer. See `src/nhl/pregame/slate.py`.
+  `nhl pregame` prints it.
+- **Replacement level:** players missing from a rating snapshot (debuts, call-ups,
+  placeholders, an unknown starting goalie) get the mean term of low-usage players in that
+  snapshot instead of league average (`sim/inputs.py`, `REPLACEMENT_LEVEL`). Backtest effect
+  is noise (2022-26 moneyline log loss −0.0001 to +0.0002) because ratings refresh daily;
+  it matters forward.
+
 ## 7. Decisions (owner, 2026-10-06)
 1. **Fill policy:** the most recent available player at the position, flagged low
    confidence; a placeholder only when there's none.
