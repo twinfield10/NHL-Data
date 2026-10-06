@@ -237,7 +237,7 @@ def referee_factors(store: Store, season: int) -> pl.DataFrame:
     return target.group_by("game_id").agg((1 + pl.col("dev").fill_null(0.0).sum() / league).alias("ref_factor"))
 
 
-def _sum_before(left: pl.DataFrame, daily: pl.DataFrame, cols: list[str], by: str | None = None) -> pl.DataFrame:
+def sum_before(left: pl.DataFrame, daily: pl.DataFrame, cols: list[str], by: str | None = None) -> pl.DataFrame:
     """``left`` (row order kept) with ``cols`` summed over ``daily`` rows strictly before each
     ``game_date`` (per ``by`` if given). Works for dates with no row of their own (future games)."""
     group = [by] if by else []
@@ -263,7 +263,7 @@ def scoring_level(games: pl.DataFrame, table: pl.DataFrame, constants: dict) -> 
          - ((pl.col("season_type") == "R") & (pl.col("last_period") == 5)).cast(pl.Int16)).alias("g")
     ).group_by("game_date").agg(pl.col("g").sum().cast(pl.Float64).alias("goals"), pl.len().cast(pl.Float64).alias("n"))
     prior = constants["goals_per_game_last"]
-    lvl = _sum_before(table.select("game_date"), done, ["goals", "n"]).with_columns(
+    lvl = sum_before(table.select("game_date"), done, ["goals", "n"]).with_columns(
         ((pl.col("goals_td") + prior * LEVEL_PRIOR_GAMES) / (pl.col("n_td") + LEVEL_PRIOR_GAMES)
          / constants["goals_per_game_lookback"]).alias("level")
     )
@@ -301,7 +301,7 @@ def team_residuals(store: Store, season: int, table: pl.DataFrame, history: pl.D
     daily = r.group_by("team_id", "game_date").agg(pl.col("ro", "rd", "h").sum())
     out = {}
     for side in ("home", "away"):
-        j = _sum_before(table.select("game_date", pl.col(f"{side}_team_id").alias("team_id")), daily, ["ro", "rd", "h"], by="team_id")
+        j = sum_before(table.select("game_date", pl.col(f"{side}_team_id").alias("team_id")), daily, ["ro", "rd", "h"], by="team_id")
         out[f"off_{side}"], out[f"def_{side}"], out[f"hours_{side}"] = (
             j["ro_td"].to_numpy(), j["rd_td"].to_numpy(), j["h_td"].to_numpy()
         )
@@ -355,7 +355,7 @@ def team_finishing_residuals(store: Store, season: int, table: pl.DataFrame, sna
     )
     out = {}
     for side in ("home", "away"):
-        j = _sum_before(table.select("game_date", pl.col(f"{side}_team_id").alias("team_id")), daily, ["ro", "rd", "po", "pd"], by="team_id")
+        j = sum_before(table.select("game_date", pl.col(f"{side}_team_id").alias("team_id")), daily, ["ro", "rd", "po", "pd"], by="team_id")
         out[f"fin_off_{side}"] = j["ro_td"].to_numpy()
         out[f"fin_def_{side}"] = j["rd_td"].to_numpy()
         out[f"fin_xoff_{side}"] = j["po_td"].to_numpy()

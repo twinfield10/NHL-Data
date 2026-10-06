@@ -254,6 +254,26 @@ def cmd_sim_constants(args: argparse.Namespace) -> None:
     build(Store(), [config.season_id(y) for y in config.parse_seasons(args.seasons)])
 
 
+def cmd_train_starters(args: argparse.Namespace) -> None:
+    """Fit and store the starting-goalie model per season; evaluate and write the report."""
+    from nhl.pregame import goalies
+    from nhl.storage.s3 import Store
+
+    store = Store()
+    seasons = [config.season_id(y) for y in config.parse_seasons(args.seasons)]
+    model = None
+    for season in seasons:
+        model = goalies.train(store, season)
+        logging.info("starter model %s fitted on %s", season, goalies.train_seasons(season))
+    tests = [config.season_id(y) for y in config.parse_seasons(args.evaluate)]
+    first = int(str(min(goalies.train_seasons(min(tests))))[:4])
+    cand = goalies.build_candidates(store, [config.season_id(y) for y in range(first, int(str(max(tests))[:4]) + 1)])
+    results = goalies.evaluate(cand, tests)
+    print(results)
+    if model is not None:
+        goalies.write_report(results, model, args.report)
+
+
 def cmd_backtest_sim(args: argparse.Namespace) -> None:
     """Backtest the game simulator and write the M4 report."""
     from pathlib import Path
@@ -490,6 +510,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--sims", type=int, default=1000)
     p.add_argument("--report", default="docs/reports/m4-backtest.md")
     p.set_defaults(func=cmd_backtest_sim)
+
+    p = sub.add_parser("train-starters", help="M5: starting-goalie model per season (+ evaluation report)")
+    p.add_argument("--seasons", default=f"2015-{_current_start_year()}", help="seasons to fit a model for")
+    p.add_argument("--evaluate", default="2018-2025", help="test seasons for the report")
+    p.add_argument("--report", default="docs/reports/m5-starters.md")
+    p.set_defaults(func=cmd_train_starters)
 
     p = sub.add_parser("game-state", help="stints, lineups, goalie starts, coaches, game logs (M2)")
     p.add_argument("--seasons", default=_default_seasons())

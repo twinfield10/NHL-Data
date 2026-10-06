@@ -1,6 +1,6 @@
 # Plan: M5 — pregame inputs (projected lineups and starting goalies)
 
-**Status:** proposed 2026-10-06.
+**Status:** phases A (inputs refactor) and B (starter model, bar passed) done 2026-10-06; C-E open.
 **Depends on:** M2 (`rosters`, `lineups`, `goalie_starts`, `player_game_logs`, `coaches`),
 M3 snapshots, M4 (`sim/inputs.py`, `engine.py`), `schedule_context`, and the external
 sources already captured: DailyFaceoff goalies and lines, source tweets, ESPN injuries,
@@ -65,6 +65,20 @@ known before the game:
 
 **Baseline:** "last game's starter starts" (and on a b2b's 2nd night, the other goalie).
 **Bar (roadmap):** log loss beats that baseline on 2025-26.
+
+**Result (2026-10-06, [report](../reports/m5-starters.md)).** `src/nhl/pregame/goalies.py`,
+`nhl train-starters`, models at `models/starters/{season}.json`.
+- 2025-26 log loss **0.708** vs 0.883 (last starter, b2b-aware) and 0.939 (last starter);
+  top pick right 68.6% vs 53.6% / 43.5%. The model wins in every season 2018-19..2025-26.
+- Calibrated within ~3 points in every probability bin (2023-2026).
+- Repeat starts fell from 59% (2015-16) to 43% (2025-26) as teams moved to tandems, so each
+  season's model is fitted on the 4 seasons before it (better than all history in each of
+  4 test seasons, by 0.01-0.02).
+- A starter outside the last-10-games candidate set (`other`) happens in ~1% of team-games.
+- Home and opponent strength (× share of recent starts) each add a small, consistent gain.
+  Dropping goalie quality or the playoff terms hurts.
+- Candidates and features come from the schedule, so future games work: a team's next game
+  uses only its completed games.
 
 **DailyFaceoff status:** `Confirmed` and `Likely` override the model with calibrated
 probabilities. There is no DFO history before 2026-10-05, so we start with priors

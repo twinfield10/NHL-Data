@@ -227,3 +227,11 @@ def freeze_predictions(season: int) -> str:
 def sim_backtest(season: int) -> str:
     """Per-game simulator prices and outcomes from the M4 backtest."""
     return f"predictions/sim_backtest/{season}.parquet"
+
+
+# --- pregame (M5) -------------------------------------------------------------------------
+
+
+def starter_model(season: int) -> str:
+    """Starting-goalie model for a season, fitted on the seasons before it (JSON)."""
+    return f"models/starters/{season}.json"

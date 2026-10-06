@@ -57,16 +57,16 @@ def test_shootout_adds_one_goal_and_everyone_has_a_winner():
     assert so.mean() > 0.9 and (np.abs(res.home - res.away)[so] == 1).all()
 
 
-def test_sum_before_is_strict_and_covers_future_dates():
+def testsum_before_is_strict_and_covers_future_dates():
     from datetime import date
 
-    from nhl.sim.inputs import _sum_before
+    from nhl.sim.inputs import sum_before
 
     daily = pl.DataFrame({
         "team_id": [1, 1, 2], "game_date": [date(2026, 10, 1), date(2026, 10, 3), date(2026, 10, 2)], "x": [1.0, 2.0, 5.0],
     })
     left = pl.DataFrame({"game_date": [date(2026, 10, 9), date(2026, 10, 3), date(2026, 10, 1)], "team_id": [1, 1, 2]})
-    out = _sum_before(left, daily, ["x"], by="team_id")
+    out = sum_before(left, daily, ["x"], by="team_id")
     # Row order kept; same-day games excluded; a date with no row of its own sums everything before.
     assert out["game_date"].to_list() == left["game_date"].to_list()
     assert out["x_td"].to_list() == [3.0, 1.0, 0.0]
