@@ -250,6 +250,24 @@ stays on hold for the scheduler design.
   is noise (2022-26 moneyline log loss −0.0001 to +0.0002) because ratings refresh daily;
   it matters forward.
 
+**Deployment accuracy (2026-10-06, [report](../reports/m5-deployment.md), `nhl
+evaluate-deployment`).** Projected vs actual ice time per player-game, 2023-26, morning
+projections without DailyFaceoff history:
+- **Shares are unbiased by role.** Grouped by the player's role in his previous game, the
+  bias is within ±0.13 min at 5v5 for every line and pair and +0.02 min for PP1. (Grouping
+  by that night's role makes top lines look 1-1.5 min under-projected; that is selection.)
+- **Errors are mostly noise and roster misses.** 5v5 MAE 1.47 min (of 13.6) for players
+  projected who dressed, 2.6 min including roster misses; PP 0.6 min, PK 0.6 min.
+- **The recency-weighted average is the best simple predictor** (5v5 MAE 1.487 vs last 10
+  games 1.527, season 1.550, last game 1.854).
+- **Effect on prices is small.** The team 5v5 offence composite (Σ share × rating) correlates
+  0.95 with the actual one; its error (sd 0.066 xG/60, no bias) is about a third of the
+  spread between teams (sd 0.21), roughly a point of win probability per team.
+- **Small leak:** players without a PP or PK unit last game are projected about double their
+  actual PP/PK time (0.84 vs 0.41 PP minutes). DailyFaceoff's units fix this forward.
+- **Not measured:** DailyFaceoff's slot adjustment (no history; phase E), in-game deployment
+  by score state, and an explicit TOI model (needed for props).
+
 ## 7. Decisions (owner, 2026-10-06)
 1. **Fill policy:** the most recent available player at the position, flagged low
    confidence; a placeholder only when there's none.

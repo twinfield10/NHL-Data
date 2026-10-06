@@ -304,6 +304,18 @@ def cmd_pregame(args: argparse.Namespace) -> None:
         print(slate.render(out.slate, out.freshness))
 
 
+def cmd_evaluate_deployment(args: argparse.Namespace) -> None:
+    """M5 diagnostic: projected vs actual ice time by role; write the report."""
+    from pathlib import Path
+
+    from nhl.pregame import evaluate
+    from nhl.storage.s3 import Store
+
+    seasons = [config.season_id(y) for y in config.parse_seasons(args.seasons)]
+    summary = evaluate.summarize(evaluate.run(Store(), seasons))
+    print(evaluate.write_report(summary, seasons, Path(args.report)))
+
+
 def cmd_evaluate_betting(args: argparse.Namespace) -> None:
     """M6: model vs market on history (information test, blend, bets at the open)."""
     from pathlib import Path
@@ -593,6 +605,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--sims", type=int, default=4000)
     p.add_argument("--no-write", action="store_true", help="don't write snapshots")
     p.set_defaults(func=cmd_pregame)
+
+    p = sub.add_parser("evaluate-deployment", help="M5: projected vs actual ice time by role")
+    p.add_argument("--seasons", default="2023-2025")
+    p.add_argument("--report", default="docs/reports/m5-deployment.md")
+    p.set_defaults(func=cmd_evaluate_deployment)
 
     p = sub.add_parser("evaluate-betting", help="M6: model vs closing market, blend, bets at the open")
     p.add_argument("--seasons", default="2021-2025")
