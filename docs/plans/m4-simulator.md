@@ -228,3 +228,21 @@ predicted at 74.8% win 78.3% (about 2 SE). The game shock (σ 0.3) probably pull
 favourites toward 50%. Next: test a smaller shock for lopsided games, or tune σ jointly
 with the team terms.
 
+### Game-shock re-tune with team terms (2026-10-06)
+On 2016-2019 with both team terms on, at strength 1.2 (1.3 was worse everywhere):
+
+| σ | Log loss | 2+ margins (56.6% actual) | OT (22.7%) | Puck line |
+|---|---|---|---|---|
+| 0.3 | 0.6766 | 55.2% | 21.1% | 0.6193 |
+| 0.2 | 0.6765 | 54.2% | 21.7% | 0.6201 |
+| 0.1 | 0.6765 | 53.5% | 22.1% | 0.6206 |
+
+- **Log loss is flat in σ.** It only shapes the goal distribution, so σ stays at 0.3 (best
+  puck line, closest margins).
+- **The top-bin calibration miss flips sign between eras:** overconfident on 2016-2019
+  (72.7% predicted vs 69.4% actual), underconfident on 2020-2025 (74.8% vs 78.3%). That's
+  noise in a bin of a few hundred games, not a σ effect.
+- **The remaining gap is structural.** OT and 2+ margins are both short, so there are too
+  many one-goal regulation finishes; σ can only trade one for the other. The fix is the
+  late-game item above: per-minute 3rd-period score effects.
+
