@@ -76,18 +76,16 @@ def _shares(logs: pl.DataFrame, strength: str, value: str, alias: str, cumulativ
     return part.with_columns((pl.col("v") / pl.col("v").sum().over("game_id", "team_id")).fill_nan(None).alias(alias)).drop("v")
 
 
-def build_season(store: Store, season: int, constants: dict, snapshots: list[date] | None = None) -> SeasonInputs:
-    """Inputs for every final game of ``season`` that has a prior rating snapshot."""
-    snapshots = snapshots if snapshots is not None else snapshot_dates(store)
-    games = store.read_parquet_required(keys.GAMES).filter((pl.col("season") == season) & pl.col("is_final"))
+def actual_deployment(store: Store, season: int) -> tuple[pl.DataFrame, pl.DataFrame]:
+    """Deployment and starters as actually played (the M4 backtest's lineups).
+
+    Returns:
+        ``(deployment, starters)``. ``deployment``: ``game_id, team_id, player_id, position,
+        s5, spp, spk, sshot, is_d`` with shares scaled to skaters on the ice (Σ s5 = 5,
+        Σ spp = 5, Σ spk = 4 per team-game). ``starters``: ``game_id, team_id, starter``.
+    """
     logs = store.read_parquet_required(keys.player_game_logs(season)).filter(pl.col("position") != "G")
     starts = store.read_parquet_required(keys.goalie_starts(season)).select("game_id", "team_id", "starter")
-    rest = store.read_parquet_required(schedule_context_key(season)).select(
-        "game_id", "is_home",
-        pl.when(pl.col("days_rest") == 1).then(pl.lit("b2b")).when(pl.col("days_rest") == 2).then(pl.lit("normal"))
-        .otherwise(pl.lit("rested")).alias("rest"),
-    )
-    coaches = store.read_parquet_required(keys.coaches(season)).select("game_id", "is_home", "coach_id")
 
     # Deployment: 5v5 from the game; PP / PK / shots from earlier games, among those dressed.
     dressed = logs.filter(pl.col("strength") == "all").select("game_id", "team_id", "player_id", "position")
@@ -112,16 +110,36 @@ def build_season(store: Store, season: int, constants: dict, snapshots: list[dat
             (pl.col("position") == "D").alias("is_d"),
         )
     )
+    return dep, starts
 
-    rows = []
-    for snap, part in games.with_columns(
-        pl.col("game_date").map_elements(lambda d: _latest_before(snapshots, d), return_dtype=pl.Date).alias("snapshot")
-    ).filter(pl.col("snapshot").is_not_null()).partition_by("snapshot", as_dict=True).items():
-        rows.append(_rates_for(store, snap[0], part, dep, starts, rest, coaches, constants))
-    table = pl.concat(rows).sort("game_date", "game_id")
-    refs = referee_factors(store, season)
-    table = table.join(refs, on="game_id", how="left").with_columns(pl.col("ref_factor").fill_null(1.0))
-    level = scoring_level(games, table, constants)
+
+def build_season(store: Store, season: int, constants: dict, snapshots: list[date] | None = None) -> SeasonInputs:
+    """Inputs for every final game of ``season`` that has a prior rating snapshot (actual lineups)."""
+    games = store.read_parquet_required(keys.GAMES).filter((pl.col("season") == season) & pl.col("is_final"))
+    dep, starts = actual_deployment(store, season)
+    return build_inputs(store, season, games, dep, starts, constants, snapshots)
+
+
+def build_inputs(store: Store, season: int, games: pl.DataFrame, dep: pl.DataFrame, starts: pl.DataFrame,
+                 constants: dict, snapshots: list[date] | None = None,
+                 coaches: pl.DataFrame | None = None, history: pl.DataFrame | None = None) -> SeasonInputs:
+    """Inputs for ``games`` of ``season`` from any deployment and starters.
+
+    Shared by the backtest (actual lineups) and the pregame path (projected lineups, one
+    call per starter pair). ``games`` need ``game_id, game_date, season_type, home_team_id,
+    away_team_id`` (scores and ``last_period`` may be null for future games). ``dep`` and
+    ``starts`` follow :func:`actual_deployment`. ``coaches`` (``game_id, is_home, coach_id``)
+    defaults to the season's coach table. The scoring level and team residuals use only
+    the season's games completed before each game's date. ``history`` is the
+    :func:`rate_table` of the season's completed games with actual lineups, which the team
+    residuals compare against; it defaults to the rate table of ``games`` themselves (the
+    backtest case, where ``games`` are the completed games).
+    """
+    snapshots = snapshots if snapshots is not None else snapshot_dates(store)
+    table = rate_table(store, season, games, dep, starts, constants, snapshots, coaches)
+    hist = table if history is None else history
+    completed = store.read_parquet_required(keys.GAMES).filter((pl.col("season") == season) & pl.col("is_final"))
+    level = scoring_level(completed, table, constants)
     # Playoffs: lower scoring and a smaller home edge (point-in-time factors from earlier
     # playoffs); folded into the level so the simulator's calibration keeps it.
     playoff = (table["season_type"] == "P").to_numpy()
@@ -142,8 +160,28 @@ def build_season(store: Store, season: int, constants: dict, snapshots: list[dat
         score_terms=_score_terms(constants),
         xg60_5v5={s: table[f"xg60_5v5_{s}"].to_numpy() for s in ("home", "away")},
         level=level,
-        team_res={**team_residuals(store, season, table), **team_finishing_residuals(store, season, table, snapshots)},
+        team_res={**team_residuals(store, season, table, hist), **team_finishing_residuals(store, season, table, snapshots)},
     )
+
+
+def rate_table(store: Store, season: int, games: pl.DataFrame, dep: pl.DataFrame, starts: pl.DataFrame,
+               constants: dict, snapshots: list[date], coaches: pl.DataFrame | None = None) -> pl.DataFrame:
+    """Per-game rates (before the league level and calibration) with the referee factor."""
+    rest = store.read_parquet_required(schedule_context_key(season)).select(
+        "game_id", "is_home",
+        pl.when(pl.col("days_rest") == 1).then(pl.lit("b2b")).when(pl.col("days_rest") == 2).then(pl.lit("normal"))
+        .otherwise(pl.lit("rested")).alias("rest"),
+    )
+    if coaches is None:
+        coaches = store.read_parquet_required(keys.coaches(season)).select("game_id", "is_home", "coach_id")
+    rows = []
+    for snap, part in games.with_columns(
+        pl.col("game_date").map_elements(lambda d: _latest_before(snapshots, d), return_dtype=pl.Date).alias("snapshot")
+    ).filter(pl.col("snapshot").is_not_null()).partition_by("snapshot", as_dict=True).items():
+        rows.append(_rates_for(store, snap[0], part, dep, starts, rest, coaches, constants))
+    table = pl.concat(rows).sort("game_date", "game_id")
+    refs = referee_factors(store, season)
+    return table.join(refs, on="game_id", how="left").with_columns(pl.col("ref_factor").fill_null(1.0))
 
 
 LEVEL_PRIOR_GAMES = 150
@@ -199,6 +237,19 @@ def referee_factors(store: Store, season: int) -> pl.DataFrame:
     return target.group_by("game_id").agg((1 + pl.col("dev").fill_null(0.0).sum() / league).alias("ref_factor"))
 
 
+def _sum_before(left: pl.DataFrame, daily: pl.DataFrame, cols: list[str], by: str | None = None) -> pl.DataFrame:
+    """``left`` (row order kept) with ``cols`` summed over ``daily`` rows strictly before each
+    ``game_date`` (per ``by`` if given). Works for dates with no row of their own (future games)."""
+    group = [by] if by else []
+    cum = daily.sort("game_date").with_columns(
+        *[(pl.col(c).cum_sum().over(group) if by else pl.col(c).cum_sum()).alias(f"{c}_td") for c in cols]
+    ).select(*group, "game_date", *[f"{c}_td" for c in cols])
+    out = left.with_row_index("_row").sort("game_date").join_asof(
+        cum, on="game_date", by=by, strategy="backward", allow_exact_matches=False, check_sortedness=False
+    )
+    return out.sort("_row").drop("_row").with_columns(pl.col(f"{c}_td").fill_null(0.0) for c in cols)
+
+
 def scoring_level(games: pl.DataFrame, table: pl.DataFrame, constants: dict) -> np.ndarray:
     """Per game: league scoring level relative to the lookback the constants came from.
 
@@ -210,18 +261,16 @@ def scoring_level(games: pl.DataFrame, table: pl.DataFrame, constants: dict) -> 
     done = games.with_columns(
         (pl.col("home_score") + pl.col("away_score")
          - ((pl.col("season_type") == "R") & (pl.col("last_period") == 5)).cast(pl.Int16)).alias("g")
-    ).group_by("game_date").agg(pl.col("g").sum().alias("goals"), pl.len().alias("n")).sort("game_date").with_columns(
-        (pl.col("goals").cum_sum() - pl.col("goals")).alias("goals_td"), (pl.col("n").cum_sum() - pl.col("n")).alias("n_td")
-    )
+    ).group_by("game_date").agg(pl.col("g").sum().cast(pl.Float64).alias("goals"), pl.len().cast(pl.Float64).alias("n"))
     prior = constants["goals_per_game_last"]
-    lvl = table.select("game_date").join(done.select("game_date", "goals_td", "n_td"), on="game_date", how="left").with_columns(
-        ((pl.col("goals_td").fill_null(0) + prior * LEVEL_PRIOR_GAMES) / (pl.col("n_td").fill_null(0) + LEVEL_PRIOR_GAMES)
+    lvl = _sum_before(table.select("game_date"), done, ["goals", "n"]).with_columns(
+        ((pl.col("goals_td") + prior * LEVEL_PRIOR_GAMES) / (pl.col("n_td") + LEVEL_PRIOR_GAMES)
          / constants["goals_per_game_lookback"]).alias("level")
     )
     return lvl["level"].to_numpy()
 
 
-def team_residuals(store: Store, season: int, table: pl.DataFrame) -> dict[str, np.ndarray]:
+def team_residuals(store: Store, season: int, table: pl.DataFrame, history: pl.DataFrame | None = None) -> dict[str, np.ndarray]:
     """Running team-level residuals: what the team did at 5v5 beyond its player ratings.
 
     For each earlier game of the season, offence residual = actual 5v5 xGF − the rating-based
@@ -230,30 +279,29 @@ def team_residuals(store: Store, season: int, table: pl.DataFrame) -> dict[str, 
     date, with the 5v5 hours. The engine turns them into a shrunk team term. Captures
     system, chemistry and form not in the player ratings.
 
+    Predictions come from ``history`` (the rate table of completed games; default ``table``).
+
     Returns:
         ``{"off_home", "def_home", "off_away", "def_away", "hours_home", "hours_away"}``
         aligned with ``table``.
     """
+    history = table if history is None else history
     logs = store.read_parquet_required(keys.team_game_logs(season)).filter(pl.col("strength") == "5v5").select(
         "game_id", "team_id", "xgf", "xga", (pl.col("toi_s") / 3600).alias("h")
     )
     pred = pl.concat([
-        table.select("game_id", "game_date", pl.col("home_team_id").alias("team_id"),
-                     pl.col("xg60_5v5_home").alias("pf"), pl.col("xg60_5v5_away").alias("pa")),
-        table.select("game_id", "game_date", pl.col("away_team_id").alias("team_id"),
-                     pl.col("xg60_5v5_away").alias("pf"), pl.col("xg60_5v5_home").alias("pa")),
+        history.select("game_id", "game_date", pl.col("home_team_id").alias("team_id"),
+                       pl.col("xg60_5v5_home").alias("pf"), pl.col("xg60_5v5_away").alias("pa")),
+        history.select("game_id", "game_date", pl.col("away_team_id").alias("team_id"),
+                       pl.col("xg60_5v5_away").alias("pf"), pl.col("xg60_5v5_home").alias("pa")),
     ])
     r = pred.join(logs, on=["game_id", "team_id"], how="inner").with_columns(
         (pl.col("xgf") - pl.col("pf") * pl.col("h")).alias("ro"), (pl.col("xga") - pl.col("pa") * pl.col("h")).alias("rd")
     )
-    daily = r.group_by("team_id", "game_date").agg(pl.col("ro", "rd", "h").sum()).sort("game_date").with_columns(
-        *[(pl.col(c).cum_sum().over("team_id") - pl.col(c)).alias(f"{c}_td") for c in ("ro", "rd", "h")]
-    ).select("team_id", "game_date", "ro_td", "rd_td", "h_td")
+    daily = r.group_by("team_id", "game_date").agg(pl.col("ro", "rd", "h").sum())
     out = {}
     for side in ("home", "away"):
-        j = table.select("game_date", pl.col(f"{side}_team_id").alias("team_id")).join(
-            daily, on=["team_id", "game_date"], how="left"
-        ).with_columns(pl.col("ro_td", "rd_td", "h_td").fill_null(0.0))
+        j = _sum_before(table.select("game_date", pl.col(f"{side}_team_id").alias("team_id")), daily, ["ro", "rd", "h"], by="team_id")
         out[f"off_{side}"], out[f"def_{side}"], out[f"hours_{side}"] = (
             j["ro_td"].to_numpy(), j["rd_td"].to_numpy(), j["h_td"].to_numpy()
         )
@@ -304,14 +352,10 @@ def team_finishing_residuals(store: Store, season: int, table: pl.DataFrame, sna
     dfn = d.group_by(pl.col("opp").alias("team_id"), "game_date").agg(pl.col("r").sum().alias("rd"), pl.col("p").sum().alias("pd"))
     daily = off.join(dfn, on=["team_id", "game_date"], how="full", coalesce=True).with_columns(
         pl.col("ro", "po", "rd", "pd").fill_null(0.0)
-    ).sort("game_date").with_columns(
-        *[(pl.col(c_).cum_sum().over("team_id") - pl.col(c_)).alias(f"{c_}_td") for c_ in ("ro", "rd", "po", "pd")]
     )
     out = {}
     for side in ("home", "away"):
-        j = table.select("game_date", pl.col(f"{side}_team_id").alias("team_id")).join(
-            daily.select("team_id", "game_date", "ro_td", "rd_td", "po_td", "pd_td"), on=["team_id", "game_date"], how="left"
-        ).with_columns(pl.col("ro_td", "rd_td", "po_td", "pd_td").fill_null(0.0))
+        j = _sum_before(table.select("game_date", pl.col(f"{side}_team_id").alias("team_id")), daily, ["ro", "rd", "po", "pd"], by="team_id")
         out[f"fin_off_{side}"] = j["ro_td"].to_numpy()
         out[f"fin_def_{side}"] = j["rd_td"].to_numpy()
         out[f"fin_xoff_{side}"] = j["po_td"].to_numpy()
