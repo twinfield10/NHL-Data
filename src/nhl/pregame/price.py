@@ -17,7 +17,9 @@ Forward-only inputs: each team's most recent head coach, and the referees assign
 
 from __future__ import annotations
 
+import fcntl
 import logging
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from zoneinfo import ZoneInfo
@@ -178,9 +180,33 @@ def price(store: Store, season: int, games: pl.DataFrame, dep: pl.DataFrame, pro
     )
 
 
+#: One pregame run at a time on this machine. Two polls can trigger a reprice within seconds;
+#: the second waits (it then sees the first one's inputs plus its own) instead of racing.
+LOCK_PATH = "/tmp/nhl_data_pregame.lock"
+
+
+@contextmanager
+def _run_lock():
+    with open(LOCK_PATH, "w") as fh:
+        fcntl.flock(fh, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(fh, fcntl.LOCK_UN)
+
+
 def run(store: Store, day: date | None = None, as_of: datetime | None = None, n_sims: int = N_SIMS,
         write: bool = True) -> Pregame | None:
-    """Project, price and snapshot every game on ``day`` (default today) not yet started."""
+    """Project, price and snapshot every game on ``day`` (default today) not yet started.
+
+    Runs are serialised on this machine (:data:`LOCK_PATH`); ``as_of`` defaults to the
+    moment the lock is taken, so a waiting run uses everything captured until then.
+    """
+    with _run_lock():
+        return _run(store, day, as_of, n_sims, write)
+
+
+def _run(store: Store, day: date | None, as_of: datetime | None, n_sims: int, write: bool) -> Pregame | None:
     as_of = as_of or datetime.now(timezone.utc)
     day = day or as_of.astimezone(EASTERN).date()
     games = upcoming(store, day, as_of)

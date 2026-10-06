@@ -62,7 +62,13 @@ def snapshot_dates(store: Store) -> list[date]:
 
 
 def _latest_before(days: list[date], day: date) -> date | None:
-    earlier = [d for d in days if d < day]
+    """The rating snapshot to use for games on ``day``: the latest dated on or before it.
+
+    A snapshot dated D is fitted on games strictly before D (``nhl.ratings.snapshots``), so
+    it is point-in-time for D's own games. The nightly job writes today's snapshot at ~4 am;
+    requiring a date strictly before ``day`` would make every live price a day stale.
+    """
+    earlier = [d for d in days if d <= day]
     return earlier[-1] if earlier else None
 
 

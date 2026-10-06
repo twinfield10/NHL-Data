@@ -43,7 +43,7 @@ MAX_AGE_HOURS = {
     "transactions": 24.0,
     "ref_assignments": 24.0,
     "odds": 6.0,
-    "ratings": 36.0,     # nightly `nhl update`: the snapshot is dated the day it covers
+    "ratings": 36.0,     # nightly `nhl update` writes a snapshot dated today (games before today)
     "game_state": 36.0,  # last final game present in player logs
 }
 
@@ -78,9 +78,8 @@ def freshness(store: Store, season: int, as_of: datetime) -> pl.DataFrame:
 
     snaps = sorted({k.split("/")[1] for k in store.list_keys("ratings/") if k.count("/") == 2 and k[8:9].isdigit()})
     snap = date.fromisoformat(snaps[-1]) if snaps else None
-    # A snapshot dated D covers games through D; it is "made" at the end of that day.
-    add("ratings", datetime.combine(snap + timedelta(days=1), datetime.min.time(), timezone.utc) if snap else None,
-        f"snapshot {snap}")
+    # A snapshot dated D uses games before D and is written early on D by the nightly job.
+    add("ratings", datetime.combine(snap, datetime.min.time(), timezone.utc) if snap else None, f"snapshot {snap}")
 
     games = store.read_parquet_required(keys.GAMES).filter((pl.col("season") == season) & pl.col("is_final"))
     logs = store.get_parquet(keys.player_game_logs(season))

@@ -186,8 +186,9 @@ correct confirmed starter is worth, which decides how hard to chase late confirm
 **Repricing:** `nhl poll --what goalies,lines` reports whether anything changed (it
 already stores only transitions). When it did, it runs `pregame` for the affected games.
 The roadmap bar ("reprice within minutes of a confirmed change") is met by the poll
-cadence plus a pregame run of a few seconds. **No cron is installed in M5**; scheduling
-stays on hold for the scheduler design.
+cadence plus a pregame run of a few seconds. The schedule is designed in
+[docs/scheduler.md](../scheduler.md) (2026-10-06) and installed with
+`scripts/install_cron.sh --apply`.
 
 **Officials:** add the ~20-minutes-before-puck-drop officials check from the roadmap to
 `poll --window`, so the referee crew factor uses the late assignment.

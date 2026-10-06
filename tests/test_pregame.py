@@ -324,7 +324,7 @@ def test_freshness_flags_stale_and_missing_sources():
         keys.dailyfaceoff_goalies(season): cap(1), keys.dailyfaceoff_lines(season): cap(30),
         keys.injuries(season): cap(2), keys.transactions(season): cap(3),
         f"{keys.odds_live_prefix(season)}lowvig.parquet": cap(0.5),
-        "ratings/2026-10-05/ev.parquet": pl.DataFrame(),
+        "ratings/2026-10-06/ev.parquet": pl.DataFrame(),  # written by this morning's nightly run
         keys.GAMES: pl.DataFrame({"season": [season], "is_final": [True], "game_date": [date(2026, 10, 5)]}),
         keys.player_game_logs(season): pl.DataFrame({"game_date": [date(2026, 10, 5)]}),
     })
