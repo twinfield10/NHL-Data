@@ -35,6 +35,8 @@ nhl train-freeze               # frozen-puck model (M3 phase A) + freeze predict
 nhl build-priors               # season-start priors for finishing, EV/ST ratings, penalties (after each season)
 nhl ratings [--as-of DATE | --backfill 2015-2026]   # point-in-time ratings -> ratings/{date}/
 nhl evaluate-ratings           # M3 bar -> docs/reports/m3-evaluation.md
+nhl sim-constants              # simulator league constants per season (point-in-time)
+nhl backtest-sim               # M4 bar -> docs/reports/m4-backtest.md
 nhl update                     # nightly: catalog -> ingest -> build -> features -> score -> game state (current season)
 nhl poll --what odds,goalies,lines,injuries [--window 90]   # one poll of the live sources
 ```
@@ -107,6 +109,7 @@ src/nhl/
   models/evaluate.py   log loss, Brier, AUC, calibration
   gamestate/           M2: stints, rosters/coaches, lineups, goalie starts, game logs, validation
   ratings/             M3: frozen-puck model, finishing/goaltending, EV/ST RAPM, penalties, snapshots
+  sim/                 M4: game simulator (constants, inputs, engine, markets, backtest)
 tests/                 unit tests on hand-built synthetic games
 notebooks/             exploration
 ```

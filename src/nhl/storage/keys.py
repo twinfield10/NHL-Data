@@ -222,3 +222,8 @@ def player_game_logs(season: int) -> str:
 def freeze_predictions(season: int) -> str:
     """Per saved shot on goal: P(goalie freezes the puck) (see nhl.ratings.freeze)."""
     return f"predictions/freeze/{season}.parquet"
+
+
+def sim_backtest(season: int) -> str:
+    """Per-game simulator prices and outcomes from the M4 backtest."""
+    return f"predictions/sim_backtest/{season}.parquet"

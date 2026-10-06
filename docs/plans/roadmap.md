@@ -1,6 +1,6 @@
 # Plan: NHL game-prediction platform (roadmap)
 
-**Status:** M1 complete (2026-10-05). Data sources for M5/M6 built early. M2 built and backfilled 2010-2026 ([m2-game-state.md](m2-game-state.md), [validation](../reports/m2-validation.md)); line agreement with DailyFaceoff awaits games played after 2026-10-05. M3 built ([m3-ratings.md](m3-ratings.md)): bar passed on xG. Everything else is proposed.
+**Status:** M1 complete (2026-10-05). Data sources for M5/M6 built early. M2 built and backfilled 2010-2026 ([m2-game-state.md](m2-game-state.md), [validation](../reports/m2-validation.md)); line agreement with DailyFaceoff awaits games played after 2026-10-05. M3 built ([m3-ratings.md](m3-ratings.md)): bar passed on xG. M4 built ([m4-simulator.md](m4-simulator.md)): beats the Poisson baseline out of sample; a team-level term is the top open item. Everything else is proposed.
 M3 methods and the xG sub-models were revised 2026-10-05 after a review of HockeyViz's
 Magnus 8 xG and Magnus 9 EV/ST models (see [References](#references)).
 **Written:** 2026-10-05.
@@ -232,6 +232,8 @@ drop, and starting goalies are often confirmed only after the morning skate.
   structured lines, the parsed source tweet, and the team's last actual lineup from
   shift data. Each projected slot records which source it came from and how
   confident it is.
+
+- **Officials, last-minute check.** The NHL API right-rail lists officials only ~25-35 minutes before puck drop (measured on 3 games, 2026-10-05). Scouting the Refs (posts ~10:30-15:30 ET) stays the primary pregame source; add a poll ~20 min before each puck drop to catch late swaps (e.g. Andrew Smith / Kiel Murchison on 10/4).
 
 **Done when:** the starter model's log loss beats "last game's starter", and the
 pregame pipeline reprices a game within minutes of a confirmed change.

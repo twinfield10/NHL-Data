@@ -246,6 +246,26 @@ def cmd_evaluate_ratings(args: argparse.Namespace) -> None:
     print(write_report(results, summary, Path(args.report)))
 
 
+def cmd_sim_constants(args: argparse.Namespace) -> None:
+    """Estimate and store simulator league constants (point-in-time) per season."""
+    from nhl.sim.constants import build
+    from nhl.storage.s3 import Store
+
+    build(Store(), [config.season_id(y) for y in config.parse_seasons(args.seasons)])
+
+
+def cmd_backtest_sim(args: argparse.Namespace) -> None:
+    """Backtest the game simulator and write the M4 report."""
+    from pathlib import Path
+
+    from nhl.sim.backtest import run, write_report
+    from nhl.storage.s3 import Store
+
+    seasons = [config.season_id(y) for y in config.parse_seasons(args.seasons)]
+    results = run(Store(), seasons, n_sims=args.sims)
+    print(write_report(results, Path(args.report)))
+
+
 def cmd_game_state(args: argparse.Namespace) -> None:
     """Build stints, lineups, goalie starts, coaches and game logs (M2)."""
     from nhl.gamestate.build import build_season
@@ -460,6 +480,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--seasons", default="2015-2025")
     p.add_argument("--report", default="docs/reports/m3-evaluation.md")
     p.set_defaults(func=cmd_evaluate_ratings)
+
+    p = sub.add_parser("sim-constants", help="simulator league constants per season (point-in-time)")
+    p.add_argument("--seasons", default=f"2016-{_current_start_year()}")
+    p.set_defaults(func=cmd_sim_constants)
+
+    p = sub.add_parser("backtest-sim", help="M4 bar: backtest the game simulator vs results and a Poisson baseline")
+    p.add_argument("--seasons", default="2016-2025")
+    p.add_argument("--sims", type=int, default=1000)
+    p.add_argument("--report", default="docs/reports/m4-backtest.md")
+    p.set_defaults(func=cmd_backtest_sim)
 
     p = sub.add_parser("game-state", help="stints, lineups, goalie starts, coaches, game logs (M2)")
     p.add_argument("--seasons", default=_default_seasons())
