@@ -235,3 +235,8 @@ def sim_backtest(season: int) -> str:
 def starter_model(season: int) -> str:
     """Starting-goalie model for a season, fitted on the seasons before it (JSON)."""
     return f"models/starters/{season}.json"
+
+
+def pregame_backtest(season: int) -> str:
+    """Per-game prices under actual / projected lineups and starters (M5 backtest)."""
+    return f"predictions/pregame_backtest/{season}.parquet"

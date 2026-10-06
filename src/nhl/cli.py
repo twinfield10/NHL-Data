@@ -274,6 +274,22 @@ def cmd_train_starters(args: argparse.Namespace) -> None:
         goalies.write_report(results, model, args.report)
 
 
+def cmd_backtest_pregame(args: argparse.Namespace) -> None:
+    """M5: backtest with projected lineups and the starter mixture; write the report."""
+    from pathlib import Path
+
+    from nhl.pregame import backtest
+    from nhl.storage import keys
+    from nhl.storage.s3 import Store
+
+    store = Store()
+    seasons = [config.season_id(y) for y in config.parse_seasons(args.seasons)]
+    results = backtest.run(store, seasons, n_sims=args.sims)
+    for season, part in results.partition_by("season", as_dict=True).items():
+        store.put_parquet(keys.pregame_backtest(season[0]), part)
+    print(backtest.write_report(results, backtest.lineup_accuracy(store, seasons), Path(args.report)))
+
+
 def cmd_backtest_sim(args: argparse.Namespace) -> None:
     """Backtest the game simulator and write the M4 report."""
     from pathlib import Path
@@ -516,6 +532,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--evaluate", default="2018-2025", help="test seasons for the report")
     p.add_argument("--report", default="docs/reports/m5-starters.md")
     p.set_defaults(func=cmd_train_starters)
+
+    p = sub.add_parser("backtest-pregame", help="M5: backtest with projected lineups and the starter mixture")
+    p.add_argument("--seasons", default="2021-2025")
+    p.add_argument("--sims", type=int, default=1000)
+    p.add_argument("--report", default="docs/reports/m5-pregame-backtest.md")
+    p.set_defaults(func=cmd_backtest_pregame)
 
     p = sub.add_parser("game-state", help="stints, lineups, goalie starts, coaches, game logs (M2)")
     p.add_argument("--seasons", default=_default_seasons())

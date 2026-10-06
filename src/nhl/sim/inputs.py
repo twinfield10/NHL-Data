@@ -122,7 +122,8 @@ def build_season(store: Store, season: int, constants: dict, snapshots: list[dat
 
 def build_inputs(store: Store, season: int, games: pl.DataFrame, dep: pl.DataFrame, starts: pl.DataFrame,
                  constants: dict, snapshots: list[date] | None = None,
-                 coaches: pl.DataFrame | None = None, history: pl.DataFrame | None = None) -> SeasonInputs:
+                 coaches: pl.DataFrame | None = None, history: pl.DataFrame | None = None,
+                 team_res: dict[str, np.ndarray] | None = None) -> SeasonInputs:
     """Inputs for ``games`` of ``season`` from any deployment and starters.
 
     Shared by the backtest (actual lineups) and the pregame path (projected lineups, one
@@ -133,7 +134,8 @@ def build_inputs(store: Store, season: int, games: pl.DataFrame, dep: pl.DataFra
     the season's games completed before each game's date. ``history`` is the
     :func:`rate_table` of the season's completed games with actual lineups, which the team
     residuals compare against; it defaults to the rate table of ``games`` themselves (the
-    backtest case, where ``games`` are the completed games).
+    backtest case, where ``games`` are the completed games). ``team_res`` reuses residuals
+    already computed for the same ``games`` (they don't depend on lineups or starters).
     """
     snapshots = snapshots if snapshots is not None else snapshot_dates(store)
     table = rate_table(store, season, games, dep, starts, constants, snapshots, coaches)
@@ -160,7 +162,9 @@ def build_inputs(store: Store, season: int, games: pl.DataFrame, dep: pl.DataFra
         score_terms=_score_terms(constants),
         xg60_5v5={s: table[f"xg60_5v5_{s}"].to_numpy() for s in ("home", "away")},
         level=level,
-        team_res={**team_residuals(store, season, table, hist), **team_finishing_residuals(store, season, table, snapshots)},
+        team_res=team_res if team_res is not None else {
+            **team_residuals(store, season, table, hist), **team_finishing_residuals(store, season, table, snapshots),
+        },
     )
 
 

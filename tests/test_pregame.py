@@ -69,3 +69,75 @@ def test_fit_learns_back_to_back_switch():
     p_a_else = late.filter(pl.col("player_id") == A, pl.col("b2b_2nd") == 0)["p_start"].mean()
     assert p_b_on_b2b > 0.8 and p_a_else > 0.8
     assert G.log_loss(late) < 0.3
+
+
+# --------------------------------------------------------------------------- lineups
+
+def _lineup_fixture(events: list[dict]):
+    """Team 1 played 3 games; skaters 1-12 F and 21-26 D dressed in all, 13 (F) in game 1 only."""
+    from nhl.pregame import lineups as L
+
+    rows = []
+    for g, day in enumerate([date(2026, 10, 1), date(2026, 10, 3), date(2026, 10, 5)]):
+        players = [(p, "C") for p in range(1, 13)] + [(p, "D") for p in range(21, 27)]
+        if g == 0:
+            players = [(p, pos) for p, pos in players if p != 12] + [(13, "L")]
+        for p, pos in players:
+            rows.append({"game_id": 100 + g, "game_date": day, "team_id": 1, "player_id": p, "position": pos,
+                         "s5": (0.06 if pos == "D" else 0.04) + (0.03 if p in (1, 2) else 0.0),
+                         "spp": 0.1, "spk": 0.1, "sshot": 0.05})
+    hist = pl.DataFrame(rows)
+    ev = pl.DataFrame(events, schema=L._EVENT_SCHEMA) if events else pl.DataFrame(schema=L._EVENT_SCHEMA)
+    return L, L._build_index(hist, ev)
+
+
+def _ev(pid, kind, known, until=None, cause="espn:Injured Reserve", injury=True):
+    from datetime import datetime, timezone
+
+    return {"team_id": 1, "player_id": pid, "known_at": datetime(*known, 15, tzinfo=timezone.utc), "kind": kind,
+            "until": until, "cause": cause, "injury": injury}
+
+
+def test_lineup_default_is_last_game():
+    L, ix = _lineup_fixture([])
+    rows = L.project_team_game(ix, 1, 999, date(2026, 10, 7), L.morning(date(2026, 10, 7)))
+    assert sorted(r["player_id"] for r in rows) == list(range(1, 13)) + list(range(21, 27))
+    assert {r["source"] for r in rows} == {"last_game"}
+
+
+def test_lineup_injury_until_return_date_then_back():
+    # Player 1 goes on IR after the last game, expected back 10/12.
+    L, ix = _lineup_fixture([_ev(1, "out", (2026, 10, 6), until=date(2026, 10, 12))])
+    before = L.project_team_game(ix, 1, 999, date(2026, 10, 9), L.morning(date(2026, 10, 9)))
+    ids = {r["player_id"] for r in before}
+    assert 1 not in ids and 13 in ids  # the recent healthy scratch fills his slot
+    fill = next(r for r in before if r["player_id"] == 13)
+    assert fill["source"] == "fill" and fill["confidence"] == "low" and "until 2026-10-12" in fill["issues"]
+    # Same knowledge, a game after his expected return: he's back and nobody is filled.
+    after = L.project_team_game(ix, 1, 998, date(2026, 10, 13), L.morning(date(2026, 10, 9)))
+    assert 1 in {r["player_id"] for r in after} and 13 not in {r["player_id"] for r in after}
+
+
+def test_lineup_ignores_events_before_last_game_and_returns_displace():
+    # Player 2 was "assigned" before the last game but played in it: stale, ignored.
+    # Player 13 (a regular, missing the last two games) is activated from IR after it.
+    L, ix = _lineup_fixture([
+        _ev(2, "out", (2026, 10, 2), cause="tx:assigned", injury=False),
+        _ev(13, "in", (2026, 10, 6), cause="tx:activated_ir"),
+    ])
+    rows = L.project_team_game(ix, 1, 999, date(2026, 10, 7), L.morning(date(2026, 10, 7)))
+    ids = {r["player_id"] for r in rows}
+    assert 2 in ids
+    # 13's usage (0.04) isn't clearly above the weakest forward's, so he doesn't displace anyone.
+    assert 13 not in ids and len(rows) == 18
+
+
+def test_lineup_placeholder_when_nobody_available_and_normalise():
+    L, ix = _lineup_fixture([_ev(21, "out", (2026, 10, 6), until=None, cause="tx:traded", injury=False)])
+    rows = L.project_team_game(ix, 1, 999, date(2026, 10, 7), L.morning(date(2026, 10, 7)))
+    ph = [r for r in rows if r["player_id"] is None]
+    assert len(ph) == 1 and ph[0]["position"] == "D" and "placeholder" in ph[0]["issues"]
+    dep = L.normalise(pl.DataFrame(rows, schema_overrides={"player_id": pl.Int64}))
+    sums = dep.group_by("team_id").agg(pl.col("s5", "spp", "spk", "sshot").sum()).row(0, named=True)
+    assert np.isclose(sums["s5"], 5) and np.isclose(sums["spp"], 5) and np.isclose(sums["spk"], 4) and np.isclose(sums["sshot"], 1)
+    assert L.lineup_shape(dep)["shape"][0] == "12F6D"

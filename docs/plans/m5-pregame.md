@@ -1,6 +1,6 @@
 # Plan: M5 — pregame inputs (projected lineups and starting goalies)
 
-**Status:** phases A (inputs refactor) and B (starter model, bar passed) done 2026-10-06; C-E open.
+**Status:** phases A (inputs refactor), B (starter model, bar passed) and C (projected lineups, pregame backtest) done 2026-10-06; D-E open.
 **Depends on:** M2 (`rosters`, `lineups`, `goalie_starts`, `player_game_logs`, `coaches`),
 M3 snapshots, M4 (`sim/inputs.py`, `engine.py`), `schedule_context`, and the external
 sources already captured: DailyFaceoff goalies and lines, source tweets, ESPN injuries,
@@ -87,23 +87,31 @@ team-games have settled. A null status means DFO's projection only and is used a
 feature, not an override.
 
 ## 3. Projected lineup
-**Default (`last_game`):** the dressed skaters from the team's last game, with each player's
-deployment from an exponentially weighted average of the team's last ~10 games (half-life
-~4 games), so one odd game doesn't dominate. PP/PK and shot shares already come from
-earlier games in M4; this reuses that logic.
+**Default (`last_game`):** the dressed skaters from the team's last game. Each player's
+deployment is a recency-weighted average of his own recent games, on any team, so a traded
+player brings his role: half-life 5 games for 5v5/PP/PK shares, 15 for shot shares. The
+shares are renormalised over the projected 18.
 
-**Absences:** a player is removed when, as of the snapshot, any of these hold:
-- ESPN injury status `Out`, `Injured Reserve` or `Day-To-Day` *and* listed out by DFO;
-- a transaction after his last game: placed on IR, assigned, traded, waived-and-claimed,
-  suspended.
-`Day-To-Day` alone keeps him in, with `p_dressed` < 1 and an issue flag.
+**Status events** (built 2026-10-06, `src/nhl/pregame/lineups.py`): ESPN injuries and
+transactions become `out` / `in` events with the time they were known. Only events after
+the last game count, because that lineup already reflects everything known before it.
+- **ESPN** `Injured Reserve`, `Out`, `Suspension`: out **until the expected return date**.
+  On a game after that date he is back (owner's request, 2026-10-06), so a projection for
+  any future date uses the return date in force. `Removed` from the report: back.
+  `Day-To-Day`: no change.
+- **Transactions:** placed on IR, assigned, suspended, retired, traded away: out. Activated
+  from IR, recalled, claimed, traded in: available. A backfilled transaction counts as known
+  the day after its date. Missing player ids are matched by name to the team's rosters.
+- **A regular back from injury** (ESPN return date passed, or activated from IR) replaces
+  the lowest-usage player at his position when his own 5v5 share is clearly higher
+  (`source=return`, medium confidence). A recall alone only fills a vacancy.
 
-**Replacing a removed player (decided 2026-10-06):** the team's most
-recent dressed-but-now-available player at the same position (the healthy scratch or
-recalled player from transactions), tagged `source=fill`, `confidence=low`. If nobody
-qualifies, a replacement-level placeholder with league-average-of-depth ratings, also
-flagged. The simulator needs 18 skaters, so something must fill the slot, but it is
-never silent.
+**Replacing a removed player (decided 2026-10-06):** first a player back from injury, then
+the most recently dressed or added player at the same position (a healthy scratch, a
+recall, a trade), tagged `source=fill`, `confidence=low`. If nobody qualifies, a
+placeholder (no player id, the departed player's deployment, league-average ratings), also
+flagged. The simulator needs 18 skaters, so something must fill the slot, but it is never
+silent.
 
 **DailyFaceoff lines (`dfo`):** used when the team's latest DFO version was updated after
 its last game. Validation already exists (`validate_lines`):
@@ -143,6 +151,31 @@ Run M4 on 2023-24..2025-26 with:
 and report log loss, calibration and totals against the actual-lineup run. Expected: a
 small moneyline cost from lineups, a larger one from goalies. It also tells us how much a
 correct confirmed starter is worth, which decides how hard to chase late confirmations.
+
+**Result (2026-10-06, [report](../reports/m5-pregame-backtest.md)).** 2021-22..2025-26,
+6,993 games, 1,000 simulations, `nhl backtest-pregame`:
+
+| variant | moneyline LL | max cal. err | O/U 5.5 LL | puck line LL |
+|---|---|---|---|---|
+| actual lineups and starters | 0.6620 | 0.029 | 0.6807 | 0.6115 |
+| projected lineups | 0.6607 | 0.024 | 0.6806 | 0.6097 |
+| starter mixture | 0.6625 | 0.026 | 0.6808 | 0.6120 |
+| **pregame (both)** | **0.6612** | 0.033 | 0.6807 | 0.6104 |
+| Poisson baseline | 0.6682 | | | |
+
+- **Pregame inputs cost nothing.** Projected lineups are slightly *better* than the actual
+  ones. The actual variant takes 5v5 shares from the game itself, which carry in-game noise
+  (injuries, blowouts, penalties), while the projection averages recent games.
+- **The starter mixture costs 0.0005** of log loss against knowing the starter. Collapsing
+  the mixture on a confirmed starter is worth little on average; it matters on the
+  individual games where the backup starts.
+- **The pregame model beats Poisson in every season but 2025-26** (0.6809 vs 0.6816, the
+  season where M4 also lost).
+- **Lineup accuracy:** 92-95% of dressed skaters projected (93-95% weighted by ice time).
+  Transactions help in 2024-26 but slightly hurt in 2021-24 (−0.3 points), mostly
+  conditioning-loan "assigned" moves that don't remove a player. Most misses are
+  healthy-scratch rotation and unannounced injuries; only lineup news (phase D) fixes
+  those. ESPN injury history starts 2026-10-05, so its value is measured forward.
 
 ## 6. Pregame command and repricing
 `nhl pregame [--date D]`:

@@ -164,7 +164,7 @@ def candidate_features(tg: pl.DataFrame, dressed: pl.DataFrame, apps: pl.DataFra
         .select("team_id", pl.col("n").alias("n_src"), "player_id", "started", "consecutive_starts")
     )
     # Each past appearance contributes to the next LONG_WINDOW team-games.
-    lagged = hist.with_columns(pl.int_ranges(1, LONG_WINDOW + 1).alias("lag")).explode("lag").with_columns(
+    lagged = hist.with_columns(pl.int_ranges(1, LONG_WINDOW + 1).alias("lag")).explode("lag", empty_as_null=True).with_columns(
         (pl.col("n_src") + pl.col("lag")).alias("n")
     )
     agg = lagged.group_by("team_id", "n", "player_id").agg(
