@@ -63,7 +63,9 @@ xg = store.get_parquet(keys.xg_predictions(20242025))
 
 A read-only web app over the pregame and betting outputs: the day's **games** (model vs
 market in team colors, best prices, edges, starters, bets), a **game** page (price through the day,
-edges, goalie probabilities, projected lines), live **edges**, and the **bets** ledger.
+edges, goalie probabilities, projected lines), **team** and **player** ratings from the latest
+rating snapshot (teams composed from today's projected lineups, as the simulator does), live
+**edges**, and the **bets** ledger.
 
 - API: `src/nhl/api/` (FastAPI). It reads the S3 data contract in `nhl.pregame.slate` and
   caches stamped snapshots in-process.

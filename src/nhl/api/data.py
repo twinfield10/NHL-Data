@@ -3,7 +3,9 @@
 Everything the API serves comes from objects the pipeline already writes (see
 :mod:`nhl.pregame.slate` for the data contract). Snapshots under a ``stamp`` never change,
 so they are cached for the life of the process; the two mutable objects (the ``latest``
-pointer and the bets ledger) are re-read after :data:`MUTABLE_TTL_SECONDS`.
+pointer and the bets ledger) are re-read after :data:`MUTABLE_TTL_SECONDS`. The one
+exception is rankings, which compose team ratings from a fresh lineup projection
+(:mod:`nhl.ratings.rankings`) and are cached for :data:`RANKINGS_TTL_SECONDS`.
 """
 
 from __future__ import annotations
@@ -13,11 +15,15 @@ import logging
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date
+from datetime import date, datetime, timezone
 
 import polars as pl
 
 from nhl.betting import edges as edges_mod
+from nhl.pregame import lineups
+from nhl.ratings import rankings
+from nhl.sim import constants as sim_constants
+from nhl.sim.inputs import snapshot_dates
 from nhl.storage import keys
 from nhl.storage.s3 import Store
 
@@ -27,6 +33,7 @@ MUTABLE_TTL_SECONDS = 30.0
 LIST_TTL_SECONDS = 60.0
 GAMES_TTL_SECONDS = 300.0
 CLOSING_TTL_SECONDS = 120.0
+RANKINGS_TTL_SECONDS = 900.0
 READ_WORKERS = 16
 
 
@@ -217,6 +224,46 @@ class SiteData:
             return best.drop("decimal")
 
         return self._timed_get(f"lines/{day}/{sorted(game_ids)}", LIST_TTL_SECONDS, load)
+
+    # ------------------------------------------------------------------ ratings
+    def rating_snapshot(self, day: date) -> date | None:
+        """The latest rating snapshot dated on or before ``day`` (the one ``day``'s prices use)."""
+        def load() -> list[date]:
+            return snapshot_dates(self.store)
+        days = [d for d in self._timed_get("rating-days", LIST_TTL_SECONDS, load) if d <= day]
+        return days[-1] if days else None
+
+    def rankings(self, day: date) -> dict | None:
+        """Player, goalie and team boards from ``day``'s rating snapshot, or None without one.
+
+        Team boards project every team's lineup as of now, so the whole thing is cached for
+        :data:`RANKINGS_TTL_SECONDS` (injury news moves it within a day).
+        """
+        snap = self.rating_snapshot(day)
+        if snap is None:
+            return None
+
+        def load() -> dict:
+            season = int(self.games().filter(pl.col("game_date") <= day)["season"].max())
+            span = [season - 10001, season]
+            games = self.games()
+            tables = rankings.snapshot_tables(self.store, snap)
+            players = self.store.read_parquet_required(keys.PLAYERS)
+            teams = rankings.current_teams(self.store, span, games)
+            team_ids = sorted(set(games.filter(pl.col("season") == season)["home_team_id"].cast(pl.Int64).to_list()))
+            as_of = datetime.now(timezone.utc)
+            dep = lineups.project(self.store, rankings.lineup_targets(team_ids, day), span, as_of=as_of)
+            starts = pl.concat([s for y in span if (s := self.store.get_parquet(keys.goalie_starts(y))) is not None],
+                               how="vertical_relaxed")
+            goalies = rankings.goalie_weights(starts, games, teams)
+            board = rankings.team_board(tables, dep, goalies, sim_constants.estimate(self.store, season))
+            return {
+                "snapshot": snap, "as_of": as_of, "season": season,
+                "players": rankings.player_board(tables, players, teams, day),
+                "goalies": rankings.goalie_board(tables, players, teams, day),
+                "teams": board, "goalie_weights": goalies, "lineups": dep,
+            }
+        return self._timed_get(f"rankings/{day}", RANKINGS_TTL_SECONDS, load)
 
     def ledger(self) -> pl.DataFrame | None:
         """The paper/real bet ledger (re-read every :data:`MUTABLE_TTL_SECONDS`)."""

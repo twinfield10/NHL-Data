@@ -47,3 +47,11 @@ export const shiftDate = (d: string, days: number) => {
 /** Pipeline run stamp "20261006T234814Z" -> ISO timestamp. */
 export const stampToIso = (s: string) =>
   `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}T${s.slice(9, 11)}:${s.slice(11, 13)}:${s.slice(13, 15)}Z`;
+
+/** 0.123 -> "+0.12" (rates such as xG/60). */
+export const signed = (v: number | null | undefined, digits = 2) =>
+  v == null ? "–" : `${v > 0 ? "+" : ""}${v.toFixed(digits)}`;
+
+/** Seconds -> "12:34" (minutes:seconds). */
+export const minutes = (s: number | null | undefined) =>
+  s == null ? "–" : `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;

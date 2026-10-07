@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { BetsResponse, EdgesResponse, GameResponse, SlateResponse } from "./types";
+import type { BetsResponse, EdgesResponse, GameResponse, PlayersResponse, SlateResponse, TeamsResponse } from "./types";
 
 async function apiFetch<T>(path: string): Promise<T> {
   const res = await fetch(path);
@@ -29,3 +29,9 @@ export const useBets = (kind?: string | null) =>
     queryKey: ["bets", kind],
     queryFn: () => apiFetch<BetsResponse>(`/api/bets${kind ? `?kind=${kind}` : ""}`),
   });
+
+export const usePlayerRatings = () =>
+  useQuery({ queryKey: ["ratings", "players"], queryFn: () => apiFetch<PlayersResponse>("/api/ratings/players") });
+
+export const useTeamRatings = () =>
+  useQuery({ queryKey: ["ratings", "teams"], queryFn: () => apiFetch<TeamsResponse>("/api/ratings/teams") });

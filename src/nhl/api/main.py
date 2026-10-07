@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from nhl import config
-from nhl.api.routers import betting, games, slate
+from nhl.api.routers import betting, games, ratings, slate
 from nhl.api.serialize import today_et
 
 app = FastAPI(title="NHL-Data API", description="Pregame prices, edges and bets", version="0.1.0")
@@ -23,6 +23,7 @@ app.add_middleware(
 app.include_router(slate.router)
 app.include_router(games.router)
 app.include_router(betting.router)
+app.include_router(ratings.router)
 
 
 @app.get("/api/health")
