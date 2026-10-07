@@ -12,6 +12,7 @@ from nhl.api.deps import game_day, get_data
 from nhl.api.serialize import rows
 from nhl.api.teaminfo import team_context
 from nhl.ratings import rankings
+from nhl.storage import keys
 
 router = APIRouter(prefix="/api/ratings", tags=["ratings"])
 
@@ -110,7 +111,15 @@ def get_lines(
         lines = lines.with_columns(pl.lit(None, dtype=pl.String).alias("slot"))
     abbrs = data.games().filter(pl.col("season") == season).select(
         pl.col("home_team_id").cast(pl.Int64).alias("team_id"), pl.col("home_abbr").alias("team_abbr")).unique("team_id")
-    lines = lines.join(abbrs, on="team_id", how="left").drop("_key").sort("xgd60", descending=True)
+    lines = lines.join(abbrs, on="team_id", how="left")
+    uc = data.processed(keys.unit_context(season), season == current)
+    if uc is not None:
+        # 5v5 decomposition while the whole unit was on the ice (forward lines and D pairs).
+        uc = _unit_key(uc).select(
+            "team_id", "kind", "_key", "tier", pl.col("toi_s").alias("ctx_toi_s"),
+            *[pl.col(f"{p}_{s}").alias(f"ctx_{p}_{s}") for p in ("actual", "own", "mates", "comp", "zone", "ctx", "resid") for s in ("f", "a")])
+        lines = lines.join(uc, on=["team_id", "kind", "_key"], how="left")
+    lines = lines.drop("_key").sort("xgd60", descending=True)
 
     skaters = {p["player_id"]: p for p in r["players"].select(
         "player_id", "player_name", "position", "ev_off", "ev_def", "ev_net").to_dicts()}

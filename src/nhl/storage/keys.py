@@ -244,6 +244,16 @@ def usage_matchups(season: int) -> str:
     return f"processed/usage_matchups/{season}.parquet"
 
 
+def unit_context(season: int) -> str:
+    """5v5 decomposition per forward line and D pair while the whole unit is on the ice."""
+    return f"processed/unit_context/{season}.parquet"
+
+
+def linemates(season: int) -> str:
+    """Season 5v5 time together per (team, player, teammate)."""
+    return f"processed/linemates/{season}.parquet"
+
+
 # --- ratings (M3) -------------------------------------------------------------------------
 
 

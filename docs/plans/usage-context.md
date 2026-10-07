@@ -1,6 +1,6 @@
 # Plan: Usage and context (teammate and opponent quality)
 
-**Status:** planned 2026-10-07. **Phase A built 2026-10-07** (`src/nhl/usage/tiers.py`, `nhl usage`, nightly after game state; backfilled 2010-11 to 2026-27): see [Phase A results](#phase-a-results-2026-10-07). **Phase B built 2026-10-07** (`src/nhl/usage/onice.py`, `nhl onice`, nightly after the ratings snapshot; backfilled 2015-16 to 2026-27): see [Phase B results](#phase-b-results-2026-10-07). **Phase C done 2026-10-07**: matchups are real but don't move game prices; simulator unchanged ([report](../reports/usage-matchups.md)). **Phase D done 2026-10-07**: gate passed, rating + context beats shrunk raw on-ice rates in every season ([report](../reports/usage-projection.md)).
+**Status:** planned 2026-10-07. **Phase A built 2026-10-07** (`src/nhl/usage/tiers.py`, `nhl usage`, nightly after game state; backfilled 2010-11 to 2026-27): see [Phase A results](#phase-a-results-2026-10-07). **Phase B built 2026-10-07** (`src/nhl/usage/onice.py`, `nhl onice`, nightly after the ratings snapshot; backfilled 2015-16 to 2026-27): see [Phase B results](#phase-b-results-2026-10-07). **Phase C done 2026-10-07**: matchups are real but don't move game prices; simulator unchanged ([report](../reports/usage-matchups.md)). **Phase D done 2026-10-07**: gate passed, rating + context beats shrunk raw on-ice rates in every season ([report](../reports/usage-projection.md)). **Phase E built 2026-10-07**: see [Phase E](#phase-e-site).
 **Depends on:** M2 stints (`processed/stints/{season}`) and inferred units
 (`processed/lineups/{season}`), M3 point-in-time rating snapshots (`ratings/{date}/`,
 weekly 2015-16 on), M4 simulator inputs (`sim/inputs.py` deployment shares).
@@ -161,7 +161,17 @@ See [usage-projection.md](../reports/usage-projection.md) (`src/nhl/usage/projec
 - 5v5 points/60 improve only 1.4% (7 of 11): points need their own model (DANAH).
 
 ## Phase E: Site
-API routes (`src/nhl/api/routers/`) and frontend panels:
+**Built 2026-10-07.** The site's tabs were regrouped first: Ratings (Teams / Lines / Players)
+and Model Results (Edges / Bets). New pipeline tables, written by `nhl onice` (nightly):
+`processed/unit_context/{season}` (the decomposition for every forward line and D pair while
+the whole unit is on the ice, with its tier) and `processed/linemates/{season}`. API:
+`/api/ratings/players/{id}/context` (this season and last, per team) and
+`/api/ratings/teams/{id}/matchups?season=` (`src/nhl/api/routers/context.py`); `/api/ratings/lines`
+now carries each unit's tier and decomposition. Frontend: `Breakdown`, `PlayerContext` and
+`MatchupGrid` components in the expanded rows of the three Ratings tabs, plus Tier and
+Comp xGD/60 columns on the Lines tab.
+
+Planned:
 - **Player page:** the decomposition as a waterfall (own, teammates, competition, context,
   luck → on-ice xGD), tier mix and special-teams roles, QoT/QoC percentiles, most common
   linemates and their ratings.

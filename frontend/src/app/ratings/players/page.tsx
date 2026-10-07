@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import SortTable, { type Column } from "@/components/SortTable";
 import IdentityCell from "@/components/IdentityCell";
+import PlayerContext from "@/components/PlayerContext";
 import { Card, Empty, ErrorState, Loading, Pills, Signed } from "@/components/ui";
 import { usePlayerRatings } from "@/lib/api";
 import { heat, heatScale } from "@/lib/heat";
@@ -137,6 +138,7 @@ export default function PlayersPage() {
   const [pos, setPos] = useState<(typeof POSITIONS)[number]["key"]>("all");
   const [team, setTeam] = useState("");
   const [query, setQuery] = useState("");
+  const [open, setOpen] = useState<number | null>(null);
 
   const teams = useMemo(
     () => [...new Set((data?.skaters ?? []).map((p) => p.team_abbr).filter((t): t is string => !!t))].sort(),
@@ -194,7 +196,14 @@ export default function PlayersPage() {
           {view === "skaters" ? (
             skaters.length ? (
               <Card>
-                <SortTable rows={skaters} columns={skaterCols} rowKey={(p) => p.player_id} initialSort={{ key: "xgd", desc: true }} />
+                <SortTable
+                  rows={skaters}
+                  columns={skaterCols}
+                  rowKey={(p) => p.player_id}
+                  initialSort={{ key: "xgd", desc: true }}
+                  onRowClick={(p) => setOpen(open === p.player_id ? null : p.player_id)}
+                  expanded={(p) => (open === p.player_id ? <PlayerContext playerId={p.player_id} /> : null)}
+                />
               </Card>
             ) : (
               <Empty>No skaters match.</Empty>
@@ -211,7 +220,8 @@ export default function PlayersPage() {
             Ratings are Bayesian: each starts from a preseason prior (last season, aged) and moves with this season&apos;s games,
             so early in the year they are mostly prior. 5v5 and special-teams values are on-ice xG per 60 relative to an
             average player (xGA: lower is better). Cell colors are scaled across the whole league, so they
-            don&apos;t change when you filter. Hover a header for its definition.
+            don&apos;t change when you filter. Hover a header for its definition. Click a skater for his on-ice breakdown
+            (own play vs teammates, competition and deployment), ice-time tiers and linemates.
           </p>
         </>
       )}

@@ -199,6 +199,97 @@ def build_onice(store: Store, season: int, design=None, usage: pl.DataFrame | No
     return pl.concat(out).sort(*_KEYS)
 
 
+def _snapshot_player_terms(store: Store, snaps: list[date]) -> pl.DataFrame:
+    """``snapshot, player_id, o, d`` for every player in each snapshot, plus a ``player_id``-null
+    row per snapshot holding its replacement levels."""
+    out = []
+    for snap in snaps:
+        base = f"ratings/{snap.isoformat()}/"
+        ev = store.read_parquet_required(base + "ev.parquet")
+        _, repl = _snapshot_terms(store, snap)
+        wide = ev.pivot(on="side", index="player_id", values="mean").rename({"O": "o", "D": "d"})
+        out.append(pl.concat([
+            wide.select(pl.lit(snap).alias("snapshot"), "player_id", "o", "d"),
+            pl.DataFrame({"snapshot": [snap], "player_id": [None], "o": [repl["O"]], "d": [repl["D"]]},
+                         schema={"snapshot": pl.Date, "player_id": pl.Int64, "o": pl.Float64, "d": pl.Float64}),
+        ]))
+    return pl.concat(out)
+
+
+def unit_context(store: Store, preds: pl.DataFrame, rosters: pl.DataFrame, usage: pl.DataFrame) -> pl.DataFrame:
+    """The same decomposition for every forward line (exactly 3 forwards) and D pair (exactly 2
+    defencemen), over the 5v5 stints the whole unit was on the ice together.
+
+    For a unit, ``own`` is the sum of its members' terms, ``mates`` the other skaters' (the pair
+    for a line, the line for a pair) and ``comp`` the five opponents'.
+
+    Args:
+        preds: :func:`stint_predictions` output.
+        rosters: ``game_id, player_id, position``.
+        usage: ``processed/usage`` (for the unit's tier).
+
+    Returns:
+        ``team_id, kind`` (F / D), ``player_ids`` (sorted), ``toi_s``, ``tier`` (the members'
+        most common tier, by time together), and ``{part}_{f|a}`` for
+        actual / own / mates / comp / zone / ctx / league / resid.
+    """
+    pos = rosters.select("game_id", "player_id", (pl.col("position") == "D").alias("is_d"))
+    terms = _snapshot_player_terms(store, sorted(preds["snapshot"].unique().to_list()))
+    repl = terms.filter(pl.col("player_id").is_null()).select("snapshot", pl.col("o").alias("ro"), pl.col("d").alias("rd"))
+    named = terms.drop_nulls("player_id")
+    base = preds.select("_i", "game_id", "snapshot", "att_team", "def_team", "duration_s", "y",
+                        "o_sum", "d_sum", "zone", "ctx", "league", "resid", "offence", "defence")
+    groups = []
+    for side, team, term in (("offence", "att_team", "o"), ("defence", "def_team", "d")):
+        ex = (base.select("_i", "game_id", "snapshot", pl.col(side).alias("player_id")).explode("player_id", empty_as_null=True)
+              .join(pos, on=["game_id", "player_id"], how="inner")
+              .join(named, on=["snapshot", "player_id"], how="left").join(repl, on="snapshot", how="left")
+              .with_columns(pl.coalesce(term, "r" + term).alias("t")))
+        groups.append(ex.group_by("_i").agg(
+            pl.col("player_id").filter(~pl.col("is_d")).sort().alias(f"{side}_F"),
+            pl.col("player_id").filter(pl.col("is_d")).sort().alias(f"{side}_D"),
+            pl.col("t").filter(~pl.col("is_d")).sum().alias(f"{side}_F_t"),
+            pl.col("t").filter(pl.col("is_d")).sum().alias(f"{side}_D_t"),
+        ))
+    rows = base.join(groups[0], on="_i").join(groups[1], on="_i")
+    tiers = usage.select("game_id", "player_id", "tier")
+    out = []
+    for kind, size in (("F", 3), ("D", 2)):
+        views = []
+        for s, side, team, other_sum, comp in (("f", "offence", "att_team", "o_sum", "d_sum"), ("a", "defence", "def_team", "d_sum", "o_sum")):
+            v = rows.filter(pl.col(f"{side}_{kind}").list.len() == size).select(
+                "_i", "game_id", pl.col(team).cast(pl.Int64).alias("team_id"), pl.col(f"{side}_{kind}").alias("player_ids"),
+                "duration_s", pl.col("y").alias("actual"), pl.col(f"{side}_{kind}_t").alias("own"),
+                (pl.col(other_sum) - pl.col(f"{side}_{kind}_t")).alias("mates"), pl.col(comp).alias("comp"),
+                "zone", "ctx", "league", "resid",
+            )
+            w = pl.col("duration_s")
+            agg = v.group_by("team_id", "player_ids").agg(
+                w.sum().alias(f"toi_{s}"),
+                *[((pl.col(c) * w).sum() / w.sum()).alias(f"{c}_{s}") for c in ("actual", *PARTS, "resid")],
+            )
+            views.append((v, agg))
+        both = views[0][1].join(views[1][1], on=["team_id", "player_ids"], how="inner")
+        # Tier: the members' most common tier, weighted by seconds together.
+        together = (views[0][0].group_by("team_id", "player_ids", "game_id").agg(pl.col("duration_s").sum())
+                    .with_columns(pl.col("player_ids").list.first().alias("player_id"))
+                    .join(tiers, on=["game_id", "player_id"], how="left")
+                    .group_by("team_id", "player_ids", "tier").agg(pl.col("duration_s").sum())
+                    .sort("duration_s", descending=True).group_by("team_id", "player_ids", maintain_order=True)
+                    .agg(pl.col("tier").first()))
+        out.append(both.join(together, on=["team_id", "player_ids"], how="left").with_columns(
+            pl.lit(kind).alias("kind"), pl.col("toi_f").alias("toi_s")).drop("toi_f", "toi_a"))
+    return pl.concat(out)
+
+
+def linemates(stints: pl.DataFrame) -> pl.DataFrame:
+    """Season 5v5 time together per (team, player, teammate): ``team_id, player_id, mate_id, shared_s, games``."""
+    from nhl.usage.projection import shared_toi
+
+    return shared_toi(stints).group_by("team_id", "player_id", "mate_id").agg(
+        pl.col("shared_s").sum(), pl.col("game_id").n_unique().alias("games"))
+
+
 #: Minimum 5v5 minutes for a skater to get QoT / QoC / part percentiles in the summary.
 PCTL_MIN_TOI_S = 200 * 60
 
@@ -244,7 +335,8 @@ def validate(onice: pl.DataFrame) -> dict[str, float]:
 
 
 def build_season(store: Store, season: int) -> dict[str, float]:
-    """Build and store ``processed/onice_context/{season}`` and its season summary."""
+    """Build and store ``processed/onice_context/{season}``, its season summary, the unit
+    decomposition (``processed/unit_context``) and season linemates (``processed/linemates``)."""
     usage = store.read_parquet_required(keys.usage(season))
     onice = build_onice(store, season, usage=usage)
     if onice.is_empty():
@@ -252,6 +344,10 @@ def build_season(store: Store, season: int) -> dict[str, float]:
         return {}
     store.put_parquet(keys.onice_context(season), onice)
     store.put_parquet(keys.onice_context_summary(season), summarize(onice, usage))
+    stints = store.read_parquet_required(keys.stints(season))
+    rosters = store.read_parquet_required(keys.rosters(season))
+    store.put_parquet(keys.unit_context(season), unit_context(store, stint_predictions(store, season), rosters, usage))
+    store.put_parquet(keys.linemates(season), linemates(stints))
     checks = validate(onice)
     logger.info("onice %s: %s", season, ", ".join(f"{k} {v:.4f}" for k, v in checks.items()))
     return checks

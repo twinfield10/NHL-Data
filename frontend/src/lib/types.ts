@@ -370,6 +370,11 @@ export interface LineRating {
   /** Team's total time in that state, and the unit's share of it together. */
   team_toi_s: number;
   toi_share: number;
+  /** Lines and pairs: the members' most common ice-time tier, and the 5v5 decomposition while the
+   *  whole unit was on the ice (regulation; per 60, ``_f`` = xGF, ``_a`` = xGA). Null for PP/PK. */
+  tier?: string | null;
+  ctx_toi_s?: number | null;
+  [ctx: `ctx_${string}`]: number | null | undefined;
 }
 
 export interface LinesResponse extends RatingsMeta {
@@ -377,4 +382,88 @@ export interface LinesResponse extends RatingsMeta {
   line_season: number;
   seasons: number[];
   lines: LineRating[];
+}
+
+/** One decomposition part per 60: xGF (``f``), xGA (``a``, lower is better) and xGD (``d``). */
+export interface PartValue {
+  f: number | null;
+  a: number | null;
+  d: number | null;
+}
+
+export type PartKey = "own" | "mates" | "comp" | "zone" | "ctx" | "resid" | "actual" | "league";
+
+export interface Linemate {
+  player_id: number;
+  player_name: string;
+  shared_s: number;
+  /** Share of his 5v5 time with this teammate. */
+  share: number | null;
+  games: number;
+  ev_net: number | null;
+}
+
+export interface PlayerContextRow {
+  season: number;
+  team_id: number;
+  team_abbr: string | null;
+  group: "F" | "D";
+  games: number;
+  toi_s: number;
+  parts: Record<PartKey, PartValue>;
+  /** Quality of teammates / competition: mean net rating (O − D) of the 4 teammates / 5 opponents,
+   *  with percentiles within F or D (≥ 200 5v5 minutes, else null). */
+  qot_net: number | null;
+  qoc_net: number | null;
+  qot_net_pct: number | null;
+  qoc_net_pct: number | null;
+  qot_toi: number | null;
+  qoc_toi: number | null;
+  usage: {
+    tier_mode?: string | null;
+    tier_avg?: number | null;
+    toi_5v5_pg?: number | null;
+    toi_pp_pg?: number | null;
+    toi_pk_pg?: number | null;
+    games_pp1?: number;
+    games_pp2?: number;
+    games_pk1?: number;
+    games_pk2?: number;
+    oz_start_share?: number | null;
+    [games: `games_${string}`]: number | string | null | undefined;
+  };
+  linemates: Linemate[];
+}
+
+export interface PlayerContextResponse {
+  player_id: number;
+  player_name: string | null;
+  season: number;
+  rows: PlayerContextRow[];
+}
+
+export interface MatchupCell {
+  venue: "all" | "home" | "away";
+  own_tier: string;
+  opp_tier: string;
+  seconds: number;
+  share: number;
+  /** Share of time against that tier ÷ the tier's overall share: 1 = no matching. */
+  ratio: number;
+}
+
+export interface TeamMatchupsResponse {
+  team_id: number;
+  season: number;
+  seasons: number[];
+  cells: MatchupCell[];
+  coaches: string[];
+  index: {
+    mi_bits: number;
+    pct: number;
+    f1_vs_f1: number | null;
+    d1_f1_home: number | null;
+    d1_f1_away: number | null;
+    teams: number;
+  } | null;
 }

@@ -55,3 +55,6 @@ export const signed = (v: number | null | undefined, digits = 2) =>
 /** Seconds -> "12:34" (minutes:seconds). */
 export const minutes = (s: number | null | undefined) =>
   s == null ? "–" : `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+
+/** 20252026 -> "2025-26" */
+export const seasonLabel = (s: number) => `${Math.floor(s / 10000)}-${String(s % 100).padStart(2, "0")}`;

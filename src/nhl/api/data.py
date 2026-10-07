@@ -280,6 +280,13 @@ class SiteData:
             return rankings.observed_units(stints, rosters)
         return self._timed_get(f"units/{season}", RANKINGS_TTL_SECONDS if current else DAY_SECONDS, load)
 
+    def processed(self, key: str, current: bool) -> pl.DataFrame | None:
+        """A season table under ``processed/`` (usage, on-ice context, matchups, linemates): the
+        current season re-read every :data:`RANKINGS_TTL_SECONDS` (the nightly job rewrites it),
+        finished seasons once a day."""
+        return self._timed_get(f"processed/{key}", RANKINGS_TTL_SECONDS if current else DAY_SECONDS,
+                               lambda: self.store.get_parquet(key))
+
     def ledger(self) -> pl.DataFrame | None:
         """The paper/real bet ledger (re-read every :data:`MUTABLE_TTL_SECONDS`)."""
         return self._timed_get("ledger", MUTABLE_TTL_SECONDS, lambda: self.store.get_parquet(keys.BETS_LEDGER))
