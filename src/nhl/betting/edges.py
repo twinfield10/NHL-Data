@@ -13,17 +13,17 @@ For every game on a date that hasn't started, every captured book and every main
 5. **Stake** (owner, 2026-10-06): ¼ Kelly on a bankroll of :data:`BANKROLL_UNITS` units,
    at most 2 u per bet, 3 u per game (moneyline and puck line on a game are correlated) and
    10 u per day including bets already in the ledger.
-6. **Flag** when the edge clears :data:`MIN_EDGE` and the market isn't track-only.
+6. **Flag** when the edge clears :data:`MIN_EDGE`.
 
 **Tiers** say how much history stands behind a bet (all are staked the same, by the owner's
 choice; the ledger measures each tier's CLV separately):
 
 * ``validated``: moneylines in November-February (CLV at the open +1.0% ± 0.4%, 2016-26);
-* ``unvalidated``: moneylines in other months, puck lines;
-* ``track_only``: totals (CLV −1% in both eras). Computed and paper-traded, never flagged.
+* ``unvalidated``: moneylines in other months, puck lines, totals (totals CLV was −1% in
+  both eras; staked anyway by the owner's choice, 2026-10-07).
 
-Outputs ``pregame/edges/{date}/{stamp}.parquet`` and appends newly flagged and track-only
-bets to the paper ledger (:mod:`nhl.betting.ledger`).
+Outputs ``pregame/edges/{date}/{stamp}.parquet`` and appends newly flagged bets to the paper
+ledger (:mod:`nhl.betting.ledger`).
 """
 
 from __future__ import annotations
@@ -58,8 +58,6 @@ LOCK_PATH = "/tmp/nhl_data_edges.lock"
 
 
 def tier(market: str, segment: str) -> str:
-    if market == "total":
-        return "track_only"
     return "validated" if market == "moneyline" and segment == "nov_feb" else "unvalidated"
 
 
@@ -146,9 +144,7 @@ def _price(store: Store, rows: pl.DataFrame, prices: pl.DataFrame, games: pl.Dat
         pl.lit(seg).alias("segment"), pl.lit(now).alias("as_of"),
     )
     return best.with_columns(
-        ((pl.col("edge") >= pl.col("market").replace_strict(MIN_EDGE, return_dtype=pl.Float64))
-         & (pl.col("tier") != "track_only")).alias("flagged"),
-        (pl.col("edge") >= pl.col("market").replace_strict(MIN_EDGE, return_dtype=pl.Float64)).alias("qualifies"),
+        (pl.col("edge") >= pl.col("market").replace_strict(MIN_EDGE, return_dtype=pl.Float64)).alias("flagged"),
     )
 
 
@@ -218,7 +214,7 @@ def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:
 
 
 def run(store: Store, day: date | None = None, write: bool = True) -> pl.DataFrame:
-    """Compute edges, snapshot them, and add new flagged / track-only bets to the paper ledger."""
+    """Compute edges, snapshot them, and add new flagged bets to the paper ledger."""
     with _lock():
         now = datetime.now(timezone.utc)
         day = day or now.astimezone(EASTERN).date()
@@ -227,7 +223,7 @@ def run(store: Store, day: date | None = None, write: bool = True) -> pl.DataFra
             return e
         st = stamp(now)
         store.put_parquet(keys.betting_edges(day, st), e.drop("score_matrix", strict=False).with_columns(pl.lit(st).alias("stamp")))
-        new = ledger.add_paper(store, e.filter(pl.col("flagged") | ((pl.col("tier") == "track_only") & pl.col("qualifies"))))
+        new = ledger.add_paper(store, e.filter(pl.col("flagged")))
         logger.info("edges %s: %d flagged (%.1f u), %d new paper bets", day, e.filter(pl.col("flagged")).height,
                     float(e["stake_units"].sum()), new)
         return e
@@ -253,7 +249,4 @@ def render(e: pl.DataFrame) -> str:
     out = [f"FLAGGED ({flagged.height}, {flagged['stake_units'].sum():.2f} u):"] + [line(r) for r in flagged.iter_rows(named=True)]
     if flagged.is_empty():
         out.append("  none")
-    tracked = e.filter((pl.col("tier") == "track_only") & pl.col("qualifies"))
-    if tracked.height:
-        out += [f"TRACKED, not flagged ({tracked.height}):"] + [line(r) for r in tracked.iter_rows(named=True)]
     return "\n".join(out)

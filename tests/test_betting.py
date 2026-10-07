@@ -141,7 +141,7 @@ def _edges(rows):
 
     base = {"game_date": date(2026, 10, 6), "line": None, "book": "LowVig", "price": -110.0, "p_model_side": 0.6,
             "p_market_side": 0.5, "p": 0.55, "pregame_stamp": "S", "as_of": datetime(2026, 10, 6, 18, tzinfo=timezone.utc),
-            "tier": "unvalidated", "qualifies": True}
+            "tier": "unvalidated"}
     return pl.DataFrame([{**base, **r} for r in rows])
 
 
@@ -152,12 +152,14 @@ def test_stakes_respect_bet_game_and_day_caps():
         {"game_id": 1, "market": "moneyline", "side": 1, "kelly": 0.05, "flagged": True},   # 5 u -> capped at 2
         {"game_id": 1, "market": "puckline", "side": 1, "kelly": 0.03, "flagged": True},    # 3 u -> 2; game 4 u -> 3
         {"game_id": 2, "market": "moneyline", "side": 2, "kelly": 0.01, "flagged": True},   # 1 u
-        {"game_id": 3, "market": "total", "side": 1, "kelly": 0.04, "flagged": False},      # track only: 0
+        {"game_id": 3, "market": "total", "side": 1, "kelly": 0.04, "flagged": True},       # 4 u -> capped at 2
+        {"game_id": 3, "market": "total", "side": 2, "kelly": 0.04, "flagged": False},      # not flagged: 0
     ])
-    out = E._stakes(e, _Mem(), e["game_date"][0]).sort("game_id", "market")
+    out = E._stakes(e, _Mem(), e["game_date"][0]).filter(pl.col("flagged"))
     st = dict(zip(zip(out["game_id"], out["market"]), out["stake_units"]))
-    assert st[(1, "moneyline")] == 1.5 and st[(1, "puckline")] == 1.5 and st[(2, "moneyline")] == 1.0 and st[(3, "total")] == 0.0
-    # Day cap: 8 u already in the ledger leaves 2 u for these 4 u.
+    assert out.height == 4
+    assert st[(1, "moneyline")] == 1.5 and st[(1, "puckline")] == 1.5 and st[(2, "moneyline")] == 1.0 and st[(3, "total")] == 2.0
+    # Day cap: 8 u already in the ledger leaves 2 u for these 6 u.
     from nhl.betting import ledger
     from nhl.storage import keys
     row = {c: None for c in ledger.SCHEMA} | {"bet_id": "x", "kind": "paper", "game_id": 9, "game_date": e["game_date"][0],

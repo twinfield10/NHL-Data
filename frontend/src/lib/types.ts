@@ -125,7 +125,6 @@ export interface Edge {
   p: number;
   edge: number;
   flagged: boolean;
-  qualifies: boolean;
   outlier: boolean;
   stake_units: number;
   home_abbr: string;
