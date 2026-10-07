@@ -1,0 +1,1753 @@
+{
+ "kind": "skater",
+ "id": 8478402,
+ "season": 20252026,
+ "captured_at": "2026-10-05T18:30:00+00:00",
+ "game_types": {
+  "2": {
+   "skater-detail": {
+    "player": {
+     "id": 8478402,
+     "firstName": {
+      "default": "Connor"
+     },
+     "lastName": {
+      "default": "McDavid"
+     },
+     "birthDate": "1997-01-13",
+     "shootsCatches": "L",
+     "sweaterNumber": 97,
+     "position": "C",
+     "slug": "connor-mcdavid-8478402",
+     "goals": 48,
+     "assists": 90,
+     "points": 138,
+     "gamesPlayed": 82,
+     "team": {
+      "commonName": {
+       "default": "Oilers"
+      },
+      "placeNameWithPreposition": {
+       "default": "Edmonton",
+       "fr": "d'Edmonton"
+      },
+      "abbrev": "EDM"
+     }
+    },
+    "seasonsWithEdgeStats": [
+     {
+      "id": 20212022,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20222023,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20232024,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20242025,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20252026,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20262027,
+      "gameTypes": [
+       2
+      ]
+     }
+    ],
+    "topShotSpeed": {
+     "imperial": 82.05,
+     "percentile": 0.3098,
+     "leagueAvg": {
+      "imperial": 83.6208
+     }
+    },
+    "skatingSpeed": {
+     "speedMax": {
+      "imperial": 24.6119,
+      "percentile": 0.9967,
+      "leagueAvg": {
+       "imperial": 22.1684
+      }
+     },
+     "burstsOver20": {
+      "value": 681,
+      "percentile": 1.0,
+      "leagueAvg": {
+       "value": 75.2
+      }
+     }
+    },
+    "totalDistanceSkated": {
+     "imperial": 330.2671,
+     "percentile": 1.0,
+     "leagueAvg": {
+      "imperial": 123.5454
+     }
+    },
+    "distanceMaxGame": {
+     "imperial": 4.914,
+     "percentile": 0.9984,
+     "leagueAvg": {
+      "imperial": 2.9231
+     }
+    },
+    "sogSummary": [
+     {
+      "locationCode": "all",
+      "shots": 306,
+      "shotsPercentile": 0.9984,
+      "shotsLeagueAvg": 85.9138,
+      "goals": 48,
+      "goalsPercentile": 0.9967,
+      "goalsLeagueAvg": 11.1545,
+      "shootingPctg": 0.1569,
+      "shootingPctgPercentile": 0.7348,
+      "shootingPctgLeagueAvg": 0.1298
+     },
+     {
+      "locationCode": "high",
+      "shots": 120,
+      "shotsPercentile": 0.9984,
+      "shotsLeagueAvg": 31.6244,
+      "goals": 26,
+      "goalsPercentile": 0.9951,
+      "goalsLeagueAvg": 6.1935,
+      "shootingPctg": 0.2167,
+      "shootingPctgPercentile": 0.5986,
+      "shootingPctgLeagueAvg": 0.1958
+     },
+     {
+      "locationCode": "long",
+      "shots": 8,
+      "shotsPercentile": 0.6042,
+      "shotsLeagueAvg": 8.0081,
+      "goals": 1,
+      "goalsPercentile": 0.8078,
+      "goalsLeagueAvg": 0.3106,
+      "shootingPctg": 0.125,
+      "shootingPctgPercentile": 0.8889,
+      "shootingPctgLeagueAvg": 0.0388
+     },
+     {
+      "locationCode": "mid",
+      "shots": 92,
+      "shotsPercentile": 0.9691,
+      "shotsLeagueAvg": 27.2195,
+      "goals": 9,
+      "goalsPercentile": 0.8893,
+      "goalsLeagueAvg": 3.3008,
+      "shootingPctg": 0.0978,
+      "shootingPctgPercentile": 0.319,
+      "shootingPctgLeagueAvg": 0.1213
+     }
+    ],
+    "sogDetails": [
+     {
+      "area": "Behind the Net",
+      "shots": 11,
+      "shotsPercentile": 1.0
+     },
+     {
+      "area": "Beyond Red Line",
+      "shots": 1,
+      "shotsPercentile": 0.3974
+     },
+     {
+      "area": "Center Point",
+      "shots": 4,
+      "shotsPercentile": 0.6971
+     },
+     {
+      "area": "Crease",
+      "shots": 23,
+      "shotsPercentile": 0.9967
+     },
+     {
+      "area": "High Slot",
+      "shots": 27,
+      "shotsPercentile": 0.9446
+     },
+     {
+      "area": "L Circle",
+      "shots": 36,
+      "shotsPercentile": 0.9691
+     },
+     {
+      "area": "L Corner",
+      "shots": 1,
+      "shotsPercentile": 0.842
+     },
+     {
+      "area": "L Net Side",
+      "shots": 34,
+      "shotsPercentile": 1.0
+     },
+     {
+      "area": "L Point",
+      "shots": 3,
+      "shotsPercentile": 0.6075
+     },
+     {
+      "area": "Low Slot",
+      "shots": 97,
+      "shotsPercentile": 0.9935
+     },
+     {
+      "area": "Offensive Neutral Zone",
+      "shots": 3,
+      "shotsPercentile": 0.6645
+     },
+     {
+      "area": "Outside L",
+      "shots": 15,
+      "shotsPercentile": 0.9463
+     },
+     {
+      "area": "Outside R",
+      "shots": 9,
+      "shotsPercentile": 0.8257
+     },
+     {
+      "area": "R Circle",
+      "shots": 29,
+      "shotsPercentile": 0.9414
+     },
+     {
+      "area": "R Corner",
+      "shots": 0,
+      "shotsPercentile": 0.0
+     },
+     {
+      "area": "R Net Side",
+      "shots": 12,
+      "shotsPercentile": 0.9821
+     },
+     {
+      "area": "R Point",
+      "shots": 1,
+      "shotsPercentile": 0.3322
+     }
+    ],
+    "zoneTimeDetails": {
+     "offensiveZonePctg": 0.47687929,
+     "offensiveZonePercentile": 0.9788235294118,
+     "offensiveZoneLeagueAvg": 0.43087924,
+     "offensiveZoneEvPctg": 0.45271129,
+     "offensiveZoneEvPercentile": 0.9694117647059,
+     "offensiveZoneEvLeagueAvg": 0.42022407,
+     "neutralZonePctg": 0.16919112,
+     "neutralZonePercentile": 0.0541176470588,
+     "neutralZoneLeagueAvg": 0.16794965,
+     "defensiveZonePctg": 0.35392959,
+     "defensiveZonePercentile": 0.9576470588235,
+     "defensiveZoneLeagueAvg": 0.4011711
+    }
+   },
+   "skater-skating-speed-detail": {
+    "topSkatingSpeeds": [
+     {
+      "gameCenterLink": "/gamecenter/cgy-vs-edm/2025/10/08/2025020006",
+      "gameDate": "2025-10-08",
+      "gameType": 2,
+      "playerOnHomeTeam": true,
+      "skatingSpeed": {
+       "imperial": 24.6119,
+       "metric": 39.609
+      },
+      "timeInPeriod": "08:04",
+      "periodDescriptor": {
+       "number": 2,
+       "periodType": "REG",
+       "maxRegulationPeriods": 3
+      },
+      "homeTeam": {
+       "commonName": {
+        "default": "Oilers"
+       },
+       "placeNameWithPreposition": {
+        "default": "Edmonton",
+        "fr": "d'Edmonton"
+       },
+       "abbrev": "EDM",
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/EDM_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/EDM_dark.svg"
+       },
+       "slug": "edmonton-oilers-22"
+      },
+      "awayTeam": {
+       "commonName": {
+        "default": "Flames"
+       },
+       "placeNameWithPreposition": {
+        "default": "Calgary",
+        "fr": "de Calgary"
+       },
+       "abbrev": "CGY",
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/CGY_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/CGY_dark.svg"
+       },
+       "slug": "calgary-flames-20"
+      }
+     }
+    ],
+    "skatingSpeedDetails": {
+     "maxSkatingSpeed": {
+      "imperial": 24.6119,
+      "percentile": 0.9967,
+      "leagueAvg": {
+       "imperial": 22.1684
+      }
+     },
+     "burstsOver22": {
+      "value": 151,
+      "percentile": 1.0,
+      "leagueAvg": 3.8472
+     },
+     "bursts20To22": {
+      "value": 530,
+      "percentile": 1.0,
+      "leagueAvg": 71.3528
+     },
+     "bursts18To20": {
+      "value": 922,
+      "percentile": 0.9967,
+      "leagueAvg": 313.7463
+     }
+    }
+   },
+   "skater-shot-speed-detail": {
+    "hardestShots": [
+     {
+      "gameCenterLink": "/gamecenter/edm-vs-cbj/2025/11/13/2025020274",
+      "gameDate": "2025-11-13",
+      "gameType": 2,
+      "playerOnHomeTeam": false,
+      "shotSpeed": {
+       "imperial": 82.05,
+       "metric": 132.05
+      },
+      "timeInPeriod": "00:39",
+      "periodDescriptor": {
+       "number": 3,
+       "periodType": "REG",
+       "maxRegulationPeriods": 3
+      },
+      "homeTeam": {
+       "commonName": {
+        "default": "Blue Jackets"
+       },
+       "placeNameWithPreposition": {
+        "default": "Columbus",
+        "fr": "de Columbus"
+       },
+       "abbrev": "CBJ",
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/CBJ_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/CBJ_dark.svg"
+       },
+       "slug": "columbus-blue-jackets-29"
+      },
+      "awayTeam": {
+       "commonName": {
+        "default": "Oilers"
+       },
+       "placeNameWithPreposition": {
+        "default": "Edmonton",
+        "fr": "d'Edmonton"
+       },
+       "abbrev": "EDM",
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/EDM_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/EDM_dark.svg"
+       },
+       "slug": "edmonton-oilers-22"
+      }
+     }
+    ],
+    "shotSpeedDetails": {
+     "topShotSpeed": {
+      "imperial": 82.05,
+      "percentile": 0.3098,
+      "leagueAvg": {
+       "imperial": 83.6208
+      }
+     },
+     "avgShotSpeed": {
+      "imperial": 48.3919,
+      "percentile": 0.2574,
+      "leagueAvg": {
+       "imperial": 53.1912
+      }
+     },
+     "shotAttemptsOver100": {
+      "value": 0,
+      "percentile": 0.0,
+      "leagueAvg": 0.0049
+     },
+     "shotAttempts90To100": {
+      "value": 0,
+      "percentile": 0.0,
+      "leagueAvg": 0.6399
+     },
+     "shotAttempts80To90": {
+      "value": 5,
+      "percentile": 0.5311,
+      "leagueAvg": 10.0082
+     },
+     "shotAttempts70To80": {
+      "value": 56,
+      "percentile": 0.8475,
+      "leagueAvg": 28.3699
+     }
+    }
+   },
+   "skater-skating-distance-detail": {
+    "skatingDistanceLast10": [
+     {
+      "gameCenterLink": "/gamecenter/van-vs-edm/2026/04/16/2025021311",
+      "gameDate": "2026-04-16",
+      "playerOnHomeTeam": true,
+      "distanceSkatedAll": {
+       "imperial": 3.1022,
+       "metric": 4.9926
+      },
+      "toiAll": 1096,
+      "distanceSkatedEven": {
+       "imperial": 2.6103,
+       "metric": 4.2008
+      },
+      "toiEven": 935,
+      "distanceSkatedPP": {
+       "imperial": 0.371,
+       "metric": 0.5971
+      },
+      "toiPP": 116,
+      "distanceSkatedPK": {
+       "imperial": 0.1209,
+       "metric": 0.1946
+      },
+      "toiPK": 45,
+      "homeTeam": {
+       "commonName": {
+        "default": "Oilers"
+       },
+       "placeNameWithPreposition": {
+        "default": "Edmonton",
+        "fr": "d'Edmonton"
+       },
+       "abbrev": "EDM",
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/EDM_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/EDM_dark.svg"
+       },
+       "slug": "edmonton-oilers-22"
+      },
+      "awayTeam": {
+       "commonName": {
+        "default": "Canucks"
+       },
+       "placeNameWithPreposition": {
+        "default": "Vancouver",
+        "fr": "de Vancouver"
+       },
+       "abbrev": "VAN",
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/VAN_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/VAN_dark.svg"
+       },
+       "slug": "vancouver-canucks-23"
+      }
+     }
+    ],
+    "skatingDistanceDetails": [
+     {
+      "strengthCode": "all",
+      "distanceTotal": {
+       "imperial": 330.2671,
+       "percentile": 1.0,
+       "leagueAvg": {
+        "imperial": 123.5454
+       }
+      },
+      "distancePer60": {
+       "imperial": 10.5136,
+       "percentile": 0.9929,
+       "leagueAvg": {
+        "imperial": 9.6011
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 4.914,
+       "percentile": 0.9984,
+       "leagueAvg": {
+        "imperial": 2.9231
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 1.8516,
+       "percentile": 0.9967,
+       "leagueAvg": {
+        "imperial": 1.1579
+       }
+      }
+     },
+     {
+      "strengthCode": "es",
+      "distanceTotal": {
+       "imperial": 266.5441,
+       "percentile": 1.0,
+       "leagueAvg": {
+        "imperial": 107.1124
+       }
+      },
+      "distancePer60": {
+       "imperial": 10.6454,
+       "percentile": 0.9859,
+       "leagueAvg": {
+        "imperial": 9.8344
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 4.4007,
+       "percentile": 0.9984,
+       "leagueAvg": {
+        "imperial": 2.6701
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 1.8421,
+       "percentile": 0.9984,
+       "leagueAvg": {
+        "imperial": 1.0824
+       }
+      }
+     },
+     {
+      "strengthCode": "pp",
+      "distanceTotal": {
+       "imperial": 48.4922,
+       "percentile": 1.0,
+       "leagueAvg": {
+        "imperial": 11.8653
+       }
+      },
+      "distancePer60": {
+       "imperial": 9.8345,
+       "percentile": 0.9469,
+       "leagueAvg": {
+        "imperial": 8.237
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 1.3629,
+       "percentile": 0.9625,
+       "leagueAvg": {
+        "imperial": 0.5833
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 0.8005,
+       "percentile": 0.9661,
+       "leagueAvg": {
+        "imperial": 0.3722
+       }
+      }
+     },
+     {
+      "strengthCode": "pk",
+      "distanceTotal": {
+       "imperial": 15.2309,
+       "percentile": 0.8039,
+       "leagueAvg": {
+        "imperial": 6.7247
+       }
+      },
+      "distancePer60": {
+       "imperial": 10.5465,
+       "percentile": 1.0,
+       "leagueAvg": {
+        "imperial": 8.4374
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 0.6377,
+       "percentile": 0.7667,
+       "leagueAvg": {
+        "imperial": 0.3836
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 0.4225,
+       "percentile": 0.8216,
+       "leagueAvg": {
+        "imperial": 0.2542
+       }
+      }
+     }
+    ]
+   },
+   "skater-zone-time": {
+    "zoneTimeDetails": [
+     {
+      "strengthCode": "all",
+      "offensiveZonePctg": 0.47687929,
+      "offensiveZonePercentile": 0.9788235294118,
+      "offensiveZoneLeagueAvg": 0.43087924,
+      "neutralZonePctg": 0.16919112,
+      "neutralZonePercentile": 0.0541176470588,
+      "neutralZoneLeagueAvg": 0.16794965,
+      "defensiveZonePctg": 0.35392959,
+      "defensiveZonePercentile": 0.9576470588235,
+      "defensiveZoneLeagueAvg": 0.4011711
+     },
+     {
+      "strengthCode": "es",
+      "offensiveZonePctg": 0.45271129,
+      "offensiveZonePercentile": 0.9694117647059,
+      "offensiveZoneLeagueAvg": 0.42022407,
+      "neutralZonePctg": 0.17637982,
+      "neutralZonePercentile": 0.0588235294118,
+      "neutralZoneLeagueAvg": 0.17878403,
+      "defensiveZonePctg": 0.37090888,
+      "defensiveZonePercentile": 0.9576470588235,
+      "defensiveZoneLeagueAvg": 0.4009919
+     },
+     {
+      "strengthCode": "pp",
+      "offensiveZonePctg": 0.63524141,
+      "offensiveZonePercentile": 0.95625,
+      "offensiveZoneLeagueAvg": 0.55503782,
+      "neutralZonePctg": 0.13631286,
+      "neutralZonePercentile": 0.328125,
+      "neutralZoneLeagueAvg": 0.12248349,
+      "defensiveZonePctg": 0.22844573,
+      "defensiveZonePercentile": 0.965625,
+      "defensiveZoneLeagueAvg": 0.32247869
+     },
+     {
+      "strengthCode": "pk",
+      "offensiveZonePctg": 0.36419038,
+      "offensiveZonePercentile": 0.9608695652174,
+      "offensiveZoneLeagueAvg": 0.33855384,
+      "neutralZonePctg": 0.15623815,
+      "neutralZonePercentile": 0.8173913043478,
+      "neutralZoneLeagueAvg": 0.11552608,
+      "defensiveZonePctg": 0.47957147,
+      "defensiveZonePercentile": 0.9521739130435,
+      "defensiveZoneLeagueAvg": 0.54592008
+     }
+    ],
+    "zoneStarts": {
+     "offensiveZoneStartsPctg": 0.4407,
+     "offensiveZoneStartsPctgPercentile": 0.9537,
+     "neutralZoneStartsPctg": 0.3183,
+     "neutralZoneStartsPctgPercentile": 0.2819,
+     "defensiveZoneStartsPctg": 0.2476,
+     "defensiveZoneStartsPctgPercentile": 0.9383
+    }
+   },
+   "skater-shot-location-detail": {
+    "shotLocationDetails": [
+     {
+      "area": "Behind the Net",
+      "sog": 11,
+      "goals": 0,
+      "shootingPctg": 0.0,
+      "sogPercentile": 1.0,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": 0.0
+     },
+     {
+      "area": "Beyond Red Line",
+      "sog": 1,
+      "goals": 0,
+      "shootingPctg": 0.0,
+      "sogPercentile": 0.3974,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": 0.0
+     },
+     {
+      "area": "Center Point",
+      "sog": 4,
+      "goals": 0,
+      "shootingPctg": 0.0,
+      "sogPercentile": 0.6971,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": 0.0
+     },
+     {
+      "area": "Crease",
+      "sog": 23,
+      "goals": 9,
+      "shootingPctg": 0.3913,
+      "sogPercentile": 0.9967,
+      "goalsPercentile": 0.9967,
+      "shootingPctgPercentile": 0.7348
+     },
+     {
+      "area": "High Slot",
+      "sog": 27,
+      "goals": 1,
+      "shootingPctg": 0.037,
+      "sogPercentile": 0.9446,
+      "goalsPercentile": 0.4316,
+      "shootingPctgPercentile": 0.1075
+     },
+     {
+      "area": "L Circle",
+      "sog": 36,
+      "goals": 6,
+      "shootingPctg": 0.1667,
+      "sogPercentile": 0.9691,
+      "goalsPercentile": 0.9756,
+      "shootingPctgPercentile": 0.7814
+     },
+     {
+      "area": "L Corner",
+      "sog": 1,
+      "goals": 0,
+      "shootingPctg": 0.0,
+      "sogPercentile": 0.842,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": 0.0
+     },
+     {
+      "area": "L Net Side",
+      "sog": 34,
+      "goals": 5,
+      "shootingPctg": 0.1471,
+      "sogPercentile": 1.0,
+      "goalsPercentile": 0.9984,
+      "shootingPctgPercentile": 0.7133
+     },
+     {
+      "area": "L Point",
+      "sog": 3,
+      "goals": 1,
+      "shootingPctg": 0.3333,
+      "sogPercentile": 0.6075,
+      "goalsPercentile": 0.9153,
+      "shootingPctgPercentile": 0.957
+     },
+     {
+      "area": "Low Slot",
+      "sog": 97,
+      "goals": 17,
+      "shootingPctg": 0.1753,
+      "sogPercentile": 0.9935,
+      "goalsPercentile": 0.9756,
+      "shootingPctgPercentile": 0.405
+     },
+     {
+      "area": "Offensive Neutral Zone",
+      "sog": 3,
+      "goals": 2,
+      "shootingPctg": 0.6667,
+      "sogPercentile": 0.6645,
+      "goalsPercentile": 0.9853,
+      "shootingPctgPercentile": 0.9606
+     },
+     {
+      "area": "Outside L",
+      "sog": 15,
+      "goals": 2,
+      "shootingPctg": 0.1333,
+      "sogPercentile": 0.9463,
+      "goalsPercentile": 0.9691,
+      "shootingPctgPercentile": 0.828
+     },
+     {
+      "area": "Outside R",
+      "sog": 9,
+      "goals": 0,
+      "shootingPctg": 0.0,
+      "sogPercentile": 0.8257,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": 0.0
+     },
+     {
+      "area": "R Circle",
+      "sog": 29,
+      "goals": 2,
+      "shootingPctg": 0.069,
+      "sogPercentile": 0.9414,
+      "goalsPercentile": 0.7687,
+      "shootingPctgPercentile": 0.3656
+     },
+     {
+      "area": "R Corner",
+      "sog": 0,
+      "goals": 0,
+      "shootingPctg": null,
+      "sogPercentile": 0.0,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": null
+     },
+     {
+      "area": "R Net Side",
+      "sog": 12,
+      "goals": 3,
+      "shootingPctg": 0.25,
+      "sogPercentile": 0.9821,
+      "goalsPercentile": 0.9902,
+      "shootingPctgPercentile": 0.828
+     },
+     {
+      "area": "R Point",
+      "sog": 1,
+      "goals": 0,
+      "shootingPctg": 0.0,
+      "sogPercentile": 0.3322,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": 0.0
+     }
+    ],
+    "shotLocationTotals": [
+     {
+      "locationCode": "all",
+      "sog": 306,
+      "goals": 48,
+      "shootingPctg": 0.1569,
+      "sogPercentile": 0.9984,
+      "goalsPercentile": 0.9967,
+      "shootingPctgPercentile": 0.7348,
+      "sogLeagueAvg": 85.9138,
+      "goalsLeagueAvg": 11.1545,
+      "shootingPctgLeagueAvg": 0.1298
+     },
+     {
+      "locationCode": "high",
+      "sog": 120,
+      "goals": 26,
+      "shootingPctg": 0.2167,
+      "sogPercentile": 0.9984,
+      "goalsPercentile": 0.9951,
+      "shootingPctgPercentile": 0.5986,
+      "sogLeagueAvg": 31.6244,
+      "goalsLeagueAvg": 6.1935,
+      "shootingPctgLeagueAvg": 0.1958
+     },
+     {
+      "locationCode": "long",
+      "sog": 8,
+      "goals": 1,
+      "shootingPctg": 0.125,
+      "sogPercentile": 0.6042,
+      "goalsPercentile": 0.8078,
+      "shootingPctgPercentile": 0.8889,
+      "sogLeagueAvg": 8.0081,
+      "goalsLeagueAvg": 0.3106,
+      "shootingPctgLeagueAvg": 0.0388
+     },
+     {
+      "locationCode": "mid",
+      "sog": 92,
+      "goals": 9,
+      "shootingPctg": 0.0978,
+      "sogPercentile": 0.9691,
+      "goalsPercentile": 0.8893,
+      "shootingPctgPercentile": 0.319,
+      "sogLeagueAvg": 27.2195,
+      "goalsLeagueAvg": 3.3008,
+      "shootingPctgLeagueAvg": 0.1213
+     }
+    ]
+   }
+  },
+  "3": {
+   "skater-detail": {
+    "player": {
+     "id": 8478402,
+     "firstName": {
+      "default": "Connor"
+     },
+     "lastName": {
+      "default": "McDavid"
+     },
+     "birthDate": "1997-01-13",
+     "shootsCatches": "L",
+     "sweaterNumber": 97,
+     "position": "C",
+     "slug": "connor-mcdavid-8478402",
+     "goals": 1,
+     "assists": 5,
+     "points": 6,
+     "gamesPlayed": 6,
+     "team": {
+      "commonName": {
+       "default": "Oilers"
+      },
+      "placeNameWithPreposition": {
+       "default": "Edmonton",
+       "fr": "d'Edmonton"
+      },
+      "abbrev": "EDM"
+     }
+    },
+    "seasonsWithEdgeStats": [
+     {
+      "id": 20212022,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20222023,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20232024,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20242025,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20252026,
+      "gameTypes": [
+       2,
+       3
+      ]
+     },
+     {
+      "id": 20262027,
+      "gameTypes": [
+       2
+      ]
+     }
+    ],
+    "topShotSpeed": {
+     "imperial": 85.45,
+     "percentile": 0.7149,
+     "leagueAvg": {
+      "imperial": 80.0472
+     }
+    },
+    "skatingSpeed": {
+     "speedMax": {
+      "imperial": 22.987,
+      "percentile": 0.9193,
+      "leagueAvg": {
+       "imperial": 21.7547
+      }
+     },
+     "burstsOver20": {
+      "value": 54,
+      "percentile": 0.9641,
+      "leagueAvg": {
+       "value": 15.0045
+      }
+     }
+    },
+    "totalDistanceSkated": {
+     "imperial": 24.7303,
+     "percentile": 0.6816,
+     "leagueAvg": {
+      "imperial": 21.9694
+     }
+    },
+    "distanceMaxGame": {
+     "imperial": 4.4923,
+     "percentile": 0.9372,
+     "leagueAvg": {
+      "imperial": 3.0657
+     }
+    },
+    "sogSummary": [
+     {
+      "locationCode": "all",
+      "shots": 20,
+      "shotsPercentile": 0.7354,
+      "shotsLeagueAvg": 15.1295,
+      "goals": 1,
+      "goalsPercentile": 0.3812,
+      "goalsLeagueAvg": 1.8393,
+      "shootingPctg": 0.05,
+      "shootingPctgPercentile": 0.2448,
+      "shootingPctgLeagueAvg": 0.1216
+     },
+     {
+      "locationCode": "high",
+      "shots": 4,
+      "shotsPercentile": 0.4798,
+      "shotsLeagueAvg": 5.1518,
+      "goals": 0,
+      "goalsPercentile": 0.0,
+      "goalsLeagueAvg": 0.9554,
+      "shootingPctg": 0.0,
+      "shootingPctgPercentile": 0.0,
+      "shootingPctgLeagueAvg": 0.1854
+     },
+     {
+      "locationCode": "long",
+      "shots": 0,
+      "shotsPercentile": 0.0,
+      "shotsLeagueAvg": 1.4554,
+      "goals": 0,
+      "goalsPercentile": 0.0,
+      "goalsLeagueAvg": 0.067,
+      "shootingPctg": 0.0,
+      "shootingPctgPercentile": 0.0,
+      "shootingPctgLeagueAvg": 0.046
+     },
+     {
+      "locationCode": "mid",
+      "shots": 9,
+      "shotsPercentile": 0.8072,
+      "shotsLeagueAvg": 4.6384,
+      "goals": 0,
+      "goalsPercentile": 0.0,
+      "goalsLeagueAvg": 0.5045,
+      "shootingPctg": 0.0,
+      "shootingPctgPercentile": 0.0,
+      "shootingPctgLeagueAvg": 0.1088
+     }
+    ],
+    "sogDetails": [
+     {
+      "area": "Behind the Net",
+      "shots": 1,
+      "shotsPercentile": 0.8565
+     },
+     {
+      "area": "Beyond Red Line",
+      "shots": 0,
+      "shotsPercentile": 0.0
+     },
+     {
+      "area": "Center Point",
+      "shots": 0,
+      "shotsPercentile": 0.0
+     },
+     {
+      "area": "Crease",
+      "shots": 1,
+      "shotsPercentile": 0.6054
+     },
+     {
+      "area": "High Slot",
+      "shots": 4,
+      "shotsPercentile": 0.8744
+     },
+     {
+      "area": "L Circle",
+      "shots": 4,
+      "shotsPercentile": 0.852
+     },
+     {
+      "area": "L Corner",
+      "shots": 0,
+      "shotsPercentile": 0.0
+     },
+     {
+      "area": "L Net Side",
+      "shots": 0,
+      "shotsPercentile": 0.0
+     },
+     {
+      "area": "L Point",
+      "shots": 0,
+      "shotsPercentile": 0.0
+     },
+     {
+      "area": "Low Slot",
+      "shots": 3,
+      "shotsPercentile": 0.4215
+     },
+     {
+      "area": "Offensive Neutral Zone",
+      "shots": 1,
+      "shotsPercentile": 0.6637
+     },
+     {
+      "area": "Outside L",
+      "shots": 2,
+      "shotsPercentile": 0.7982
+     },
+     {
+      "area": "Outside R",
+      "shots": 2,
+      "shotsPercentile": 0.7848
+     },
+     {
+      "area": "R Circle",
+      "shots": 1,
+      "shotsPercentile": 0.3812
+     },
+     {
+      "area": "R Corner",
+      "shots": 0,
+      "shotsPercentile": 0.0
+     },
+     {
+      "area": "R Net Side",
+      "shots": 1,
+      "shotsPercentile": 0.722
+     },
+     {
+      "area": "R Point",
+      "shots": 0,
+      "shotsPercentile": 0.0
+     }
+    ],
+    "zoneTimeDetails": {
+     "offensiveZonePctg": 0.45612109,
+     "offensiveZonePercentile": 0.8167539267016,
+     "offensiveZoneLeagueAvg": 0.43026071,
+     "offensiveZoneEvPctg": 0.43416119,
+     "offensiveZoneEvPercentile": 0.7591623036649,
+     "offensiveZoneEvLeagueAvg": 0.4194531,
+     "neutralZonePctg": 0.17601849,
+     "neutralZonePercentile": 0.4240837696335,
+     "neutralZoneLeagueAvg": 0.18230578,
+     "defensiveZonePctg": 0.36786042,
+     "defensiveZonePercentile": 0.8010471204188,
+     "defensiveZoneLeagueAvg": 0.38743352
+    }
+   },
+   "skater-skating-speed-detail": {
+    "topSkatingSpeeds": [
+     {
+      "gameCenterLink": "/gamecenter/ana-vs-edm/2026/04/22/2025030182",
+      "gameDate": "2026-04-22",
+      "gameType": 3,
+      "playerOnHomeTeam": true,
+      "skatingSpeed": {
+       "imperial": 22.987,
+       "metric": 36.994
+      },
+      "timeInPeriod": "19:20",
+      "periodDescriptor": {
+       "number": 1,
+       "periodType": "REG",
+       "maxRegulationPeriods": 3
+      },
+      "homeTeam": {
+       "commonName": {
+        "default": "Oilers"
+       },
+       "placeNameWithPreposition": {
+        "default": "Edmonton",
+        "fr": "d'Edmonton"
+       },
+       "abbrev": "EDM",
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/EDM_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/EDM_dark.svg"
+       },
+       "slug": "edmonton-oilers-22"
+      },
+      "awayTeam": {
+       "commonName": {
+        "default": "Ducks"
+       },
+       "placeNameWithPreposition": {
+        "default": "Anaheim",
+        "fr": "d'Anaheim"
+       },
+       "abbrev": "ANA",
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/ANA_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/ANA_dark.svg"
+       },
+       "slug": "anaheim-ducks-24"
+      }
+     }
+    ],
+    "skatingSpeedDetails": {
+     "maxSkatingSpeed": {
+      "imperial": 22.987,
+      "percentile": 0.9193,
+      "leagueAvg": {
+       "imperial": 21.7547
+      }
+     },
+     "burstsOver22": {
+      "value": 9,
+      "percentile": 0.991,
+      "leagueAvg": 0.9777
+     },
+     "bursts20To22": {
+      "value": 45,
+      "percentile": 0.9552,
+      "leagueAvg": 14.0268
+     },
+     "bursts18To20": {
+      "value": 60,
+      "percentile": 0.6682,
+      "leagueAvg": 56.558
+     }
+    }
+   },
+   "skater-shot-speed-detail": {
+    "hardestShots": [
+     {
+      "gameCenterLink": "/gamecenter/ana-vs-edm/2026/04/22/2025030182",
+      "gameDate": "2026-04-22",
+      "gameType": 3,
+      "playerOnHomeTeam": false,
+      "shotSpeed": {
+       "imperial": 85.45,
+       "metric": 137.52
+      },
+      "timeInPeriod": "19:20",
+      "periodDescriptor": {
+       "number": 1,
+       "periodType": "REG",
+       "maxRegulationPeriods": 3
+      },
+      "homeTeam": {
+       "commonName": {
+        "default": "Oilers"
+       },
+       "placeNameWithPreposition": {
+        "default": "Edmonton",
+        "fr": "d'Edmonton"
+       },
+       "abbrev": "EDM",
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/EDM_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/EDM_dark.svg"
+       },
+       "slug": "edmonton-oilers-22"
+      },
+      "awayTeam": {
+       "commonName": {
+        "default": "Ducks"
+       },
+       "placeNameWithPreposition": {
+        "default": "Anaheim",
+        "fr": "d'Anaheim"
+       },
+       "abbrev": "ANA",
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/ANA_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/ANA_dark.svg"
+       },
+       "slug": "anaheim-ducks-24"
+      }
+     }
+    ],
+    "shotSpeedDetails": {
+     "topShotSpeed": {
+      "imperial": 85.45,
+      "percentile": 0.7149,
+      "leagueAvg": {
+       "imperial": 80.0472
+      }
+     },
+     "avgShotSpeed": {
+      "imperial": 57.1972,
+      "percentile": 0.6787,
+      "leagueAvg": {
+       "imperial": 54.7396
+      }
+     },
+     "shotAttemptsOver100": {
+      "value": 0,
+      "percentile": 0.0,
+      "leagueAvg": 0.0
+     },
+     "shotAttempts90To100": {
+      "value": 0,
+      "percentile": 0.0,
+      "leagueAvg": 0.1577
+     },
+     "shotAttempts80To90": {
+      "value": 2,
+      "percentile": 0.5928,
+      "leagueAvg": 2.1577
+     },
+     "shotAttempts70To80": {
+      "value": 3,
+      "percentile": 0.3937,
+      "leagueAvg": 5.3468
+     }
+    }
+   },
+   "skater-skating-distance-detail": {
+    "skatingDistanceLast10": [
+     {
+      "gameCenterLink": "/gamecenter/edm-vs-ana/2026/04/30/2025030186",
+      "gameDate": "2026-04-30",
+      "playerOnHomeTeam": false,
+      "distanceSkatedAll": {
+       "imperial": 4.2849,
+       "metric": 6.8959
+      },
+      "toiAll": 1489,
+      "distanceSkatedEven": {
+       "imperial": 4.089,
+       "metric": 6.5806
+      },
+      "toiEven": 1407,
+      "distanceSkatedPK": {
+       "imperial": 0.1959,
+       "metric": 0.3153
+      },
+      "toiPK": 82,
+      "homeTeam": {
+       "commonName": {
+        "default": "Ducks"
+       },
+       "placeNameWithPreposition": {
+        "default": "Anaheim",
+        "fr": "d'Anaheim"
+       },
+       "abbrev": "ANA",
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/ANA_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/ANA_dark.svg"
+       },
+       "slug": "anaheim-ducks-24"
+      },
+      "awayTeam": {
+       "commonName": {
+        "default": "Oilers"
+       },
+       "placeNameWithPreposition": {
+        "default": "Edmonton",
+        "fr": "d'Edmonton"
+       },
+       "abbrev": "EDM",
+       "teamLogo": {
+        "light": "https://assets.nhle.com/logos/nhl/svg/EDM_light.svg",
+        "dark": "https://assets.nhle.com/logos/nhl/svg/EDM_dark.svg"
+       },
+       "slug": "edmonton-oilers-22"
+      }
+     }
+    ],
+    "skatingDistanceDetails": [
+     {
+      "strengthCode": "all",
+      "distanceTotal": {
+       "imperial": 24.7303,
+       "percentile": 0.6816,
+       "leagueAvg": {
+        "imperial": 21.9694
+       }
+      },
+      "distancePer60": {
+       "imperial": 10.5024,
+       "percentile": 0.9581,
+       "leagueAvg": {
+        "imperial": 9.5221
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 4.4923,
+       "percentile": 0.9372,
+       "leagueAvg": {
+        "imperial": 3.0657
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 1.7186,
+       "percentile": 0.9955,
+       "leagueAvg": {
+        "imperial": 1.0488
+       }
+      }
+     },
+     {
+      "strengthCode": "es",
+      "distanceTotal": {
+       "imperial": 20.2783,
+       "percentile": 0.6682,
+       "leagueAvg": {
+        "imperial": 18.6576
+       }
+      },
+      "distancePer60": {
+       "imperial": 10.637,
+       "percentile": 0.9634,
+       "leagueAvg": {
+        "imperial": 9.8331
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 4.089,
+       "percentile": 0.9462,
+       "leagueAvg": {
+        "imperial": 2.7302
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 1.7186,
+       "percentile": 1.0,
+       "leagueAvg": {
+        "imperial": 0.9608
+       }
+      }
+     },
+     {
+      "strengthCode": "pp",
+      "distanceTotal": {
+       "imperial": 3.3125,
+       "percentile": 0.7259,
+       "leagueAvg": {
+        "imperial": 2.475
+       }
+      },
+      "distancePer60": {
+       "imperial": 9.9046,
+       "percentile": 0.9398,
+       "leagueAvg": {
+        "imperial": 8.0096
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 1.1944,
+       "percentile": 0.9137,
+       "leagueAvg": {
+        "imperial": 0.5112
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 0.6813,
+       "percentile": 0.9391,
+       "leagueAvg": {
+        "imperial": 0.2933
+       }
+      }
+     },
+     {
+      "strengthCode": "pk",
+      "distanceTotal": {
+       "imperial": 1.1395,
+       "percentile": 0.5617,
+       "leagueAvg": {
+        "imperial": 1.5407
+       }
+      },
+      "distancePer60": {
+       "imperial": 10.0051,
+       "percentile": 0.9158,
+       "leagueAvg": {
+        "imperial": 8.2068
+       }
+      },
+      "distanceMaxGame": {
+       "imperial": 0.3223,
+       "percentile": 0.5185,
+       "leagueAvg": {
+        "imperial": 0.3203
+       }
+      },
+      "distanceMaxPeriod": {
+       "imperial": 0.3223,
+       "percentile": 0.7901,
+       "leagueAvg": {
+        "imperial": 0.1996
+       }
+      }
+     }
+    ]
+   },
+   "skater-zone-time": {
+    "zoneTimeDetails": [
+     {
+      "strengthCode": "all",
+      "offensiveZonePctg": 0.45612109,
+      "offensiveZonePercentile": 0.8167539267016,
+      "offensiveZoneLeagueAvg": 0.43026071,
+      "neutralZonePctg": 0.17601849,
+      "neutralZonePercentile": 0.4240837696335,
+      "neutralZoneLeagueAvg": 0.18230578,
+      "defensiveZonePctg": 0.36786042,
+      "defensiveZonePercentile": 0.8010471204188,
+      "defensiveZoneLeagueAvg": 0.38743352
+     },
+     {
+      "strengthCode": "es",
+      "offensiveZonePctg": 0.43416119,
+      "offensiveZonePercentile": 0.7591623036649,
+      "offensiveZoneLeagueAvg": 0.4194531,
+      "neutralZonePctg": 0.18615346,
+      "neutralZonePercentile": 0.5183246073298,
+      "neutralZoneLeagueAvg": 0.18450053,
+      "defensiveZonePctg": 0.37968535,
+      "defensiveZonePercentile": 0.7958115183246,
+      "defensiveZoneLeagueAvg": 0.39604637
+     },
+     {
+      "strengthCode": "pp",
+      "offensiveZonePctg": 0.64434281,
+      "offensiveZonePercentile": 0.8421052631579,
+      "offensiveZoneLeagueAvg": 0.59626876,
+      "neutralZonePctg": 0.13314249,
+      "neutralZonePercentile": 0.2556390977444,
+      "neutralZoneLeagueAvg": 0.1703187,
+      "defensiveZonePctg": 0.2225147,
+      "defensiveZonePercentile": 0.9097744360902,
+      "defensiveZoneLeagueAvg": 0.23341254
+     },
+     {
+      "strengthCode": "pk",
+      "offensiveZonePctg": 0.27979335,
+      "offensiveZonePercentile": 0.4947368421053,
+      "offensiveZoneLeagueAvg": 0.26552375,
+      "neutralZonePctg": 0.12892022,
+      "neutralZonePercentile": 0.2631578947368,
+      "neutralZoneLeagueAvg": 0.17076182,
+      "defensiveZonePctg": 0.59128643,
+      "defensiveZonePercentile": 0.4,
+      "defensiveZoneLeagueAvg": 0.56371443
+     }
+    ],
+    "zoneStarts": {
+     "offensiveZoneStartsPctg": 0.4706,
+     "offensiveZoneStartsPctgPercentile": 0.9188,
+     "neutralZoneStartsPctg": 0.2824,
+     "neutralZoneStartsPctgPercentile": 0.1795,
+     "defensiveZoneStartsPctg": 0.2471,
+     "defensiveZoneStartsPctgPercentile": 0.7949
+    }
+   },
+   "skater-shot-location-detail": {
+    "shotLocationDetails": [
+     {
+      "area": "Behind the Net",
+      "sog": 1,
+      "goals": 0,
+      "shootingPctg": 0.0,
+      "sogPercentile": 0.8565,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": 0.0
+     },
+     {
+      "area": "Beyond Red Line",
+      "sog": 0,
+      "goals": 0,
+      "shootingPctg": null,
+      "sogPercentile": 0.0,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": null
+     },
+     {
+      "area": "Center Point",
+      "sog": 0,
+      "goals": 0,
+      "shootingPctg": null,
+      "sogPercentile": 0.0,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": null
+     },
+     {
+      "area": "Crease",
+      "sog": 1,
+      "goals": 0,
+      "shootingPctg": 0.0,
+      "sogPercentile": 0.6054,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": 0.0
+     },
+     {
+      "area": "High Slot",
+      "sog": 4,
+      "goals": 0,
+      "shootingPctg": 0.0,
+      "sogPercentile": 0.8744,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": 0.0
+     },
+     {
+      "area": "L Circle",
+      "sog": 4,
+      "goals": 0,
+      "shootingPctg": 0.0,
+      "sogPercentile": 0.852,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": 0.0
+     },
+     {
+      "area": "L Corner",
+      "sog": 0,
+      "goals": 0,
+      "shootingPctg": null,
+      "sogPercentile": 0.0,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": null
+     },
+     {
+      "area": "L Net Side",
+      "sog": 0,
+      "goals": 0,
+      "shootingPctg": null,
+      "sogPercentile": 0.0,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": null
+     },
+     {
+      "area": "L Point",
+      "sog": 0,
+      "goals": 0,
+      "shootingPctg": null,
+      "sogPercentile": 0.0,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": null
+     },
+     {
+      "area": "Low Slot",
+      "sog": 3,
+      "goals": 0,
+      "shootingPctg": 0.0,
+      "sogPercentile": 0.4215,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": 0.0
+     },
+     {
+      "area": "Offensive Neutral Zone",
+      "sog": 1,
+      "goals": 0,
+      "shootingPctg": 0.0,
+      "sogPercentile": 0.6637,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": 0.0
+     },
+     {
+      "area": "Outside L",
+      "sog": 2,
+      "goals": 0,
+      "shootingPctg": 0.0,
+      "sogPercentile": 0.7982,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": 0.0
+     },
+     {
+      "area": "Outside R",
+      "sog": 2,
+      "goals": 1,
+      "shootingPctg": 0.5,
+      "sogPercentile": 0.7848,
+      "goalsPercentile": 0.9238,
+      "shootingPctgPercentile": 0.958
+     },
+     {
+      "area": "R Circle",
+      "sog": 1,
+      "goals": 0,
+      "shootingPctg": 0.0,
+      "sogPercentile": 0.3812,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": 0.0
+     },
+     {
+      "area": "R Corner",
+      "sog": 0,
+      "goals": 0,
+      "shootingPctg": null,
+      "sogPercentile": 0.0,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": null
+     },
+     {
+      "area": "R Net Side",
+      "sog": 1,
+      "goals": 0,
+      "shootingPctg": 0.0,
+      "sogPercentile": 0.722,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": 0.0
+     },
+     {
+      "area": "R Point",
+      "sog": 0,
+      "goals": 0,
+      "shootingPctg": null,
+      "sogPercentile": 0.0,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": null
+     }
+    ],
+    "shotLocationTotals": [
+     {
+      "locationCode": "all",
+      "sog": 20,
+      "goals": 1,
+      "shootingPctg": 0.05,
+      "sogPercentile": 0.7354,
+      "goalsPercentile": 0.3812,
+      "shootingPctgPercentile": 0.2448,
+      "sogLeagueAvg": 15.1295,
+      "goalsLeagueAvg": 1.8393,
+      "shootingPctgLeagueAvg": 0.1216
+     },
+     {
+      "locationCode": "high",
+      "sog": 4,
+      "goals": 0,
+      "shootingPctg": 0.0,
+      "sogPercentile": 0.4798,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": 0.0,
+      "sogLeagueAvg": 5.1518,
+      "goalsLeagueAvg": 0.9554,
+      "shootingPctgLeagueAvg": 0.1854
+     },
+     {
+      "locationCode": "long",
+      "sog": 0,
+      "goals": 0,
+      "shootingPctg": null,
+      "sogPercentile": 0.0,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": null,
+      "sogLeagueAvg": 1.4554,
+      "goalsLeagueAvg": 0.067,
+      "shootingPctgLeagueAvg": 0.046
+     },
+     {
+      "locationCode": "mid",
+      "sog": 9,
+      "goals": 0,
+      "shootingPctg": 0.0,
+      "sogPercentile": 0.8072,
+      "goalsPercentile": 0.0,
+      "shootingPctgPercentile": 0.0,
+      "sogLeagueAvg": 4.6384,
+      "goalsLeagueAvg": 0.5045,
+      "shootingPctgLeagueAvg": 0.1088
+     }
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,218 @@
+{
+ "timestamp": "2026-10-05T18:27:17Z",
+ "status": "success",
+ "season": {
+  "year": 2027,
+  "type": 2,
+  "name": "Regular Season",
+  "displayName": "2026-27"
+ },
+ "requestedYear": {
+  "year": 2026,
+  "displayName": "2026"
+ },
+ "count": 18,
+ "pageIndex": 1,
+ "pageSize": 1000,
+ "pageCount": 1,
+ "transactions": [
+  {
+   "date": "2026-10-04T07:00Z",
+   "description": "Recalled LW Yegor Pinchuk from Milwaukee (AHL). Assigned G Matt Murray to Milwaukee.",
+   "team": {
+    "id": "27",
+    "location": "Nashville",
+    "name": "Predators",
+    "abbreviation": "NSH",
+    "displayName": "Nashville Predators"
+   }
+  },
+  {
+   "date": "2026-10-04T07:00Z",
+   "description": "Placed C Patrick Giles on waivers.",
+   "team": {
+    "id": "18",
+    "location": "San Jose",
+    "name": "Sharks",
+    "abbreviation": "SJ",
+    "displayName": "San Jose Sharks"
+   }
+  },
+  {
+   "date": "2026-06-30T07:00Z",
+   "description": "Acquired Fs Evan Rodrigues, Jesper Boqvist, and Ben Steeves from Florida in exchange for G Jacob Markstrom and F Angus Crookshank. Re-signed F Arseny Gritsyuk to a three-year contract.",
+   "team": {
+    "id": "11",
+    "location": "New Jersey",
+    "name": "Devils",
+    "abbreviation": "NJ",
+    "displayName": "New Jersey Devils"
+   }
+  },
+  {
+   "date": "2026-06-26T07:00Z",
+   "description": "Acquired two 2026 first-round picks (No. 15 and 29) from St. Louis Blues for F Mason McTavish.",
+   "team": {
+    "id": "25",
+    "location": "Anaheim",
+    "name": "Ducks",
+    "abbreviation": "ANA",
+    "displayName": "Anaheim Ducks"
+   }
+  },
+  {
+   "date": "2026-09-26T07:00Z",
+   "description": "Claimed D William Trudeau off waivers from New York.",
+   "team": {
+    "id": "27",
+    "location": "Nashville",
+    "name": "Predators",
+    "abbreviation": "NSH",
+    "displayName": "Nashville Predators"
+   }
+  },
+  {
+   "date": "2026-02-11T08:00Z",
+   "description": "Reinstated F Marc McLaughlin from long-term injured reserve and placed him on waivers.",
+   "team": {
+    "id": "11",
+    "location": "New Jersey",
+    "name": "Devils",
+    "abbreviation": "NJ",
+    "displayName": "New Jersey Devils"
+   }
+  },
+  {
+   "date": "2026-01-04T08:00Z",
+   "description": "Suspended D Logan Stanley for one game.",
+   "team": {
+    "id": "28",
+    "location": "Winnipeg",
+    "name": "Jets",
+    "abbreviation": "WPG",
+    "displayName": "Winnipeg Jets"
+   }
+  },
+  {
+   "date": "2026-06-07T07:00Z",
+   "description": "F Milan Lucic announced his retirement.",
+   "team": {
+    "id": "1",
+    "location": "Boston",
+    "name": "Bruins",
+    "abbreviation": "BOS",
+    "displayName": "Boston Bruins"
+   }
+  },
+  {
+   "date": "2026-04-05T07:00Z",
+   "description": "Fired head coach Patrick Roy. Hired Peter DeBoer as new head coach.",
+   "team": {
+    "id": "12",
+    "location": "New York",
+    "name": "Islanders",
+    "abbreviation": "NYI",
+    "displayName": "New York Islanders"
+   }
+  },
+  {
+   "date": "2026-03-03T08:00Z",
+   "description": "Reinstated Tomas Nosek from non-roster injured reserve.",
+   "team": {
+    "id": "26",
+    "location": "Florida",
+    "name": "Panthers",
+    "abbreviation": "FLA",
+    "displayName": "Florida Panthers"
+   }
+  },
+  {
+   "date": "2026-02-02T08:00Z",
+   "description": "Sent D Matt Kiersted to Iowa (AHL) and recalled G Cal Petersen from Iowa. Reinstated D Zach Bogosian from injured reserve.",
+   "team": {
+    "id": "30",
+    "location": "Minnesota",
+    "name": "Wild",
+    "abbreviation": "MIN",
+    "displayName": "Minnesota Wild"
+   }
+  },
+  {
+   "date": "2026-10-01T07:00Z",
+   "description": "Signed D Tristan Luneau to a six-year contract extension.",
+   "team": {
+    "id": "25",
+    "location": "Anaheim",
+    "name": "Ducks",
+    "abbreviation": "ANA",
+    "displayName": "Anaheim Ducks"
+   }
+  },
+  {
+   "date": "2026-04-19T07:00Z",
+   "description": "Reinstated G Semyon Varlamov from conditioning assignment with Bridgeport (AHL).",
+   "team": {
+    "id": "12",
+    "location": "New York",
+    "name": "Islanders",
+    "abbreviation": "NYI",
+    "displayName": "New York Islanders"
+   }
+  },
+  {
+   "date": "2026-04-23T07:00Z",
+   "description": "Assigned G Brandon Halverson to Syracuse (AHL). Recalled G Harrison Meneghin from Syracuse.",
+   "team": {
+    "id": "20",
+    "location": "Tampa Bay",
+    "name": "Lightning",
+    "abbreviation": "TB",
+    "displayName": "Tampa Bay Lightning"
+   }
+  },
+  {
+   "date": "2026-03-16T07:00Z",
+   "description": "Sent D Alexander Alexeyev to Wilkes-Barre/Scranton (AHL). Recalled D Jack St. Ivany from Wilkes-Barre/Scranton. Reinstated C Evgeni Malkin from suspension.",
+   "team": {
+    "id": "16",
+    "location": "Pittsburgh",
+    "name": "Penguins",
+    "abbreviation": "PIT",
+    "displayName": "Pittsburgh Penguins"
+   }
+  },
+  {
+   "date": "2022-10-10T07:00Z",
+   "description": "Assigned F Andreas Johnsson to Utica (AHL). Activated c Nico Hischier from injured reserve.",
+   "team": {
+    "id": "11",
+    "location": "New Jersey",
+    "name": "Devils",
+    "abbreviation": "NJ",
+    "displayName": "New Jersey Devils"
+   }
+  },
+  {
+   "date": "2026-09-25T07:00Z",
+   "description": "Loaned G Nolan Lalonde, Fs Oiva Keskinen and Luke Tuch, and Ds Charlie Elick and Guillaume Richard to Cleveland (AHL). Designated Fs Mikael Pyyhtiä and Isac Lundestrom and G Elvis Merzlikins as injured non-roster. Waived for the purpose of assignment to Cleveland Ds Corson Ceulemans and Colton White. Placed D Dante Fabbro on injured reserve.",
+   "team": {
+    "id": "29",
+    "location": "Columbus",
+    "name": "Blue Jackets",
+    "abbreviation": "CBJ",
+    "displayName": "Columbus Blue Jackets"
+   }
+  },
+  {
+   "date": "2026-10-01T07:00Z",
+   "description": "Recalled D Dennis Gilbert from Rochester (AHL). Placed G Alex Lyon and D Olen Zellweger on injured reserve. Signed D Louis Crevier to a four-year contract. Transferred F Matthew Savoie to long-term injured reserve.",
+   "team": {
+    "id": "2",
+    "location": "Buffalo",
+    "name": "Sabres",
+    "abbreviation": "BUF",
+    "displayName": "Buffalo Sabres"
+   }
+  }
+ ]
+}

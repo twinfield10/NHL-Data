@@ -1,0 +1,119 @@
+{
+ "count": 1,
+ "pageIndex": 1,
+ "pageSize": 25,
+ "pageCount": 1,
+ "items": [
+  {
+   "provider": {
+    "id": "100",
+    "name": "DraftKings"
+   },
+   "details": "TB -218",
+   "overUnder": 5.5,
+   "spread": -1.5,
+   "overOdds": -122.0,
+   "underOdds": 102.0,
+   "awayTeamOdds": {
+    "favorite": false,
+    "underdog": true,
+    "moneyLine": 180,
+    "spreadOdds": -135.0,
+    "open": {
+     "favorite": false,
+     "pointSpread": {
+      "alternateDisplayValue": "+1.5",
+      "american": "+1.5"
+     },
+     "spread": {
+      "alternateDisplayValue": "-175",
+      "american": "-175"
+     },
+     "moneyLine": {
+      "alternateDisplayValue": "+145",
+      "american": "+145"
+     }
+    },
+    "current": {
+     "pointSpread": {
+      "alternateDisplayValue": "+1.5",
+      "american": "+1.5"
+     },
+     "spread": {
+      "alternateDisplayValue": "-135",
+      "american": "-135"
+     },
+     "moneyLine": {
+      "alternateDisplayValue": "+180",
+      "american": "+180"
+     }
+    }
+   },
+   "homeTeamOdds": {
+    "favorite": true,
+    "underdog": false,
+    "moneyLine": -218,
+    "spreadOdds": 114.0,
+    "open": {
+     "favorite": true,
+     "pointSpread": {
+      "alternateDisplayValue": "-1.5",
+      "american": "-1.5"
+     },
+     "spread": {
+      "alternateDisplayValue": "+145",
+      "american": "+145"
+     },
+     "moneyLine": {
+      "alternateDisplayValue": "-175",
+      "american": "-175"
+     }
+    },
+    "current": {
+     "pointSpread": {
+      "alternateDisplayValue": "-1.5",
+      "american": "-1.5"
+     },
+     "spread": {
+      "alternateDisplayValue": "+114",
+      "american": "+114"
+     },
+     "moneyLine": {
+      "alternateDisplayValue": "-218",
+      "american": "-218"
+     }
+    }
+   },
+   "moneylineWinner": false,
+   "spreadWinner": false,
+   "open": {
+    "over": {
+     "alternateDisplayValue": "-118",
+     "american": "-118"
+    },
+    "under": {
+     "alternateDisplayValue": "-102",
+     "american": "-102"
+    },
+    "total": {
+     "alternateDisplayValue": "5.5",
+     "american": "5.5"
+    }
+   },
+   "current": {
+    "over": {
+     "alternateDisplayValue": "-122",
+     "american": "-122"
+    },
+    "under": {
+     "alternateDisplayValue": "+102",
+     "american": "+102"
+    },
+    "total": {
+     "alternateDisplayValue": "5.5",
+     "american": "5.5"
+    }
+   }
+  }
+ ]
+}

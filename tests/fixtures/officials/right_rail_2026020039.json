@@ -1,0 +1,39 @@
+{
+ "gameInfo": {
+  "referees": [
+   {
+    "fullName": {
+     "default": "Pierre Lambert"
+    },
+    "sweaterNumber": 25
+   },
+   {
+    "fullName": {
+     "default": "Brandon Blandina"
+    },
+    "sweaterNumber": 39
+   }
+  ],
+  "linesmen": [
+   {
+    "fullName": {
+     "default": "Kiel Murchison",
+     "es": "Kiel Murchison "
+    },
+    "sweaterNumber": 79
+   },
+   {
+    "fullName": {
+     "default": "Jeremy Faucher"
+    },
+    "sweaterNumber": 97
+   }
+  ],
+  "awayTeam": {
+   "abbrev": null
+  },
+  "homeTeam": {
+   "abbrev": null
+  }
+ }
+}

@@ -1,0 +1,196 @@
+{
+ "events": [
+  {
+   "id": "401349265",
+   "date": "2021-11-01T23:00Z",
+   "name": "Washington Capitals at Tampa Bay Lightning",
+   "season": {
+    "year": 2022,
+    "type": 2,
+    "slug": "regular-season"
+   },
+   "competitions": [
+    {
+     "id": "401349265",
+     "status": {
+      "type": {
+       "name": "STATUS_FINAL",
+       "state": "post",
+       "completed": true
+      }
+     },
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "abbreviation": "TB",
+        "displayName": "Tampa Bay Lightning"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "abbreviation": "WSH",
+        "displayName": "Washington Capitals"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401559375",
+   "date": "2023-11-01T23:00Z",
+   "name": "Buffalo Sabres at Philadelphia Flyers",
+   "season": {
+    "year": 2024,
+    "type": 2,
+    "slug": "regular-season"
+   },
+   "competitions": [
+    {
+     "id": "401559375",
+     "status": {
+      "type": {
+       "name": "STATUS_FINAL",
+       "state": "post",
+       "completed": true
+      }
+     },
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "abbreviation": "PHI",
+        "displayName": "Philadelphia Flyers"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "abbreviation": "BUF",
+        "displayName": "Buffalo Sabres"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401688547",
+   "date": "2025-03-01T17:30Z",
+   "name": "Nashville Predators at New York Islanders",
+   "season": {
+    "year": 2025,
+    "type": 2,
+    "slug": "regular-season"
+   },
+   "competitions": [
+    {
+     "id": "401688547",
+     "status": {
+      "type": {
+       "name": "STATUS_FINAL",
+       "state": "post",
+       "completed": true
+      }
+     },
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "abbreviation": "NYI",
+        "displayName": "New York Islanders"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "abbreviation": "NSH",
+        "displayName": "Nashville Predators"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401892445",
+   "date": "2026-10-05T23:00Z",
+   "name": "Philadelphia Flyers at Tampa Bay Lightning",
+   "season": {
+    "year": 2027,
+    "type": 2,
+    "slug": "regular-season"
+   },
+   "competitions": [
+    {
+     "id": "401892445",
+     "status": {
+      "type": {
+       "name": "STATUS_SCHEDULED",
+       "state": "pre",
+       "completed": false
+      }
+     },
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "id": "20",
+        "abbreviation": "TB",
+        "displayName": "Tampa Bay Lightning"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "id": "15",
+        "abbreviation": "PHI",
+        "displayName": "Philadelphia Flyers"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401559267",
+   "date": "2023-10-15T02:00Z",
+   "name": "Colorado Avalanche at San Jose Sharks",
+   "season": {
+    "year": 2024,
+    "type": 2,
+    "slug": "regular-season"
+   },
+   "competitions": [
+    {
+     "id": "401559267",
+     "status": {
+      "type": {
+       "name": "STATUS_FINAL",
+       "state": "post",
+       "completed": true
+      }
+     },
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "abbreviation": "SJ",
+        "displayName": "San Jose Sharks"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "abbreviation": "COL",
+        "displayName": "Colorado Avalanche"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

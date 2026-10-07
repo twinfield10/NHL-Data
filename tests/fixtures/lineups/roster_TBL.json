@@ -1,0 +1,299 @@
+{
+ "forwards": [
+  {
+   "id": 8478519,
+   "firstName": {
+    "default": "Anthony"
+   },
+   "lastName": {
+    "default": "Cirelli"
+   },
+   "sweaterNumber": 71,
+   "positionCode": "C"
+  },
+  {
+   "id": 8483447,
+   "firstName": {
+    "default": "Conor"
+   },
+   "lastName": {
+    "default": "Geekie"
+   },
+   "sweaterNumber": 94,
+   "positionCode": "C"
+  },
+  {
+   "id": 8476878,
+   "firstName": {
+    "default": "Zemgus"
+   },
+   "lastName": {
+    "default": "Girgensons"
+   },
+   "sweaterNumber": 28,
+   "positionCode": "C"
+  },
+  {
+   "id": 8482201,
+   "firstName": {
+    "default": "Gage"
+   },
+   "lastName": {
+    "default": "Goncalves"
+   },
+   "sweaterNumber": 93,
+   "positionCode": "C"
+  },
+  {
+   "id": 8476826,
+   "firstName": {
+    "default": "Yanni"
+   },
+   "lastName": {
+    "default": "Gourde"
+   },
+   "sweaterNumber": 37,
+   "positionCode": "C"
+  },
+  {
+   "id": 8477404,
+   "firstName": {
+    "default": "Jake"
+   },
+   "lastName": {
+    "default": "Guentzel"
+   },
+   "sweaterNumber": 59,
+   "positionCode": "C"
+  },
+  {
+   "id": 8479542,
+   "firstName": {
+    "default": "Brandon"
+   },
+   "lastName": {
+    "default": "Hagel"
+   },
+   "sweaterNumber": 38,
+   "positionCode": "L"
+  },
+  {
+   "id": 8478424,
+   "firstName": {
+    "default": "Jansen"
+   },
+   "lastName": {
+    "default": "Harkins"
+   },
+   "sweaterNumber": 10,
+   "positionCode": "C"
+  },
+  {
+   "id": 8480995,
+   "firstName": {
+    "default": "Pontus"
+   },
+   "lastName": {
+    "default": "Holmberg"
+   },
+   "sweaterNumber": 29,
+   "positionCode": "R"
+  },
+  {
+   "id": 8483752,
+   "firstName": {
+    "default": "Dominic"
+   },
+   "lastName": {
+    "default": "James"
+   },
+   "sweaterNumber": 17,
+   "positionCode": "C"
+  },
+  {
+   "id": 8476453,
+   "firstName": {
+    "default": "Nikita"
+   },
+   "lastName": {
+    "default": "Kucherov",
+    "cs": "Kučerov",
+    "fi": "Kutsherov",
+    "sk": "Kučerov"
+   },
+   "sweaterNumber": 86,
+   "positionCode": "R"
+  },
+  {
+   "id": 8481624,
+   "firstName": {
+    "default": "Ilya",
+    "cs": "Ilja",
+    "fi": "Ilja",
+    "sk": "Iľja"
+   },
+   "lastName": {
+    "default": "Mikheyev",
+    "cs": "Michejev",
+    "fi": "Mihejev",
+    "sk": "Michejev"
+   },
+   "sweaterNumber": 95,
+   "positionCode": "R"
+  },
+  {
+   "id": 8478010,
+   "firstName": {
+    "default": "Brayden"
+   },
+   "lastName": {
+    "default": "Point"
+   },
+   "sweaterNumber": 21,
+   "positionCode": "C"
+  },
+  {
+   "id": 8477149,
+   "firstName": {
+    "default": "Scott"
+   },
+   "lastName": {
+    "default": "Sabourin"
+   },
+   "sweaterNumber": 49,
+   "positionCode": "R"
+  },
+  {
+   "id": 8479705,
+   "firstName": {
+    "default": "Jeffrey"
+   },
+   "lastName": {
+    "default": "Viel"
+   },
+   "sweaterNumber": 25,
+   "positionCode": "L"
+  }
+ ],
+ "defensemen": [
+  {
+   "id": 8474590,
+   "firstName": {
+    "default": "John"
+   },
+   "lastName": {
+    "default": "Carlson"
+   },
+   "sweaterNumber": 74,
+   "positionCode": "D"
+  },
+  {
+   "id": 8478416,
+   "firstName": {
+    "default": "Erik"
+   },
+   "lastName": {
+    "default": "Cernak",
+    "cs": "Černák",
+    "sk": "Černák"
+   },
+   "sweaterNumber": 81,
+   "positionCode": "D"
+  },
+  {
+   "id": 8481719,
+   "firstName": {
+    "default": "Max"
+   },
+   "lastName": {
+    "default": "Crozier"
+   },
+   "sweaterNumber": 24,
+   "positionCode": "D"
+  },
+  {
+   "id": 8480426,
+   "firstName": {
+    "default": "Charle-Edouard"
+   },
+   "lastName": {
+    "default": "D'Astous"
+   },
+   "sweaterNumber": 51,
+   "positionCode": "D"
+  },
+  {
+   "id": 8475167,
+   "firstName": {
+    "default": "Victor"
+   },
+   "lastName": {
+    "default": "Hedman"
+   },
+   "sweaterNumber": 77,
+   "positionCode": "D"
+  },
+  {
+   "id": 8482929,
+   "firstName": {
+    "default": "Emil"
+   },
+   "lastName": {
+    "default": "Lilleberg"
+   },
+   "sweaterNumber": 78,
+   "positionCode": "D"
+  },
+  {
+   "id": 8474151,
+   "firstName": {
+    "default": "Ryan"
+   },
+   "lastName": {
+    "default": "McDonagh"
+   },
+   "sweaterNumber": 27,
+   "positionCode": "D"
+  },
+  {
+   "id": 8482655,
+   "firstName": {
+    "default": "J.J."
+   },
+   "lastName": {
+    "default": "Moser"
+   },
+   "sweaterNumber": 90,
+   "positionCode": "D"
+  }
+ ],
+ "goalies": [
+  {
+   "id": 8483710,
+   "firstName": {
+    "default": "Dennis"
+   },
+   "lastName": {
+    "default": "Hildeby"
+   },
+   "sweaterNumber": 35,
+   "positionCode": "G"
+  },
+  {
+   "id": 8476883,
+   "firstName": {
+    "default": "Andrei",
+    "cs": "Andrej",
+    "sk": "Andrej"
+   },
+   "lastName": {
+    "default": "Vasilevskiy",
+    "cs": "Vasilevskij",
+    "fi": "Vasilevski",
+    "sk": "Vasilevskij"
+   },
+   "sweaterNumber": 88,
+   "positionCode": "G"
+  }
+ ]
+}

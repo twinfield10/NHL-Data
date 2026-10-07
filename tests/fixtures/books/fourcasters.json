@@ -1,0 +1,957 @@
+{
+ "data": {
+  "games": [
+   {
+    "live": false,
+    "periodName": "Full Time",
+    "id": "6ac0bf4ae16d06a69b2da690",
+    "league": "NHL",
+    "sport": "hockey",
+    "start": "2026-10-05T23:07:00.000Z",
+    "ended": false,
+    "participants": [
+     {
+      "id": "61682acd0672772dc72af7ae",
+      "longName": "Philadelphia Flyers",
+      "shortName": "PHI",
+      "homeAway": "away",
+      "rotationNumber": "1"
+     },
+     {
+      "id": "6165e6e83c65e61a09bf21c9",
+      "longName": "Tampa Bay Lightning",
+      "shortName": "TBL",
+      "homeAway": "home",
+      "rotationNumber": "2"
+     }
+    ],
+    "awayMoneylines": [
+     {
+      "type": "moneyline",
+      "sumUntaken": 413.77551,
+      "odds": 196
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 15.765306,
+      "odds": 196
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 104.37018,
+      "odds": 194.5
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 871.649485,
+      "odds": 194
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 1729.112953,
+      "odds": 193
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 204.21466,
+      "odds": 191
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 958.421053,
+      "odds": 190
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 158.333333,
+      "odds": 189
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 500,
+      "odds": 188.5
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 110,
+      "odds": 188
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 16844.919786,
+      "odds": 187
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 2375.04,
+      "odds": 186
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 4750,
+      "odds": 185
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 948,
+      "odds": 184
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 18397.826087,
+      "odds": 184
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 1700,
+      "odds": 183
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 2777.777778,
+      "odds": 180
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 555.555556,
+      "odds": 180
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 5587.5,
+      "odds": 176
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 2500,
+      "odds": 176
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 2840.909091,
+      "odds": 176
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 25,
+      "odds": 153
+     }
+    ],
+    "homeMoneylines": [
+     {
+      "type": "moneyline",
+      "sumUntaken": 53.505,
+      "odds": -205
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 694.341176,
+      "odds": -206
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 3519,
+      "odds": -207
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 207,
+      "odds": -207
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 416,
+      "odds": -208
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 1774.24,
+      "odds": -208
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 231,
+      "odds": -210
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 1510.17,
+      "odds": -213
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 32889.705882,
+      "odds": -213
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 14084.038725,
+      "odds": -215
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 544.565728,
+      "odds": -215
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 398.1744,
+      "odds": -216
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 12124.875,
+      "odds": -217
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 5425,
+      "odds": -217
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 10285.8,
+      "odds": -217
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 10355,
+      "odds": -218
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 5177.5872,
+      "odds": -218
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 11050,
+      "odds": -221
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 2210,
+      "odds": -221
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 2151.96,
+      "odds": -227
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 30.1975,
+      "odds": -257
+     }
+    ],
+    "awaySpreads": {
+     "1.5": [
+      {
+       "type": "spread",
+       "sumUntaken": 384,
+       "odds": -128,
+       "spread": 1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 532.77,
+       "odds": -129,
+       "spread": 1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 1324.7,
+       "odds": -130,
+       "spread": 1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 4879.75,
+       "odds": -131,
+       "spread": 1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 3275,
+       "odds": -131,
+       "spread": 1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 2483.76,
+       "odds": -131,
+       "spread": 1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 341.9064,
+       "odds": -132,
+       "spread": 1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 1474.725,
+       "odds": -132.5,
+       "spread": 1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 2384.9856,
+       "odds": -134,
+       "spread": 1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 1289.28,
+       "odds": -136,
+       "spread": 1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 289,
+       "odds": -136,
+       "spread": 1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 694.607407,
+       "odds": -136,
+       "spread": 1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 3961.5,
+       "odds": -139,
+       "spread": 1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 1390,
+       "odds": -139,
+       "spread": 1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 8232.063158,
+       "odds": -140,
+       "spread": 1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 12755.368421,
+       "odds": -144,
+       "spread": 1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 37.5,
+       "odds": -150,
+       "spread": 1.5
+      }
+     ],
+     "0": [
+      {
+       "type": "spread",
+       "sumUntaken": 751.653944,
+       "odds": 196.5,
+       "spread": 0
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 1227.835052,
+       "odds": 194,
+       "spread": 0
+      }
+     ]
+    },
+    "homeSpreads": {
+     "-1.5": [
+      {
+       "type": "spread",
+       "sumUntaken": 29.758065,
+       "odds": 124,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 300,
+       "odds": 123,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 1810.699588,
+       "odds": 121.5,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 430.578512,
+       "odds": 121,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 1088.320661,
+       "odds": 121,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 1128.333333,
+       "odds": 120,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 1779.84,
+       "odds": 118,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 2850,
+       "odds": 117,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 298.258621,
+       "odds": 116,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 2723.271379,
+       "odds": 116,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 24.130435,
+       "odds": 115,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 948,
+       "odds": 114,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 212.5,
+       "odds": 114,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 866.669643,
+       "odds": 112,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 5931.705357,
+       "odds": 112,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 892.857143,
+       "odds": 112,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 3725,
+       "odds": 109,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 2500,
+       "odds": 109,
+       "spread": -1.5
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 1834.862385,
+       "odds": 109,
+       "spread": -1.5
+      }
+     ],
+     "0": [
+      {
+       "type": "spread",
+       "sumUntaken": 1194.8,
+       "odds": -206,
+       "spread": 0
+      },
+      {
+       "type": "spread",
+       "sumUntaken": 2496,
+       "odds": -208,
+       "spread": 0
+      }
+     ]
+    },
+    "over": {
+     "5.5": [
+      {
+       "type": "total",
+       "sumUntaken": 265.29,
+       "odds": -119.5,
+       "total": 5.5,
+       "OU": "over"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 964.9118,
+       "odds": -120,
+       "total": 5.5,
+       "OU": "over"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 1525.81,
+       "odds": -121,
+       "total": 5.5,
+       "OU": "over"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 585.6,
+       "odds": -122,
+       "total": 5.5,
+       "OU": "over"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 1194.48,
+       "odds": -126,
+       "total": 5.5,
+       "OU": "over"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 3052.35,
+       "odds": -126,
+       "total": 5.5,
+       "OU": "over"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 356.6556,
+       "odds": -126,
+       "total": 5.5,
+       "OU": "over"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 225.552,
+       "odds": -127,
+       "total": 5.5,
+       "OU": "over"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 4093.830508,
+       "odds": -128,
+       "total": 5.5,
+       "OU": "over"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 8111.40813,
+       "odds": -130,
+       "total": 5.5,
+       "OU": "over"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 33.75,
+       "odds": -135,
+       "total": 5.5,
+       "OU": "over"
+      }
+     ],
+     "5": [
+      {
+       "type": "total",
+       "sumUntaken": 1393.55,
+       "odds": -235,
+       "total": 5,
+       "OU": "over"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 2160.56,
+       "odds": -239,
+       "total": 5,
+       "OU": "over"
+      }
+     ]
+    },
+    "under": {
+     "5.5": [
+      {
+       "type": "total",
+       "sumUntaken": 545.374449,
+       "odds": 113.5,
+       "total": 5.5,
+       "OU": "under"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 1281.415929,
+       "odds": 113,
+       "total": 5.5,
+       "OU": "under"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 11.151786,
+       "odds": 112,
+       "total": 5.5,
+       "OU": "under"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 742.227027,
+       "odds": 111,
+       "total": 5.5,
+       "OU": "under"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 276.504505,
+       "odds": 111,
+       "total": 5.5,
+       "OU": "under"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 476.0181,
+       "odds": 110.5,
+       "total": 5.5,
+       "OU": "under"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 2172.102642,
+       "odds": 106,
+       "total": 5.5,
+       "OU": "under"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 177.6,
+       "odds": 106,
+       "total": 5.5,
+       "OU": "under"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 948,
+       "odds": 104,
+       "total": 5.5,
+       "OU": "under"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 2422.5,
+       "odds": 104,
+       "total": 5.5,
+       "OU": "under"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 7148.427184,
+       "odds": 103,
+       "total": 5.5,
+       "OU": "under"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 25,
+       "odds": 100,
+       "total": 5.5,
+       "OU": "under"
+      }
+     ],
+     "5": [
+      {
+       "type": "total",
+       "sumUntaken": 521.818182,
+       "odds": 220,
+       "total": 5,
+       "OU": "under"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 865.437788,
+       "odds": 217,
+       "total": 5,
+       "OU": "under"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 718.396226,
+       "odds": 212,
+       "total": 5,
+       "OU": "under"
+      }
+     ]
+    },
+    "mainHomeSpread": -1.5,
+    "mainAwaySpread": 1.5,
+    "mainTotal": 5.5
+   },
+   {
+    "live": false,
+    "periodName": "Full Time",
+    "id": "6ac212aae16d06a69b309368",
+    "league": "NHL",
+    "sport": "hockey",
+    "start": "2026-10-06T23:37:00.000Z",
+    "ended": false,
+    "participants": [
+     {
+      "id": "616715d70672772dc70c6797",
+      "longName": "New York Islanders",
+      "shortName": "NYI",
+      "homeAway": "away",
+      "rotationNumber": "17"
+     },
+     {
+      "id": "6165e6e23c65e61a09bf1f73",
+      "longName": "New York Rangers",
+      "shortName": "NYR",
+      "homeAway": "home",
+      "rotationNumber": "18"
+     }
+    ],
+    "awayMoneylines": [
+     {
+      "type": "moneyline",
+      "sumUntaken": 5158.261935,
+      "odds": 124
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 2060.835897,
+      "odds": 117
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 862.068966,
+      "odds": 116
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 25,
+      "odds": 115
+     }
+    ],
+    "homeMoneylines": [
+     {
+      "type": "moneyline",
+      "sumUntaken": 529.849624,
+      "odds": -145
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 37.5,
+      "odds": -150
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 586.72,
+      "odds": -152
+     },
+     {
+      "type": "moneyline",
+      "sumUntaken": 1835.745,
+      "odds": -153
+     }
+    ],
+    "awaySpreads": {
+     "1.5": [
+      {
+       "type": "spread",
+       "sumUntaken": 1041.389671,
+       "odds": -233,
+       "spread": 1.5
+      }
+     ]
+    },
+    "homeSpreads": {
+     "-1.5": [
+      {
+       "type": "spread",
+       "sumUntaken": 388.748466,
+       "odds": 163,
+       "spread": -1.5
+      }
+     ]
+    },
+    "over": {
+     "5.5": [
+      {
+       "type": "total",
+       "sumUntaken": 25.5,
+       "odds": -120,
+       "total": 5.5,
+       "OU": "over"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 424.99115,
+       "odds": -120,
+       "total": 5.5,
+       "OU": "over"
+      }
+     ],
+     "6.5": [
+      {
+       "type": "total",
+       "sumUntaken": 160.653231,
+       "odds": 130,
+       "total": 6.5,
+       "OU": "over"
+      }
+     ]
+    },
+    "under": {
+     "5.5": [
+      {
+       "type": "total",
+       "sumUntaken": 27.5,
+       "odds": -110,
+       "total": 5.5,
+       "OU": "under"
+      },
+      {
+       "type": "total",
+       "sumUntaken": 425.968142,
+       "odds": -120,
+       "total": 5.5,
+       "OU": "under"
+      }
+     ],
+     "6.5": [
+      {
+       "type": "total",
+       "sumUntaken": 327.888495,
+       "odds": -197,
+       "total": 6.5,
+       "OU": "under"
+      }
+     ]
+    },
+    "mainHomeSpread": -1.5,
+    "mainAwaySpread": 1.5,
+    "mainTotal": 5.5
+   },
+   {
+    "live": false,
+    "periodName": "Full Time",
+    "id": "6ac362c2e16d06a69b322845",
+    "league": "NHL",
+    "sport": "hockey",
+    "start": "2026-10-07T23:37:00.000Z",
+    "ended": false,
+    "participants": [
+     {
+      "id": "6165e6e83c65e61a09bf21cb",
+      "longName": "Pittsburgh Penguins",
+      "shortName": "PIT",
+      "homeAway": "away",
+      "rotationNumber": "29"
+     },
+     {
+      "id": "6165e6e23c65e61a09bf1f71",
+      "longName": "Washington Capitals",
+      "shortName": "WAS",
+      "homeAway": "home",
+      "rotationNumber": "30"
+     }
+    ],
+    "awayMoneylines": [
+     {
+      "type": "moneyline",
+      "sumUntaken": 877.192982,
+      "odds": 114
+     }
+    ],
+    "homeMoneylines": [
+     {
+      "type": "moneyline",
+      "sumUntaken": 1650,
+      "odds": -165
+     }
+    ],
+    "awaySpreads": {
+     "1.5": [
+      {
+       "type": "spread",
+       "sumUntaken": 1309.676966,
+       "odds": -195,
+       "spread": 1.5
+      }
+     ]
+    },
+    "homeSpreads": {
+     "-1.5": [
+      {
+       "type": "spread",
+       "sumUntaken": 618.954128,
+       "odds": 109,
+       "spread": -1.5
+      }
+     ]
+    },
+    "over": {},
+    "under": {},
+    "mainHomeSpread": -1.5,
+    "mainAwaySpread": 1.5,
+    "mainTotal": 0
+   },
+   {
+    "live": false,
+    "periodName": "Full Time",
+    "id": "6ac362c2e16d06a69b322847",
+    "league": "NHL",
+    "sport": "hockey",
+    "start": "2026-10-08T02:07:00.000Z",
+    "ended": false,
+    "participants": [
+     {
+      "id": "6459956944b203dcab2a2bc8",
+      "longName": "Edmonton Oilers",
+      "shortName": "EDM",
+      "homeAway": "away",
+      "rotationNumber": "31"
+     },
+     {
+      "id": "6165e6e43c65e61a09bf2007",
+      "longName": "Anaheim Ducks",
+      "shortName": "ANA",
+      "homeAway": "home",
+      "rotationNumber": "32"
+     }
+    ],
+    "awayMoneylines": [],
+    "homeMoneylines": [],
+    "awaySpreads": {},
+    "homeSpreads": {},
+    "over": {},
+    "under": {},
+    "mainHomeSpread": 0,
+    "mainAwaySpread": 0,
+    "mainTotal": 0
+   }
+  ]
+ }
+}
