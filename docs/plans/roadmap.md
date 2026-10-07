@@ -287,6 +287,7 @@ Pages:
 
 Teammate and opponent quality, deployment tiers and line matchups, then player archetypes,
 then DANAH (player future value / WAR). Plan: [usage-context.md](usage-context.md).
+Archetypes plan (2026-10-07): [archetypes.md](archetypes.md).
 
 ## Later: late-season and playoff accuracy (owner, 2026-10-06)
 

@@ -254,6 +254,29 @@ def linemates(season: int) -> str:
     return f"processed/linemates/{season}.parquet"
 
 
+# --- archetypes (docs/plans/archetypes.md) ------------------------------------------------
+
+
+def style_counts(season: int) -> str:
+    """Regular-season style counts per skater-game (shots by location/type, physical, deployment)."""
+    return f"processed/style_counts/{season}.parquet"
+
+
+def style(season: int) -> str:
+    """Style features per (player, season, window): raw and shrunk to the position mean."""
+    return f"processed/style/{season}.parquet"
+
+
+def style_priors(season: int) -> str:
+    """Shrinkage prior per (window, position group, feature): mean, prior weight k, reliability."""
+    return f"processed/style_priors/{season}.parquet"
+
+
+def archetypes(season: int) -> str:
+    """Style axes (all skaters), forward archetype probabilities and style comps per (player, window)."""
+    return f"processed/archetypes/{season}.parquet"
+
+
 # --- ratings (M3) -------------------------------------------------------------------------
 
 

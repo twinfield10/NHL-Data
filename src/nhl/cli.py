@@ -442,6 +442,35 @@ def cmd_onice(args: argparse.Namespace) -> None:
         print(config.season_id(year), "  ".join(f"{k} {v:.4f}" for k, v in checks.items()))
 
 
+def cmd_style(args: argparse.Namespace) -> None:
+    """Style features per skater (archetypes plan phase A): counts, shrunk features, reliability."""
+    from nhl.archetypes.features import build_season
+    from nhl.storage.s3 import Store
+
+    store = Store()
+    for year in config.parse_seasons(args.seasons):
+        checks = build_season(store, config.season_id(year))
+        print(config.season_id(year), "  ".join(f"{k} {v:.3f}" for k, v in checks.items()))
+
+
+def cmd_archetypes(args: argparse.Namespace) -> None:
+    """Style axes, forward archetypes and comps (archetypes plan phase B); ``--fit`` refits the model."""
+    from nhl.archetypes import model as am
+    from nhl.storage.s3 import Store
+
+    store = Store()
+    if args.fit:
+        print("fitted", am.save(store, am.fit(store), args.version))
+    mdl = am.load(store, args.version)
+    pool = am.comp_pool(store, mdl)
+    seasons = [config.season_id(y) for y in config.parse_seasons(args.seasons)]
+    for season in seasons:
+        checks = am.build_season(store, season, mdl, pool)
+        print(season, "  ".join(f"{k} {v:.3f}" for k, v in checks.items()))
+    if len(seasons) > 1:
+        print("persistence", "  ".join(f"{k} {v:.2f}" for k, v in am.persistence(store, seasons).items()))
+
+
 def cmd_validate_game_state(args: argparse.Namespace) -> None:
     """Check the M2 tables against official scores and NHL boxscores; write the report."""
     from pathlib import Path
@@ -454,7 +483,7 @@ def cmd_validate_game_state(args: argparse.Namespace) -> None:
 
 
 def cmd_update(args: argparse.Namespace) -> None:
-    """Nightly: catalog -> ingest -> rebuild -> features -> score -> game state -> usage -> ratings snapshot -> on-ice."""
+    """Nightly: catalog -> ingest -> rebuild -> features -> score -> game state -> usage -> ratings snapshot -> on-ice -> style -> archetypes."""
     year = str(args.season or _current_start_year())
     cmd_catalog(argparse.Namespace(seasons=f"{config.FIRST_SEASON}-{year}", force=False))
     cmd_ingest(argparse.Namespace(seasons=year, workers=6, refetch=False, skip_catalog=True))
@@ -468,6 +497,8 @@ def cmd_update(args: argparse.Namespace) -> None:
     cmd_usage(argparse.Namespace(seasons=year))
     cmd_ratings(argparse.Namespace(backfill=None, as_of=None, every=7))
     cmd_onice(argparse.Namespace(seasons=year))
+    cmd_style(argparse.Namespace(seasons=year))
+    cmd_archetypes(argparse.Namespace(seasons=year, fit=False, version=None))
 
 
 POLL_TARGETS = ("odds", "goalies", "lines", "injuries", "transactions", "officials")
@@ -780,6 +811,16 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("onice", help="5v5 on-ice decomposition and QoT/QoC per skater-game (usage plan phase B)")
     p.add_argument("--seasons", default=_default_seasons())
     p.set_defaults(func=cmd_onice)
+
+    p = sub.add_parser("style", help="style features per skater, shrunk, with split-half reliability (archetypes phase A)")
+    p.add_argument("--seasons", default=_default_seasons())
+    p.set_defaults(func=cmd_style)
+
+    p = sub.add_parser("archetypes", help="style axes, forward archetypes and style comps (archetypes phase B)")
+    p.add_argument("--seasons", default=_default_seasons())
+    p.add_argument("--fit", action="store_true", help="refit the model on the pooled fit seasons first")
+    p.add_argument("--version", default=None, help="model version to fit as / assign with (default LATEST)")
+    p.set_defaults(func=cmd_archetypes)
 
     p = sub.add_parser("validate-game-state", help="validate M2 tables vs official scores and boxscores")
     p.add_argument("--seasons", default=_default_seasons())
