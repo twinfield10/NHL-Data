@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 from datetime import date, datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import polars as pl
@@ -368,3 +369,49 @@ def test_poll_refused_is_skip(module: Any, games: pl.DataFrame) -> None:
     store = FakeStore()
     assert module.poll(store, games, client=Refusing()) == 0
     assert not store.parquet
+
+
+# ------------------------------------------------------------------- 4Casters sign-in --
+class FakeExchangeWeb:
+    """The exchange as of 2026-10-06: the order book needs a valid ``Authorization`` token."""
+
+    def __init__(self, password: str = "pw", valid: str = "tok-2") -> None:
+        self.session = SimpleNamespace(headers={})
+        self.password, self.valid = password, valid
+        self.logins = 0
+
+    def post_json(self, url: str, payload: dict) -> Any:
+        if url.endswith("/user/login"):
+            assert "Authorization" not in self.session.headers  # a stale token isn't sent to login
+            if payload["password"] != self.password:
+                raise SourceUnavailable("401")
+            self.logins += 1
+            return {"data": {"user": {"auth": self.valid}}}
+        if self.session.headers.get("Authorization") != self.valid:
+            raise SourceUnavailable("403")
+        return {"data": {"games": []}}
+
+
+def test_fourcasters_signs_in_caches_token_and_reuses_it(tmp_path) -> None:
+    token = tmp_path / "auth_token"
+    web = FakeExchangeWeb()
+    fourcasters.SignedInClient(web, "me", "pw", token).post_json("u/exchange/getOrderbook", {"leagueRequested": "NHL"})
+    assert web.logins == 1 and token.read_text() == "tok-2" and oct(token.stat().st_mode)[-3:] == "600"
+    again = FakeExchangeWeb()
+    fourcasters.SignedInClient(again, "me", "pw", token).post_json("u/exchange/getOrderbook", {"leagueRequested": "NHL"})
+    assert again.logins == 0  # the cached token is used without logging in
+
+
+def test_fourcasters_expired_token_signs_in_again_once(tmp_path) -> None:
+    token = tmp_path / "auth_token"
+    token.write_text("tok-1")  # expired
+    web = FakeExchangeWeb()
+    assert fourcasters.SignedInClient(web, "me", "pw", token).post_json("u/x", {}) == {"data": {"games": []}}
+    assert web.logins == 1 and token.read_text() == "tok-2"
+
+
+def test_fourcasters_bad_login_is_a_skip_not_a_crash(games: pl.DataFrame, tmp_path) -> None:
+    client = fourcasters.SignedInClient(FakeExchangeWeb(password="right"), "me", "wrong", tmp_path / "t")
+    with pytest.raises(SourceUnavailable, match="login refused"):
+        client.post_json("u/x", {})
+    assert fourcasters.poll(FakeStore(), games, client=client) == 0  # type: ignore[arg-type]

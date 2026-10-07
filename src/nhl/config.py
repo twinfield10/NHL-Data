@@ -15,6 +15,11 @@ S3_REGION: str = os.getenv("NHL_S3_REGION", "us-east-2")
 CACHE_DIR: Path = Path(os.getenv("NHL_CACHE_DIR", REPO_ROOT / "data" / "cache"))
 API_RPS: float = float(os.getenv("NHL_API_RPS", "8"))
 
+#: 4Casters account. The exchange stopped serving its order book anonymously on 2026-10-06
+#: ("Sign in to read the board", ANON_READ_REFUSED); without these the source is skipped.
+CAST4_USER: str | None = os.getenv("CAST4_USER") or None
+CAST4_PASS: str | None = os.getenv("CAST4_PASS") or None
+
 #: First season (by start year) with usable play-by-play coordinates and shift charts.
 FIRST_SEASON: int = 2010
 

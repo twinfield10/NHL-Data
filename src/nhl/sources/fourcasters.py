@@ -1,8 +1,17 @@
 """4Casters exchange: poll the NHL order book and store the takeable price as it moves.
 
-One anonymous ``POST /exchange/getOrderbook {"leagueRequested": "NHL"}`` returns every
-game with full depth; there are no credentials and no per-game fan-out. Ported from
-rebirtha-nfl. What shapes the normalizer:
+One ``POST /exchange/getOrderbook {"leagueRequested": "NHL"}`` returns every game with full
+depth; there is no per-game fan-out. Ported from rebirtha-nfl.
+
+**Sign-in.** Until 2026-10-06 the order book was anonymous; since then an anonymous read
+is refused with 403 ``ANON_READ_REFUSED`` ("Sign in to read the board"). With
+``CAST4_USER`` / ``CAST4_PASS`` set, :class:`SignedInClient` logs in (``POST /user/login``,
+the token is ``data.user.auth``), sends the token as the ``Authorization`` header, caches it
+under the local cache directory so polls don't log in every few minutes, and signs in
+again once when a call is refused (an expired token). Without credentials the source is
+skipped with a warning saying so.
+
+What shapes the normalizer:
 
 * **A price is only real at a size.** Each resting order carries ``sumUntaken`` (dollars
   still available) and the top of book is often a few dollars deep. :func:`vwap` walks
@@ -38,13 +47,16 @@ rebirtha-nfl. What shapes the normalizer:
 from __future__ import annotations
 
 import logging
+import os
 import re
 from collections.abc import Iterable
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import polars as pl
 
+from nhl import config
 from nhl.ingest.http import SourceUnavailable, WebClient
 from nhl.odds.core import american_price, implied_probability, odds_frame
 from nhl.odds.props import props_frame, store_props
@@ -84,13 +96,84 @@ PROP_EVENT = re.compile(r"^(?P<name>.+?)\s*\((?P<kind>[^()]+)\)\s*$")
 HEADERS: dict[str, str] = {"Accept": "application/json", "Content-Type": "application/json"}
 
 
+TOKEN_PATH: Path = Path(config.CACHE_DIR) / "fourcasters" / "auth_token"
+
+
+# ------------------------------------------------------------------------------ auth --
+class SignedInClient:
+    """A :class:`WebClient` that signs in to 4Casters and re-signs-in once on a refusal.
+
+    Args:
+        web: The underlying rate-limited client.
+        username: 4Casters account name.
+        password: 4Casters password.
+        token_path: Where the session token is cached between runs (None: not cached).
+    """
+
+    def __init__(self, web: WebClient, username: str, password: str, token_path: Path | None = TOKEN_PATH) -> None:
+        self.web, self.username, self.password, self.token_path = web, username, password, token_path
+        self.token: str | None = self._read_cached()
+        if self.token:
+            self.web.session.headers["Authorization"] = self.token
+
+    def _read_cached(self) -> str | None:
+        if self.token_path is None or not self.token_path.exists():
+            return None
+        return self.token_path.read_text().strip() or None
+
+    def _write_cached(self, token: str) -> None:
+        if self.token_path is None:
+            return
+        self.token_path.parent.mkdir(parents=True, exist_ok=True)
+        self.token_path.write_text(token)
+        os.chmod(self.token_path, 0o600)
+
+    def sign_in(self) -> str:
+        """Log in and use the new token from now on.
+
+        Raises:
+            SourceUnavailable: The login was refused or returned no token.
+        """
+        self.web.session.headers.pop("Authorization", None)
+        try:
+            reply = self.web.post_json(f"{API_BASE}/user/login", {"username": self.username, "password": self.password}) or {}
+        except SourceUnavailable as exc:
+            raise SourceUnavailable(f"{SOURCE}: login refused; check CAST4_USER / CAST4_PASS ({exc})") from exc
+        token = ((reply.get("data") or {}).get("user") or {}).get("auth")
+        if not token:
+            raise SourceUnavailable(f"{SOURCE}: login returned no token")
+        logger.info("[4casters] signed in")
+        self.token = token
+        self.web.session.headers["Authorization"] = token
+        self._write_cached(token)
+        return token
+
+    def post_json(self, url: str, payload: dict[str, Any]) -> Any:
+        """POST signed in; on a refusal with a cached token, sign in again and retry once."""
+        fresh = False
+        if self.token is None:
+            self.sign_in()
+            fresh = True
+        try:
+            return self.web.post_json(url, payload)
+        except SourceUnavailable:
+            if fresh:
+                raise
+            logger.info("[4casters] refused with the cached token; signing in again")
+            self.sign_in()
+            return self.web.post_json(url, payload)
+
+
 # ----------------------------------------------------------------------------- fetch --
-def make_client() -> WebClient:
-    """A rate-limited client for the exchange API."""
-    return WebClient(SOURCE, rps=RPS, headers=HEADERS)
+def make_client() -> WebClient | SignedInClient:
+    """A rate-limited client for the exchange API, signed in when credentials are configured."""
+    web = WebClient(SOURCE, rps=RPS, headers=HEADERS)
+    if config.CAST4_USER and config.CAST4_PASS:
+        return SignedInClient(web, config.CAST4_USER, config.CAST4_PASS)
+    return web
 
 
-def fetch(client: WebClient | None = None, store: Store | None = None) -> tuple[dict[str, Any], datetime]:
+def fetch(client: WebClient | SignedInClient | None = None, store: Store | None = None) -> tuple[dict[str, Any], datetime]:
     """Pull the whole NHL order book in one call and archive it.
 
     Args:
@@ -113,7 +196,7 @@ def fetch(client: WebClient | None = None, store: Store | None = None) -> tuple[
 
 
 def fetch_props(
-    client: WebClient | None = None, store: Store | None = None, captured_at: datetime | None = None
+    client: WebClient | SignedInClient | None = None, store: Store | None = None, captured_at: datetime | None = None
 ) -> dict[str, Any]:
     """Pull the NHL prop order books (``leagueRequested: NHL-PROPS``) and archive them.
 
@@ -391,7 +474,8 @@ def normalize(raw: dict[str, Any] | list, captured_at: datetime) -> pl.DataFrame
 
 # ------------------------------------------------------------------------------ poll --
 def poll(
-    store: Store, games: pl.DataFrame, client: WebClient | None = None, resolver: PlayerResolver | None = None
+    store: Store, games: pl.DataFrame, client: WebClient | SignedInClient | None = None,
+    resolver: PlayerResolver | None = None,
 ) -> int:
     """Fetch, archive, normalize and store one 4Casters poll (game lines, then props).
 
@@ -412,7 +496,9 @@ def poll(
     try:
         raw, captured_at = fetch(client, store)
     except SourceUnavailable as exc:
-        logger.warning("[4casters] skipped: %s", exc)
+        hint = "" if isinstance(client, SignedInClient) else \
+            " (the order book needs a signed-in account since 2026-10-06: set CAST4_USER and CAST4_PASS in .env)"
+        logger.warning("[4casters] skipped: %s%s", exc, hint)
         return 0
     odds = normalize(raw, captured_at)
     props = props_frame([])
@@ -426,5 +512,5 @@ def poll(
     return written
 
 
-__all__ = ["BOOK", "EXCHANGE_VIG", "MIN_FILL_RATIO", "PROP_UNIT_SIZE", "UNIT_SIZE", "fetch", "fetch_props",
+__all__ = ["BOOK", "EXCHANGE_VIG", "SignedInClient", "MIN_FILL_RATIO", "PROP_UNIT_SIZE", "UNIT_SIZE", "fetch", "fetch_props",
            "game_rows", "normalize", "normalize_props", "poll", "prop_rows", "vwap", "make_client"]
