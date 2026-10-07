@@ -249,3 +249,133 @@ export interface BetsResponse {
   totals: BetTotals;
   breakdown: BetBreakdown[];
 }
+
+// /api/ratings (see nhl.ratings.rankings). EV/PP/PK terms are xG per 60 relative to average,
+// defence sign-flipped so higher is better; finishing and save are fractions of xG.
+
+export interface Skater {
+  player_id: number;
+  player_name: string | null;
+  position: string | null;
+  age: number | null;
+  team_abbr: string | null;
+  last_game_date: string | null;
+  ev_off: number;
+  ev_def: number;
+  ev_net: number;
+  ev_net_sd: number;
+  ev_net_prior: number | null;
+  ev_toi_s: number;
+  pp_off: number | null;
+  pk_def: number | null;
+  finishing: number | null;
+  shots: number | null;
+  goals: number | null;
+  ixg: number | null;
+  pen_drawn60: number | null;
+  pen_taken60: number | null;
+}
+
+export interface Goalie {
+  player_id: number;
+  player_name: string | null;
+  age: number | null;
+  team_abbr: string | null;
+  last_game_date: string | null;
+  save: number;
+  save_prior: number | null;
+  save_sd: number;
+  shots_against: number;
+  goals_against: number;
+  xga: number;
+  gsax: number;
+}
+
+export interface RatingsMeta {
+  snapshot: string;
+  as_of: string;
+  season: number;
+}
+
+export interface PlayersResponse extends RatingsMeta {
+  skaters: Skater[];
+  goalies: Goalie[];
+}
+
+export interface TeamLineupPlayer {
+  player_id: number | null;
+  player_name: string;
+  position: string;
+  slot: string | null;
+  s5: number;
+  spp: number;
+  spk: number;
+  ev_off: number | null;
+  ev_def: number | null;
+  ev_net: number | null;
+}
+
+export interface TeamRating extends TeamInfo {
+  team_id: number;
+  xgf60: number;
+  xga60: number;
+  xgd60: number;
+  gf60: number;
+  ga60: number;
+  gd60: number;
+  finishing: number;
+  save: number;
+  pp_xgf60: number;
+  pk_xga60: number;
+  take_f: number;
+  draw_f: number;
+  goalies: { player_id: number; player_name: string | null; weight: number }[];
+  lineup: TeamLineupPlayer[];
+}
+
+export interface TeamsResponse extends RatingsMeta {
+  /** League-average xG/60 the team rates are measured against. */
+  league: { xg60_5v5: number; xg60_pp: number };
+  teams: TeamRating[];
+}
+
+export interface LinePlayer {
+  player_id: number | null;
+  player_name: string;
+  position?: string | null;
+  ev_off?: number | null;
+  /** Prevention (higher is better), as on the player board. */
+  ev_def?: number | null;
+  ev_net?: number | null;
+}
+
+export interface LineRating {
+  team_id: number;
+  team_abbr: string;
+  kind: "F" | "D" | "PP" | "PK";
+  /** Slot in today's projected lineup (f1..f4, d1..d3, pp1, pk2..), null if the unit isn't in it. */
+  slot: string | null;
+  players: LinePlayer[];
+  /** Summed current ratings (5v5 for lines and pairs, special teams for PP/PK), relative to
+   *  average (xga60: lower is better). */
+  xgf60: number;
+  xga60: number;
+  xgd60: number;
+  /** On the ice together in the season (5v5, or 5v4 / 4v5 for PP / PK). */
+  toi_s: number;
+  xgf: number;
+  xga: number;
+  gf: number;
+  ga: number;
+  games: number;
+  /** Team's total time in that state, and the unit's share of it together. */
+  team_toi_s: number;
+  toi_share: number;
+}
+
+export interface LinesResponse extends RatingsMeta {
+  /** Season the units come from, and the seasons available. */
+  line_season: number;
+  seasons: number[];
+  lines: LineRating[];
+}
