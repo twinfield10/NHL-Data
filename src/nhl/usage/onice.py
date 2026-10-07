@@ -141,6 +141,39 @@ def _toi_shares(rows: pl.DataFrame, usage: pl.DataFrame) -> pl.DataFrame:
     return rows.join(per[0], on="_r", how="left").join(per[1], on="_r", how="left").drop("_r")
 
 
+def snapshot_parts(store: Store, design, rows: pl.DataFrame, days: list[date]):
+    """Yield ``(snapshot, rows, player_terms)`` for each snapshot used by ``rows``.
+
+    ``rows`` are the design's rows with ``_i`` (the design row index) and ``game_date``; each
+    yielded frame adds ``snapshot, o_sum, d_sum, zone, ctx, league`` (see :func:`row_sums`).
+    """
+    rows = rows.with_columns(
+        pl.col("game_date").map_elements(lambda d: _latest_before(days, d), return_dtype=pl.Date).alias("snapshot")
+    )
+    for (snap,), part in rows.filter(pl.col("snapshot").is_not_null()).partition_by("snapshot", as_dict=True).items():
+        terms, repl = _snapshot_terms(store, snap)
+        mask = np.zeros(design.x.shape[0], dtype=bool)
+        mask[part["_i"].to_numpy()] = True
+        part = part.sort("_i")
+        sums = row_sums(design, terms, repl, mask)
+        logger.debug("snapshot %s: %d rows, %d players at replacement", snap, part.height, int(sums["missing"][0]))
+        yield snap, part.with_columns(*[pl.Series(k, sums[k]) for k in ("o_sum", "d_sum", "zone", "ctx", "league")]), sums["player_terms"]
+
+
+def stint_predictions(store: Store, season: int, design=None, snapshots: list[date] | None = None) -> pl.DataFrame:
+    """Every EV attack row of ``season`` with the point-in-time prediction split into
+    ``o_sum, d_sum, zone, ctx, league`` and ``resid`` = ``y`` − their sum (xG per 60)."""
+    design = design or rapm.season_design(store, season, "EV")
+    days = snapshots if snapshots is not None else snapshot_dates(store)
+    rows = design.rows.with_columns(pl.Series("y", design.y)).with_row_index("_i")
+    parts = [part for _, part, _ in snapshot_parts(store, design, rows, days)]
+    if not parts:
+        return pl.DataFrame()
+    return pl.concat(parts).with_columns(
+        (pl.col("y") - pl.sum_horizontal("o_sum", "d_sum", "zone", "ctx", "league")).alias("resid")
+    ).sort("_i")
+
+
 def build_onice(store: Store, season: int, design=None, usage: pl.DataFrame | None = None,
                 snapshots: list[date] | None = None) -> pl.DataFrame:
     """The decomposition for every skater-game of ``season`` that has a snapshot (see module docstring).
@@ -153,25 +186,14 @@ def build_onice(store: Store, season: int, design=None, usage: pl.DataFrame | No
     design = design or rapm.season_design(store, season, "EV")
     usage = usage if usage is not None else store.read_parquet_required(keys.usage(season))
     days = snapshots if snapshots is not None else snapshot_dates(store)
-    rows = design.rows.with_columns(
-        pl.Series("y", design.y),
-        pl.col("game_date").map_elements(lambda d: _latest_before(days, d), return_dtype=pl.Date).alias("snapshot"),
-    ).with_row_index("_i")
-    rows = _toi_shares(rows, usage)
+    rows = _toi_shares(design.rows.with_columns(pl.Series("y", design.y)).with_row_index("_i"), usage)
     share = usage.select("game_id", "player_id", "share_5v5")
     out = []
-    for (snap,), part in rows.filter(pl.col("snapshot").is_not_null()).partition_by("snapshot", as_dict=True).items():
-        terms, repl = _snapshot_terms(store, snap)
-        mask = np.zeros(design.x.shape[0], dtype=bool)
-        mask[part["_i"].to_numpy()] = True
-        part = part.sort("_i")
-        sums = row_sums(design, terms, repl, mask)
-        part = part.with_columns(*[pl.Series(k, sums[k]) for k in ("o_sum", "d_sum", "zone", "ctx", "league")])
-        att, dfd = _views(part, sums["player_terms"], share)
+    for snap, part, player_terms in snapshot_parts(store, design, rows, days):
+        att, dfd = _views(part, player_terms, share)
         f = _aggregate(att, "f", ["qot_o", "qoc_d", "qot_toi", "qoc_toi"])
         a = _aggregate(dfd, "a", ["qot_d", "qoc_o"]).drop("toi_s")
         out.append(f.join(a, on=_KEYS, how="left").with_columns(pl.lit(snap).alias("snapshot")))
-        logger.debug("onice %s snapshot %s: %d rows, %d players at replacement", season, snap, part.height, int(sums["missing"][0]))
     if not out:
         return pl.DataFrame()
     return pl.concat(out).sort(*_KEYS)

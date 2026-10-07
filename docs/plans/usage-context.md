@@ -1,6 +1,6 @@
 # Plan: Usage and context (teammate and opponent quality)
 
-**Status:** planned 2026-10-07. **Phase A built 2026-10-07** (`src/nhl/usage/tiers.py`, `nhl usage`, nightly after game state; backfilled 2010-11 to 2026-27): see [Phase A results](#phase-a-results-2026-10-07). **Phase B built 2026-10-07** (`src/nhl/usage/onice.py`, `nhl onice`, nightly after the ratings snapshot; backfilled 2015-16 to 2026-27): see [Phase B results](#phase-b-results-2026-10-07).
+**Status:** planned 2026-10-07. **Phase A built 2026-10-07** (`src/nhl/usage/tiers.py`, `nhl usage`, nightly after game state; backfilled 2010-11 to 2026-27): see [Phase A results](#phase-a-results-2026-10-07). **Phase B built 2026-10-07** (`src/nhl/usage/onice.py`, `nhl onice`, nightly after the ratings snapshot; backfilled 2015-16 to 2026-27): see [Phase B results](#phase-b-results-2026-10-07). **Phase C done 2026-10-07**: matchups are real but don't move game prices; simulator unchanged ([report](../reports/usage-matchups.md)).
 **Depends on:** M2 stints (`processed/stints/{season}`) and inferred units
 (`processed/lineups/{season}`), M3 point-in-time rating snapshots (`ratings/{date}/`,
 weekly 2015-16 on), M4 simulator inputs (`sim/inputs.py` deployment shares).
@@ -128,6 +128,17 @@ A report (`docs/reports/usage-matchups.md`), answering empirically:
    style. **Gate:** if it improves held-out xG log likelihood beyond noise, matchups go into
    the simulator via projected matchup shares; otherwise they stay descriptive and the
    simulator is unchanged.
+
+### Phase C results (2026-10-07)
+See [usage-matchups.md](../reports/usage-matchups.md) (`src/nhl/usage/matchups.py`,
+`nhl usage-matchups`; per-team tables in `processed/usage_matchups/{season}`).
+- **Matching:** like plays like (F1 vs F1 1.18×, F4 vs F4 1.58×). The last change shows on
+  defence: home D1 vs opponent F1 1.16× (away 1.10×), home D3 sheltered 0.75× (away 0.83×).
+- **Hard minutes:** tier explains most of the competition a skater faces; beyond tier, DZ
+  starts go with tougher competition; individual defensive ability adds little.
+- **Gate: failed, as expected.** Tier × tier cells add nothing held out; an offence × defence
+  product is consistent (10 of 11 seasons) but tiny, worth −0.0006 xG per team-game on
+  average under actual deployment (99th percentile 0.012). No simulator change.
 
 ## Phase D: Player projection test
 Does knowing a player's context improve the forecast of his future on-ice results?

@@ -413,6 +413,15 @@ def cmd_usage(args: argparse.Namespace) -> None:
         print(config.season_id(year), "  ".join(f"{k} {v:.3f}" for k, v in checks.items()))
 
 
+def cmd_usage_matchups(args: argparse.Namespace) -> None:
+    """Line matchups: matching matrices, intensity, hard minutes and the interaction test."""
+    from nhl.storage.s3 import Store
+    from nhl.usage import matchups
+
+    res = matchups.run(Store(), [config.season_id(y) for y in config.parse_seasons(args.seasons)])
+    print(matchups.write_report(res, args.report))
+
+
 def cmd_onice(args: argparse.Namespace) -> None:
     """5v5 on-ice decomposition per skater-game: own, teammates, competition, context, residual."""
     from nhl.storage.s3 import Store
@@ -748,6 +757,11 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("usage", help="deployment tiers and usage per skater-game (usage plan phase A)")
     p.add_argument("--seasons", default=_default_seasons())
     p.set_defaults(func=cmd_usage)
+
+    p = sub.add_parser("usage-matchups", help="line matchup study and per-team matching tables (usage plan phase C)")
+    p.add_argument("--seasons", default=f"2015-{_current_start_year() - 1}")
+    p.add_argument("--report", default="docs/reports/usage-matchups-numbers.md")
+    p.set_defaults(func=cmd_usage_matchups)
 
     p = sub.add_parser("onice", help="5v5 on-ice decomposition and QoT/QoC per skater-game (usage plan phase B)")
     p.add_argument("--seasons", default=_default_seasons())

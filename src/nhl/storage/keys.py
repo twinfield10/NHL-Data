@@ -239,6 +239,11 @@ def onice_context_summary(season: int) -> str:
     return f"processed/onice_context_summary/{season}.parquet"
 
 
+def usage_matchups(season: int) -> str:
+    """5v5 matching matrix per team, coach and venue: own tier x opponent tier seconds, share, ratio."""
+    return f"processed/usage_matchups/{season}.parquet"
+
+
 # --- ratings (M3) -------------------------------------------------------------------------
 
 

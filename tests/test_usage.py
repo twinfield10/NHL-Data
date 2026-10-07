@@ -129,3 +129,39 @@ def test_onice_parts_add_up_and_split_teammates_from_competition(monkeypatch):
     # Player 5 only played the first stint, player 11 only the second.
     assert out.filter(pl.col("player_id") == 5)["toi_s"].item() == 60
     assert out.filter(pl.col("player_id") == 11)["toi_s"].item() == 120
+
+
+def test_matching_matrix_ratio_is_one_without_matching():
+    from nhl.usage.matchups import intensity, matching_matrix
+
+    # Every own tier sees the same opponent mix: no matching.
+    rows = [{"season": 1, "team_id": 1, "own_tier": o, "opp_tier": t, "seconds": s}
+            for o in ("F1", "F2") for t, s in (("F1", 30.0), ("F2", 10.0))]
+    m = matching_matrix(pl.DataFrame(rows), ["season", "team_id"])
+    assert all(abs(r - 1) < 1e-12 for r in m["ratio"])
+    assert abs(intensity(m, ["season", "team_id"])["mi_bits"].item()) < 1e-12
+    # Perfect matching: F1 only vs F1, F2 only vs F2.
+    rows = [{"season": 1, "team_id": 1, "own_tier": o, "opp_tier": o, "seconds": 10.0} for o in ("F1", "F2")]
+    m = matching_matrix(pl.DataFrame(rows), ["season", "team_id"])
+    assert m.filter(pl.col("own_tier") == "F1")["ratio"].item() == 2.0
+    assert abs(intensity(m, ["season", "team_id"])["mi_bits"].item() - 1.0) < 1e-12
+
+
+def test_interaction_test_finds_a_planted_product_effect():
+    import numpy as np
+
+    from nhl.usage.matchups import interaction_test, season_normals
+
+    rng = np.random.default_rng(0)
+    normals = {}
+    for season in range(3):
+        n = 4000
+        o, d = rng.normal(0, 0.4, n), rng.normal(0, 0.3, n)
+        rows = pl.DataFrame({
+            "att_ft": rng.choice(["F1", "F2", "F3", "F4"], n), "def_ft": rng.choice(["F1", "F2", "F3", "F4"], n),
+            "o_sum": o, "d_sum": d, "duration_s": np.full(n, 30.0),
+            "resid": 1.0 * o * d + rng.normal(0, 0.1, n),
+        })
+        normals[season] = season_normals(rows, 0.0, 0.0)
+    res = interaction_test(normals)
+    assert (res["gain_product"] > 0.1).all() and (res["gain_cells"].abs() < 0.01).all()
