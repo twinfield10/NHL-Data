@@ -83,15 +83,16 @@ def latest_prices(store: Store, day: date) -> tuple[pl.DataFrame, str] | None:
     return (prices, st) if prices is not None else None
 
 
-def book_rows(store: Store, season: int, game_ids: list[int]) -> pl.DataFrame:
-    """Latest price per book, game and market (cleaned), with the market consensus."""
+def book_rows(store: Store, season: int, game_ids: list[int], point: str = "last") -> pl.DataFrame:
+    """Price per book, game and market at ``point`` (``last`` = now, ``close`` = the final
+    capture before puck drop), cleaned, with the market consensus at the same point."""
     live = lines_mod.clean(lines_mod.live_lines(store, season)).filter(
-        (pl.col("point") == "last") & pl.col("game_id").is_in(game_ids)
+        (pl.col("point") == point) & pl.col("game_id").is_in(game_ids)
     )
     if live.is_empty():
         return live
     cons = pl.concat([
-        devig.consensus(live.filter(pl.col("market") == m), method, ("last",)) for m, method in evaluate.METHOD.items()
+        devig.consensus(live.filter(pl.col("market") == m), method, (point,)) for m, method in evaluate.METHOD.items()
     ]).select("game_id", "market", pl.col("line").alias("cons_line"), pl.col("p_fair").alias("p_cons"), pl.col("books").alias("cons_books"))
     parts = []
     for (market,), part in live.partition_by("market", as_dict=True).items():
@@ -105,25 +106,17 @@ def book_rows(store: Store, season: int, game_ids: list[int]) -> pl.DataFrame:
     )
 
 
-def compute(store: Store, day: date | None = None, now: datetime | None = None) -> pl.DataFrame:
-    """Best edge per (game, market, side, line) for ``day``'s games not yet started."""
-    now = now or datetime.now(timezone.utc)
-    day = day or now.astimezone(EASTERN).date()
-    got = latest_prices(store, day)
-    if got is None:
-        logger.info("edges %s: no pregame snapshot", day)
-        return pl.DataFrame()
-    prices, pregame_stamp = got
-    games = store.read_parquet_required(keys.GAMES).filter(pl.col("game_id").is_in(prices["game_id"].implode())).with_columns(
+def _games(store: Store, game_ids: list[int]) -> pl.DataFrame:
+    """Catalog rows for ``game_ids`` with the start time in UTC."""
+    return store.read_parquet_required(keys.GAMES).filter(pl.col("game_id").is_in(game_ids)).with_columns(
         pl.col("start_time_et").str.to_datetime().dt.replace_time_zone("America/New_York").dt.convert_time_zone("UTC").alias("start_utc")
-    ).filter(pl.col("start_utc") > now)
-    if games.is_empty():
-        return pl.DataFrame()
-    season = int(games["season"][0])
-    rows = book_rows(store, season, games["game_id"].to_list())
-    if rows.is_empty():
-        logger.info("edges %s: no live odds", day)
-        return pl.DataFrame()
+    )
+
+
+def _price(store: Store, rows: pl.DataFrame, prices: pl.DataFrame, games: pl.DataFrame, day: date,
+           now: datetime) -> pl.DataFrame:
+    """Model x market x blend for book ``rows``; the best book per (game, market, side, line),
+    flagged against :data:`MIN_EDGE` (no stakes). ``prices`` carries each game's pregame ``stamp``."""
     rows = evaluate.attach_model(rows, prices)
     model = blend.load(store)
     seg = blend.segment_of(day)
@@ -146,15 +139,65 @@ def compute(store: Store, day: date | None = None, now: datetime | None = None) 
         (KELLY_FRACTION * (pl.col("p") * pl.col("decimal") - 1) / (pl.col("decimal") - 1)).clip(0, None).alias("kelly"),
     ).filter(~pl.col("outlier"))
     best = out.sort("edge", descending=True).group_by("game_id", "market", "side", "line", maintain_order=True).first()
-    best = best.join(games.select("game_id", "game_date", "start_utc", "home_abbr", "away_abbr"), on="game_id").with_columns(
-        pl.col("market").map_elements(lambda m: tier(m, seg), return_dtype=pl.String).alias("tier"),
-        pl.lit(seg).alias("segment"), pl.lit(pregame_stamp).alias("pregame_stamp"), pl.lit(now).alias("as_of"),
+    best = best.join(games.select("game_id", "game_date", "start_utc", "home_abbr", "away_abbr"), on="game_id").join(
+        prices.select("game_id", pl.col("stamp").alias("pregame_stamp")), on="game_id", how="left",
     ).with_columns(
+        pl.col("market").map_elements(lambda m: tier(m, seg), return_dtype=pl.String).alias("tier"),
+        pl.lit(seg).alias("segment"), pl.lit(now).alias("as_of"),
+    )
+    return best.with_columns(
         ((pl.col("edge") >= pl.col("market").replace_strict(MIN_EDGE, return_dtype=pl.Float64))
          & (pl.col("tier") != "track_only")).alias("flagged"),
         (pl.col("edge") >= pl.col("market").replace_strict(MIN_EDGE, return_dtype=pl.Float64)).alias("qualifies"),
     )
-    return _stakes(best, store, day)
+
+
+def compute(store: Store, day: date | None = None, now: datetime | None = None) -> pl.DataFrame:
+    """Best edge per (game, market, side, line) for ``day``'s games not yet started."""
+    now = now or datetime.now(timezone.utc)
+    day = day or now.astimezone(EASTERN).date()
+    got = latest_prices(store, day)
+    if got is None:
+        logger.info("edges %s: no pregame snapshot", day)
+        return pl.DataFrame()
+    prices, pregame_stamp = got
+    games = _games(store, prices["game_id"].to_list()).filter(pl.col("start_utc") > now)
+    if games.is_empty():
+        return pl.DataFrame()
+    rows = book_rows(store, int(games["season"][0]), games["game_id"].to_list())
+    if rows.is_empty():
+        logger.info("edges %s: no live odds", day)
+        return pl.DataFrame()
+    prices = prices.with_columns(pl.lit(pregame_stamp).alias("stamp"))
+    return _stakes(_price(store, rows, prices, games, day, now), store, day)
+
+
+def last_pregame_prices(store: Store, day: date) -> pl.DataFrame | None:
+    """Each game's prices (with score matrix and ``stamp``) from the last pregame run that priced it."""
+    keys_ = sorted(k for k in store.list_keys(f"pregame/prices/{day.isoformat()}/") if k.endswith(".parquet"))
+    frames = [df.with_columns(pl.lit(k.rsplit("/", 1)[-1].removesuffix(".parquet")).alias("stamp"))
+              for k in keys_ if (df := store.get_parquet(k)) is not None]
+    if not frames:
+        return None
+    prices = pl.concat(frames, how="diagonal_relaxed")
+    return prices.filter(pl.col("stamp") == pl.col("stamp").max().over("game_id"))
+
+
+def closing(store: Store, day: date, now: datetime | None = None) -> pl.DataFrame:
+    """The edge view at the close for ``day``'s games that have started: every book's last
+    price before puck drop against the model's final pregame price. Same columns as
+    :func:`compute` with ``stake_units`` 0 (nothing can be bet any more)."""
+    now = now or datetime.now(timezone.utc)
+    prices = last_pregame_prices(store, day)
+    if prices is None:
+        return pl.DataFrame()
+    games = _games(store, prices["game_id"].to_list()).filter(pl.col("start_utc") <= now)
+    if games.is_empty():
+        return pl.DataFrame()
+    rows = book_rows(store, int(games["season"][0]), games["game_id"].to_list(), point="close")
+    if rows.is_empty():
+        return pl.DataFrame()
+    return _price(store, rows, prices, games, day, now).with_columns(pl.lit(0.0).alias("stake_units"))
 
 
 def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:

@@ -192,3 +192,20 @@ def test_ledger_paper_once_then_grade_clv_and_result():
     row = ledger.load(store).row(0, named=True)
     assert row["result"] == "win" and abs(row["pnl_units"] - 1.1) < 1e-9
     assert row["p_close"] > 0.5 and abs(row["clv"] - (row["p_close"] * 2.1 - 1)) < 1e-9
+
+
+def test_last_pregame_prices_keeps_each_games_final_run():
+    from datetime import date
+
+    from nhl.betting import edges as E
+    from nhl.storage import keys
+
+    day = date(2026, 10, 6)
+    store = _Mem({
+        keys.pregame_prices(day, "T1"): pl.DataFrame({"game_id": [1, 2], "p_home_win": [0.50, 0.40]}),
+        keys.pregame_prices(day, "T2"): pl.DataFrame({"game_id": [2], "p_home_win": [0.45]}),  # game 1 started
+    })
+    got = E.last_pregame_prices(store, day).sort("game_id")
+    assert got["p_home_win"].to_list() == [0.50, 0.45]
+    assert got["stamp"].to_list() == ["T1", "T2"]
+    assert E.last_pregame_prices(_Mem({}), day) is None
