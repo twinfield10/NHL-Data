@@ -216,6 +216,19 @@ def player_game_logs(season: int) -> str:
     return f"processed/game_logs/player/{season}.parquet"
 
 
+# --- usage and context (docs/plans/usage-context.md) -------------------------------------
+
+
+def usage(season: int) -> str:
+    """Deployment tier, TOI by strength, PP/PK unit and zone starts per skater-game."""
+    return f"processed/usage/{season}.parquet"
+
+
+def usage_summary(season: int) -> str:
+    """Usage per (season, player, team): games by tier, TOI per game, special-teams roles."""
+    return f"processed/usage_summary/{season}.parquet"
+
+
 # --- ratings (M3) -------------------------------------------------------------------------
 
 
