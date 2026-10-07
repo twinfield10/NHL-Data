@@ -433,6 +433,12 @@ POLL_TARGETS = ("odds", "goalies", "lines", "injuries", "transactions", "officia
 REPRICE_TARGETS = ("goalies", "lines", "injuries", "transactions", "officials")
 
 
+def cmd_serve(args: argparse.Namespace) -> None:
+    import uvicorn
+
+    uvicorn.run("nhl.api.main:app", host=args.host, port=args.port, reload=args.reload)
+
+
 def minutes_to_next_game(games, now: datetime | None = None) -> float | None:
     """Minutes until the next scheduled, not-yet-final game (negative = started already).
 
@@ -724,6 +730,12 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("update", help="nightly incremental update of the current season")
     p.add_argument("--season", type=int, default=None)
     p.set_defaults(func=cmd_update)
+
+    p = sub.add_parser("serve", help="run the site API (frontend/ talks to it)")
+    p.add_argument("--host", default="127.0.0.1")
+    p.add_argument("--port", type=int, default=8010)
+    p.add_argument("--reload", action="store_true", help="restart on code changes")
+    p.set_defaults(func=cmd_serve)
 
     return parser
 

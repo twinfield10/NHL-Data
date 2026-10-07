@@ -59,6 +59,24 @@ events = store.get_parquet(keys.events(20242025))
 xg = store.get_parquet(keys.xg_predictions(20242025))
 ```
 
+## Site
+
+A read-only web app over the pregame and betting outputs: the day's **games** (model vs
+market in team colors, best prices, edges, starters, bets), a **game** page (price through the day,
+edges, goalie probabilities, projected lines), live **edges**, and the **bets** ledger.
+
+- API: `src/nhl/api/` (FastAPI). It reads the S3 data contract in `nhl.pregame.slate` and
+  caches stamped snapshots in-process.
+- Frontend: `frontend/` (Next.js, Tailwind, react-query). It proxies `/api/*` to the API.
+
+```bash
+pip install -e ".[api]"
+nhl serve                       # API on http://127.0.0.1:8010 (--reload while developing)
+
+cd frontend && npm install
+npm run dev                     # http://localhost:3000 (INTERNAL_API_URL overrides the API address)
+```
+
 ## Third-party sources
 
 | Source | Module | What | History |
