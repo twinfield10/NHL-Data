@@ -84,6 +84,12 @@ function visible(t: Team, dark: boolean): string {
   return dark ? lighten(t.primary, 0.35) : "#475569";
 }
 
+/** One team's color, readable on the current background. */
+export const teamColor = (abbr: string, dark: boolean) => visible(team(abbr), dark);
+
+/** Hex color with an alpha channel, for gradients. */
+export const alpha = (hex: string, a: number) => `${hex}${Math.round(a * 255).toString(16).padStart(2, "0")}`;
+
 /** Bar colors for a matchup; the away team falls back to its secondary when the two clash. */
 export function matchupColors(away: string, home: string, dark: boolean): { away: string; home: string } {
   const a = team(away);

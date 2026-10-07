@@ -1,43 +1,54 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import SortTable, { type Column } from "@/components/SortTable";
-import TeamLogo from "@/components/TeamLogo";
+import IdentityCell from "@/components/IdentityCell";
 import { Card, ErrorState, Loading, Signed } from "@/components/ui";
 import { useTeamRatings } from "@/lib/api";
+import { heat, heatScale } from "@/lib/heat";
 import { dateTimeET, longDate, pct, signed, signedPct } from "@/lib/format";
-import type { Record3, TeamLineupPlayer, TeamRating } from "@/lib/types";
+import type { Record3, TeamLineupPlayer, TeamRating, TeamsResponse } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const SLOT_LABEL: Record<string, string> = { f1: "L1", f2: "L2", f3: "L3", f4: "L4", d1: "D1", d2: "D2", d3: "D3" };
 
 const recordText = (r: Record3) => `${r.w}-${r.l}-${r.otl}`;
 
-/** Diverging bar around zero, scaled to ``max``. */
-function NetBar({ value, max }: { value: number; max: number }) {
-  const w = Math.min(Math.abs(value) / max, 1) * 50;
-  return (
-    <div className="relative h-1.5 w-24 rounded-full bg-muted">
-      <div className="absolute inset-y-0 left-1/2 w-px bg-border" />
-      <div
-        className={cn("absolute inset-y-0 rounded-full", value >= 0 ? "bg-positive" : "bg-negative")}
-        style={value >= 0 ? { left: "50%", width: `${w}%` } : { right: "50%", width: `${w}%` }}
-      />
-    </div>
-  );
+interface TeamScales {
+  league: TeamsResponse["league"];
+  gd: number; xgd: number; xgf: number; xga: number; fin: number; save: number; pp: number; pk: number;
 }
 
-function columns(maxGd: number, open: number | null): Column<TeamRating>[] {
+/** Heat scales from all 32 teams; xGF/xGA are centred on the league average. */
+function teamScales(data: TeamsResponse): TeamScales {
+  const t = data.teams;
+  const { xg60_5v5: ev, xg60_pp: pp } = data.league;
+  return {
+    league: data.league,
+    gd: heatScale(t.map((x) => x.gd60), 0, 1),
+    xgd: heatScale(t.map((x) => x.xgd60), 0, 1),
+    xgf: heatScale(t.map((x) => x.xgf60), ev, 1),
+    xga: heatScale(t.map((x) => x.xga60), ev, 1),
+    fin: heatScale(t.map((x) => x.finishing), 0, 1),
+    save: heatScale(t.map((x) => x.save), 0, 1),
+    pp: heatScale(t.map((x) => x.pp_xgf60), pp, 1),
+    pk: heatScale(t.map((x) => x.pk_xga60), pp, 1),
+  };
+}
+
+function columns(s: TeamScales, open: number | null): Column<TeamRating>[] {
+  const { xg60_5v5: ev, xg60_pp: pp } = s.league;
   return [
     {
-      key: "team", label: "Team", sort: (t) => t.abbr,
+      key: "team", label: "Team", className: "h-px p-0", sort: (t) => t.abbr,
       render: (t) => (
-        <span className="inline-flex items-center gap-2">
-          {open === t.team_id ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
-          <TeamLogo abbr={t.abbr} className="h-6 w-6" />
-          <span className="font-medium">{t.place} {t.name}</span>
-        </span>
+        <IdentityCell abbr={t.abbr}>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="font-medium">{t.place} {t.name}</span>
+            {open === t.team_id ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+          </span>
+        </IdentityCell>
       ),
     },
     {
@@ -52,28 +63,38 @@ function columns(maxGd: number, open: number | null): Column<TeamRating>[] {
         ),
     },
     {
-      key: "gd60", label: "5v5 GD/60", align: "right", className: "font-medium",
+      key: "gd60", label: "5v5 GD/60", align: "right", className: "font-semibold",
       title: "5v5 goals for minus against per 60 vs. an average opponent, after finishing and goaltending",
-      sort: (t) => t.gd60,
-      render: (t) => (
-        <span className="inline-flex items-center justify-end gap-2">
-          <NetBar value={t.gd60} max={maxGd} />
-          <Signed value={t.gd60}>{signed(t.gd60)}</Signed>
-        </span>
-      ),
+      render: (t) => signed(t.gd60), sort: (t) => t.gd60, style: (t) => heat(t.gd60, s.gd),
     },
-    { key: "xgf", label: "xGF/60", align: "right", title: "5v5 expected goals for per 60", render: (t) => t.xgf60.toFixed(2), sort: (t) => t.xgf60 },
-    { key: "xga", label: "xGA/60", align: "right", title: "5v5 expected goals against per 60 (lower is better)", render: (t) => t.xga60.toFixed(2), sort: (t) => -t.xga60 },
+    {
+      key: "xgd", label: "xGD/60", align: "right", title: "5v5 expected goals for minus against per 60 vs. an average opponent",
+      render: (t) => signed(t.xgd60), sort: (t) => t.xgd60, style: (t) => heat(t.xgd60, s.xgd),
+    },
+    {
+      key: "xgf", label: "xGF/60", align: "right", title: `5v5 expected goals for per 60 (league average ${ev.toFixed(2)})`,
+      render: (t) => t.xgf60.toFixed(2), sort: (t) => t.xgf60, style: (t) => heat(t.xgf60, s.xgf, { center: ev }),
+    },
+    {
+      key: "xga", label: "xGA/60", align: "right", title: `5v5 expected goals against per 60, lower is better (league average ${ev.toFixed(2)})`,
+      render: (t) => t.xga60.toFixed(2), sort: (t) => -t.xga60, style: (t) => heat(t.xga60, s.xga, { center: ev, lowerIsBetter: true }),
+    },
     {
       key: "fin", label: "Finishing", align: "right", title: "Shot-weighted shooter talent: goals per xG relative to average",
-      render: (t) => <Signed value={t.finishing}>{signedPct(t.finishing)}</Signed>, sort: (t) => t.finishing,
+      render: (t) => signedPct(t.finishing), sort: (t) => t.finishing, style: (t) => heat(t.finishing, s.fin),
     },
     {
       key: "save", label: "Goaltending", align: "right", title: "Likely starters' save talent (weighted by recent starts): share of xG stopped beyond average",
-      render: (t) => <Signed value={t.save}>{signedPct(t.save)}</Signed>, sort: (t) => t.save,
+      render: (t) => signedPct(t.save), sort: (t) => t.save, style: (t) => heat(t.save, s.save),
     },
-    { key: "pp", label: "PP xGF/60", align: "right", title: "Power-play expected goals per 60 vs. an average PK", render: (t) => t.pp_xgf60.toFixed(2), sort: (t) => t.pp_xgf60 },
-    { key: "pk", label: "PK xGA/60", align: "right", title: "Penalty-kill expected goals against per 60 vs. an average PP (lower is better)", render: (t) => t.pk_xga60.toFixed(2), sort: (t) => -t.pk_xga60 },
+    {
+      key: "pp", label: "PP xGF/60", align: "right", title: `Power-play expected goals per 60 vs. an average PK (league average ${pp.toFixed(2)})`,
+      render: (t) => t.pp_xgf60.toFixed(2), sort: (t) => t.pp_xgf60, style: (t) => heat(t.pp_xgf60, s.pp, { center: pp }),
+    },
+    {
+      key: "pk", label: "PK xGA/60", align: "right", title: `Penalty-kill expected goals against per 60 vs. an average PP, lower is better (league average ${pp.toFixed(2)})`,
+      render: (t) => t.pk_xga60.toFixed(2), sort: (t) => -t.pk_xga60, style: (t) => heat(t.pk_xga60, s.pk, { center: pp, lowerIsBetter: true }),
+    },
     {
       key: "pen", label: "Pen drawn/taken", align: "right", title: "Penalty drawing and taking rates relative to league average (1.00 = average)",
       render: (t) => <span className="text-muted-foreground">{t.draw_f.toFixed(2)} / {t.take_f.toFixed(2)}</span>, sort: (t) => t.draw_f - t.take_f,
@@ -129,7 +150,7 @@ function LineupDetail({ team }: { team: TeamRating }) {
 export default function TeamsPage() {
   const { data, isLoading, error } = useTeamRatings();
   const [open, setOpen] = useState<number | null>(null);
-  const maxGd = Math.max(0.1, ...(data?.teams ?? []).map((t) => Math.abs(t.gd60)));
+  const scales = useMemo(() => (data ? teamScales(data) : null), [data]);
 
   return (
     <div className="space-y-5">
@@ -149,7 +170,7 @@ export default function TeamsPage() {
           <Card>
             <SortTable
               rows={data.teams}
-              columns={columns(maxGd, open)}
+              columns={columns(scales!, open)}
               rowKey={(t) => t.team_id}
               initialSort={{ key: "gd60", desc: true }}
               onRowClick={(t) => setOpen(open === t.team_id ? null : t.team_id)}
@@ -160,7 +181,7 @@ export default function TeamsPage() {
             Each team is its projected lineup today (injuries, transactions and DailyFaceoff lines applied, as on the game
             pages) with every skater weighted by his ice-time shares, and its goalies weighted by recent starts — the same
             composition the simulator prices games with, against an average opponent on neutral ice. Rest, coaching and
-            in-season team residuals are left out. Click a team for its lineup.
+            in-season team residuals are left out. Cell colors run from red (worse) through neutral (league average) to green (better). Click a team for its lineup.
           </p>
         </>
       )}

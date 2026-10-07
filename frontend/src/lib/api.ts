@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { BetsResponse, EdgesResponse, GameResponse, PlayersResponse, SlateResponse, TeamsResponse } from "./types";
+import type { BetsResponse, EdgesResponse, GameResponse, LinesResponse, PlayersResponse, SlateResponse, TeamsResponse } from "./types";
 
 async function apiFetch<T>(path: string): Promise<T> {
   const res = await fetch(path);
@@ -35,3 +35,9 @@ export const usePlayerRatings = () =>
 
 export const useTeamRatings = () =>
   useQuery({ queryKey: ["ratings", "teams"], queryFn: () => apiFetch<TeamsResponse>("/api/ratings/teams") });
+
+export const useLineRatings = (season?: number | null) =>
+  useQuery({
+    queryKey: ["ratings", "lines", season],
+    queryFn: () => apiFetch<LinesResponse>(`/api/ratings/lines${season ? `?season=${season}` : ""}`),
+  });

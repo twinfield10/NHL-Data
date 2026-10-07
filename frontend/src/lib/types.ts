@@ -319,6 +319,7 @@ export interface TeamRating extends TeamInfo {
   team_id: number;
   xgf60: number;
   xga60: number;
+  xgd60: number;
   gf60: number;
   ga60: number;
   gd60: number;
@@ -333,5 +334,48 @@ export interface TeamRating extends TeamInfo {
 }
 
 export interface TeamsResponse extends RatingsMeta {
+  /** League-average xG/60 the team rates are measured against. */
+  league: { xg60_5v5: number; xg60_pp: number };
   teams: TeamRating[];
+}
+
+export interface LinePlayer {
+  player_id: number | null;
+  player_name: string;
+  position?: string | null;
+  ev_off?: number | null;
+  /** Prevention (higher is better), as on the player board. */
+  ev_def?: number | null;
+  ev_net?: number | null;
+}
+
+export interface LineRating {
+  team_id: number;
+  team_abbr: string;
+  kind: "F" | "D" | "PP" | "PK";
+  /** Slot in today's projected lineup (f1..f4, d1..d3, pp1, pk2..), null if the unit isn't in it. */
+  slot: string | null;
+  players: LinePlayer[];
+  /** Summed current ratings (5v5 for lines and pairs, special teams for PP/PK), relative to
+   *  average (xga60: lower is better). */
+  xgf60: number;
+  xga60: number;
+  xgd60: number;
+  /** On the ice together in the season (5v5, or 5v4 / 4v5 for PP / PK). */
+  toi_s: number;
+  xgf: number;
+  xga: number;
+  gf: number;
+  ga: number;
+  games: number;
+  /** Team's total time in that state, and the unit's share of it together. */
+  team_toi_s: number;
+  toi_share: number;
+}
+
+export interface LinesResponse extends RatingsMeta {
+  /** Season the units come from, and the seasons available. */
+  line_season: number;
+  seasons: number[];
+  lines: LineRating[];
 }

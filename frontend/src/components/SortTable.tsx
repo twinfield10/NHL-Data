@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,8 @@ export interface Column<T> {
   sort?: (row: T) => number | string | null | undefined;
   align?: "left" | "right";
   className?: string;
+  /** Per-cell style, e.g. a heat-scale background. */
+  style?: (row: T) => CSSProperties | undefined;
 }
 
 /** Click a header to sort (numbers start descending); the first column is a rank in the current order. */
@@ -94,7 +96,7 @@ export default function SortTable<T>({
               >
                 <td className="px-3 py-2 text-right text-muted-foreground">{i + 1}</td>
                 {columns.map((c) => (
-                  <td key={c.key} className={cn("whitespace-nowrap px-3 py-2", c.align === "right" && "text-right", c.className)}>
+                  <td key={c.key} style={c.style?.(r)} className={cn("whitespace-nowrap px-3 py-2", c.align === "right" && "text-right", c.className)}>
                     {c.render(r)}
                   </td>
                 ))}

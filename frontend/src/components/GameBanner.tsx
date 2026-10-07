@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- remote SVGs from the NHL CDN */
 import type { ReactNode } from "react";
 import { american, pct } from "@/lib/format";
-import { logoUrl } from "@/lib/teams";
+import { alpha, logoUrl } from "@/lib/teams";
 import type { Record3, TeamInfo } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -27,10 +27,6 @@ export interface Chip {
 
 const wlo = (r: Record3) => `${r.w}-${r.l}-${r.otl}`;
 const pctg = (v: number | null) => (v == null ? ".000" : v.toFixed(3).replace(/^0/, ""));
-
-/** Hex color with an alpha channel, for the gradient. */
-const alpha = (hex: string, a: number) =>
-  `${hex}${Math.round(a * 255).toString(16).padStart(2, "0")}`;
 
 function GoalieDot({ status, p }: { status: string | null; p: number | null }) {
   const odds = p != null ? ` · ${pct(p, 0)} to start` : "";

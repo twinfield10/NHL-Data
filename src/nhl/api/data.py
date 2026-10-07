@@ -34,6 +34,7 @@ LIST_TTL_SECONDS = 60.0
 GAMES_TTL_SECONDS = 300.0
 CLOSING_TTL_SECONDS = 120.0
 RANKINGS_TTL_SECONDS = 900.0
+DAY_SECONDS = 86_400.0
 READ_WORKERS = 16
 
 
@@ -234,7 +235,7 @@ class SiteData:
         return days[-1] if days else None
 
     def rankings(self, day: date) -> dict | None:
-        """Player, goalie and team boards from ``day``'s rating snapshot, or None without one.
+        """Player, goalie, team and line boards from ``day``'s rating snapshot, or None without one.
 
         Team boards project every team's lineup as of now, so the whole thing is cached for
         :data:`RANKINGS_TTL_SECONDS` (injury news moves it within a day).
@@ -256,14 +257,28 @@ class SiteData:
             starts = pl.concat([s for y in span if (s := self.store.get_parquet(keys.goalie_starts(y))) is not None],
                                how="vertical_relaxed")
             goalies = rankings.goalie_weights(starts, games, teams)
-            board = rankings.team_board(tables, dep, goalies, sim_constants.estimate(self.store, season))
+            constants = sim_constants.estimate(self.store, season)
+            board = rankings.team_board(tables, dep, goalies, constants)
+            lines = rankings.line_board(tables, dep)
             return {
                 "snapshot": snap, "as_of": as_of, "season": season,
+                "league": {"xg60_5v5": constants["xg60_5v5"], "xg60_pp": constants["xg60_pp"]},
                 "players": rankings.player_board(tables, players, teams, day),
                 "goalies": rankings.goalie_board(tables, players, teams, day),
                 "teams": board, "goalie_weights": goalies, "lineups": dep,
+                "lines": lines, "tables": tables,
             }
         return self._timed_get(f"rankings/{day}", RANKINGS_TTL_SECONDS, load)
+
+    def units(self, season: int, current: bool) -> pl.DataFrame | None:
+        """Every forward line and D pair iced at 5v5 in ``season`` (:func:`nhl.ratings.rankings.observed_units`).
+        A finished season is cached for a day, the current one for :data:`RANKINGS_TTL_SECONDS`."""
+        def load() -> pl.DataFrame | None:
+            stints, rosters = self.store.get_parquet(keys.stints(season)), self.store.get_parquet(keys.rosters(season))
+            if stints is None or rosters is None:
+                return None
+            return rankings.observed_units(stints, rosters)
+        return self._timed_get(f"units/{season}", RANKINGS_TTL_SECONDS if current else DAY_SECONDS, load)
 
     def ledger(self) -> pl.DataFrame | None:
         """The paper/real bet ledger (re-read every :data:`MUTABLE_TTL_SECONDS`)."""
