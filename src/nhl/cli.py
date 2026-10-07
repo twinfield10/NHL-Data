@@ -413,6 +413,17 @@ def cmd_usage(args: argparse.Namespace) -> None:
         print(config.season_id(year), "  ".join(f"{k} {v:.3f}" for k, v in checks.items()))
 
 
+def cmd_onice(args: argparse.Namespace) -> None:
+    """5v5 on-ice decomposition per skater-game: own, teammates, competition, context, residual."""
+    from nhl.storage.s3 import Store
+    from nhl.usage.onice import build_season
+
+    store = Store()
+    for year in config.parse_seasons(args.seasons):
+        checks = build_season(store, config.season_id(year))
+        print(config.season_id(year), "  ".join(f"{k} {v:.4f}" for k, v in checks.items()))
+
+
 def cmd_validate_game_state(args: argparse.Namespace) -> None:
     """Check the M2 tables against official scores and NHL boxscores; write the report."""
     from pathlib import Path
@@ -425,7 +436,7 @@ def cmd_validate_game_state(args: argparse.Namespace) -> None:
 
 
 def cmd_update(args: argparse.Namespace) -> None:
-    """Nightly: catalog -> ingest -> rebuild -> features -> score -> game state -> usage -> ratings snapshot."""
+    """Nightly: catalog -> ingest -> rebuild -> features -> score -> game state -> usage -> ratings snapshot -> on-ice."""
     year = str(args.season or _current_start_year())
     cmd_catalog(argparse.Namespace(seasons=f"{config.FIRST_SEASON}-{year}", force=False))
     cmd_ingest(argparse.Namespace(seasons=year, workers=6, refetch=False, skip_catalog=True))
@@ -438,6 +449,7 @@ def cmd_update(args: argparse.Namespace) -> None:
     cmd_game_state(argparse.Namespace(seasons=year, workers=16))
     cmd_usage(argparse.Namespace(seasons=year))
     cmd_ratings(argparse.Namespace(backfill=None, as_of=None, every=7))
+    cmd_onice(argparse.Namespace(seasons=year))
 
 
 POLL_TARGETS = ("odds", "goalies", "lines", "injuries", "transactions", "officials")
@@ -736,6 +748,10 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("usage", help="deployment tiers and usage per skater-game (usage plan phase A)")
     p.add_argument("--seasons", default=_default_seasons())
     p.set_defaults(func=cmd_usage)
+
+    p = sub.add_parser("onice", help="5v5 on-ice decomposition and QoT/QoC per skater-game (usage plan phase B)")
+    p.add_argument("--seasons", default=_default_seasons())
+    p.set_defaults(func=cmd_onice)
 
     p = sub.add_parser("validate-game-state", help="validate M2 tables vs official scores and boxscores")
     p.add_argument("--seasons", default=_default_seasons())

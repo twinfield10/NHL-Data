@@ -229,6 +229,16 @@ def usage_summary(season: int) -> str:
     return f"processed/usage_summary/{season}.parquet"
 
 
+def onice_context(season: int) -> str:
+    """5v5 on-ice xGF/xGA split into own, teammates, competition, zone, context, league, residual."""
+    return f"processed/onice_context/{season}.parquet"
+
+
+def onice_context_summary(season: int) -> str:
+    """On-ice decomposition per (season, player, team) with QoT/QoC percentiles."""
+    return f"processed/onice_context_summary/{season}.parquet"
+
+
 # --- ratings (M3) -------------------------------------------------------------------------
 
 

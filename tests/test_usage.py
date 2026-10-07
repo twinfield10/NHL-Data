@@ -82,3 +82,50 @@ def test_shares_and_summary():
     s = summarize(u)
     assert s.filter(pl.col("player_id") == 101)["tier_mode"].item() == "F1"
     assert validate(u)["tier_sizes_ok"] == 1.0
+
+
+def _design():
+    from nhl.ratings.design import build
+
+    base = {"season": 20252026, "period": 1, "start_s": 100, "last_faceoff_s": 0, "zone_type": "otf", "lead": 0,
+            "att_rest": "normal", "def_rest": "normal", "post_penalty_5v5": False, "att_coach": None, "def_coach": None,
+            "gf": 0, "game_id": GAME}
+    rows = pl.DataFrame([
+        {**base, "stint_id": 1, "att_home": True, "att_team": HOME, "def_team": AWAY, "duration_s": 60, "xgf": 0.1,
+         "offence": [1, 2, 3, 4, 5], "defence": [6, 7, 8, 9, 10]},
+        {**base, "stint_id": 1, "att_home": False, "att_team": AWAY, "def_team": HOME, "duration_s": 60, "xgf": 0.05,
+         "offence": [6, 7, 8, 9, 10], "defence": [1, 2, 3, 4, 5]},
+        {**base, "stint_id": 2, "att_home": True, "att_team": HOME, "def_team": AWAY, "duration_s": 120, "xgf": 0.0,
+         "offence": [1, 2, 3, 4, 11], "defence": [6, 7, 8, 9, 10]},
+        {**base, "stint_id": 2, "att_home": False, "att_team": AWAY, "def_team": HOME, "duration_s": 120, "xgf": 0.2,
+         "offence": [6, 7, 8, 9, 10], "defence": [1, 2, 3, 4, 11]},
+    ]).with_columns(pl.col("xgf").cast(pl.Float32), (pl.col("xgf") * 3600 / pl.col("duration_s")).alias("y"))
+    d = build(rows)
+    d.rows = d.rows.with_columns(pl.lit(date(2025, 10, 7)).alias("game_date"))
+    return d
+
+
+def test_onice_parts_add_up_and_split_teammates_from_competition(monkeypatch):
+    from nhl.usage import onice
+
+    terms = {"intercept": 2.5, "home": 0.1, "O:1": 0.3, "D:1": -0.1, "O:6": 0.2, "D:6": 0.05}  # others missing
+    monkeypatch.setattr(onice, "_snapshot_terms", lambda store, snap: (terms, {"O": -0.05, "D": 0.02}))
+    usage = pl.DataFrame({"game_id": [GAME] * 11, "player_id": list(range(1, 12)), "share_5v5": [0.4] * 11})
+    out = onice.build_onice(None, 20252026, design=_design(), usage=usage, snapshots=[date(2025, 10, 1)])
+    p1 = out.filter(pl.col("player_id") == 1).row(0, named=True)
+    assert p1["toi_s"] == 180
+    # xGF: own O:1; teammates: 3 at replacement, then 2 and 5 / 11 at replacement too (all −0.05 × 4).
+    assert abs(p1["own_f"] - 0.3) < 1e-9 and abs(p1["mates_f"] - 4 * -0.05) < 1e-9
+    # Competition for xGF = opponents' D terms: D:6 (0.05) + four at replacement (0.02).
+    assert abs(p1["comp_f"] - (0.05 + 4 * 0.02)) < 1e-9
+    assert abs(p1["ctx_f"] - 0.1) < 1e-9 and abs(p1["league_f"] - 2.5) < 1e-9  # home attacking
+    actual = (0.1 + 0.0) * 3600 / 180
+    assert abs(p1["actual_f"] - actual) < 1e-6
+    parts = sum(p1[f"{k}_f"] for k in ("own", "mates", "comp", "zone", "ctx", "league", "resid"))
+    assert abs(parts - actual) < 1e-9
+    # xGA for player 1: own D:1, competition = opponents' O terms (O:6 + 4 × replacement).
+    assert abs(p1["own_a"] + 0.1) < 1e-9 and abs(p1["comp_a"] - (0.2 + 4 * -0.05)) < 1e-9
+    assert abs(p1["qoc_o"] - (0.2 + 4 * -0.05) / 5) < 1e-9 and abs(p1["qot_toi"] - 0.4) < 1e-9
+    # Player 5 only played the first stint, player 11 only the second.
+    assert out.filter(pl.col("player_id") == 5)["toi_s"].item() == 60
+    assert out.filter(pl.col("player_id") == 11)["toi_s"].item() == 120

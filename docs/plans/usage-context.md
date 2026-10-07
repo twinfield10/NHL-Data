@@ -1,6 +1,6 @@
 # Plan: Usage and context (teammate and opponent quality)
 
-**Status:** planned 2026-10-07. **Phase A built 2026-10-07** (`src/nhl/usage/tiers.py`, `nhl usage`, nightly after game state; backfilled 2010-11 to 2026-27): see [Phase A results](#phase-a-results-2026-10-07).
+**Status:** planned 2026-10-07. **Phase A built 2026-10-07** (`src/nhl/usage/tiers.py`, `nhl usage`, nightly after game state; backfilled 2010-11 to 2026-27): see [Phase A results](#phase-a-results-2026-10-07). **Phase B built 2026-10-07** (`src/nhl/usage/onice.py`, `nhl onice`, nightly after the ratings snapshot; backfilled 2015-16 to 2026-27): see [Phase B results](#phase-b-results-2026-10-07).
 **Depends on:** M2 stints (`processed/stints/{season}`) and inferred units
 (`processed/lineups/{season}`), M3 point-in-time rating snapshots (`ratings/{date}/`,
 weekly 2015-16 on), M4 simulator inputs (`sim/inputs.py` deployment shares).
@@ -95,6 +95,25 @@ the residual averages ≈ 0 by season and its spread shrinks with TOI as expecte
 - **Lifted / dragged** = the `teammates` component (positive = lifted).
 - **Competition** = the `competition` component, also as a percentile within position.
 - **Luck** = the residual, with a TOI-based band so small samples aren't over-read.
+
+### Phase B results (2026-10-07)
+- **Tables:** `processed/onice_context/{season}` (skater-game) and
+  `processed/onice_context_summary/{season}` (season, player, team; `*_xgd` parts,
+  `qot_net` / `qoc_net`, and percentiles within F / D for skaters with ≥ 200 5v5 minutes).
+  Context is split into `zone` (zone-start terms) and `ctx` (score, home, rest, coaches,
+  post-penalty), with the intercept as `league`, so every other part is relative to average.
+- **Checks:** every snapshot term matches a design column (2025-26: 238/238 context terms,
+  1,880/1,880 players); the parts add up to the actual on-ice xG exactly; the TOI-weighted
+  residual is within ±0.04 xG/60 (< 2%) every season 2015-16 to 2025-26 (2026-27: −0.19
+  after two nights). Games before a season's first snapshot use the previous season's last
+  one, as the simulator does.
+- **By tier (2025-26, xGD/60):** competition runs from −0.07 for F1 to +0.05 for F4 and
+  −0.05 for D1 to +0.03 for D3; teammates from +0.07 (F1) to −0.14 (F4) and +0.11 (D1) to
+  0.00 (D3). Teammate effects spread about twice as wide as competition, consistent with
+  public QoT/QoC research. Only F1 gets a clear zone-start tilt (+0.04).
+- **Spot checks (2025-26):** toughest competition goes to Montreal's top line (Suzuki,
+  Caufield, Slafkovský) and Matheson; the most lifted are mostly Carolina and Edmonton
+  defencemen; Crosby's teammates cost him −0.24 xGD/60 while his own term is +0.26.
 
 ## Phase C: Matchup study
 A report (`docs/reports/usage-matchups.md`), answering empirically:
