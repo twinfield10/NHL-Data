@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Breakdown, { type Parts } from "@/components/Breakdown";
 import IdentityCell from "@/components/IdentityCell";
 import SortTable, { type Column } from "@/components/SortTable";
 import { Card, Empty, ErrorState, Loading, Pills, Signed } from "@/components/ui";
 import { useLineRatings } from "@/lib/api";
-import { dateTimeET, longDate, minutes, pct, signed } from "@/lib/format";
+import { dateTimeET, longDate, minutes, pct, seasonLabel, signed } from "@/lib/format";
 import { heat, heatScale } from "@/lib/heat";
 import type { LineRating } from "@/lib/types";
 
@@ -47,10 +48,22 @@ const MIN_TOI = [
 ] as const;
 
 /** 20252026 -> "2025-26" */
-const seasonLabel = (s: number) => `${Math.floor(s / 10000)}-${String(s % 100).padStart(2, "0")}`;
 
 const per60 = (v: number, toi: number) => (toi ? (v / toi) * 3600 : null);
 const xgfPct = (l: LineRating) => (l.xgf + l.xga > 0 ? l.xgf / (l.xgf + l.xga) : null);
+/** A unit's 5v5 decomposition part (xGF − xGA unless ``side`` is given), from the ctx_ fields. */
+const ctx = (l: LineRating, part: string, side?: "f" | "a") => {
+  const f = l[`ctx_${part}_f`], a = l[`ctx_${part}_a`];
+  if (side) return (side === "f" ? f : a) ?? null;
+  return f == null || a == null ? null : f - a;
+};
+const unitParts = (l: LineRating): Parts =>
+  Object.fromEntries(
+    ["own", "mates", "comp", "zone", "ctx", "resid", "actual", "league"].map((p) => [
+      p, { f: ctx(l, p, "f"), a: ctx(l, p, "a"), d: ctx(l, p) },
+    ])
+  );
+
 const unitKey = (l: LineRating) => `${l.team_id}-${l.kind}-${l.players.map((p) => p.player_id).join("-")}`;
 
 /** Last names, with a first initial where two players on the unit share one ("A. Protas"). */
@@ -124,10 +137,22 @@ function columns(s: Scales, kind: Kind): Column<LineRating>[] {
     render: (l) => <span className="text-muted-foreground">{l.games}</span>, sort: (l) => l.games,
   };
 
+  const tier: Column<LineRating> = {
+    key: "tier", label: "Tier", title: "The members' most common ice-time tier (rank in the team's 5v5 TOI each game)",
+    render: (l) => <span className="text-muted-foreground">{l.tier ?? "–"}</span>, sort: (l) => l.tier,
+  };
+  const comp: Column<LineRating> = {
+    key: "comp", label: "Comp xGD/60", align: "right",
+    title: "What the opponents they faced did to their 5v5 xGD per 60 (negative = tougher competition), while the whole unit was on the ice",
+    render: (l) => <Signed value={ctx(l, "comp")}>{signed(ctx(l, "comp"))}</Signed>, sort: (l) => ctx(l, "comp"),
+  };
+
   if (kind === "PP") return [...lead, ratingF, actF, actA, goals, gp];
   if (kind === "PK") return [...lead, ratingA, actA, actF, goals, gp];
   return [
-    ...lead,
+    ...lead.slice(0, 2),
+    tier,
+    lead[2],
     {
       key: "xgd", label: "xGD/60", align: "right", className: "font-semibold",
       title: "5v5 xG differential per 60 this unit adds while on the ice, relative to average (sum of its players' current ratings)",
@@ -141,6 +166,7 @@ function columns(s: Scales, kind: Kind): Column<LineRating>[] {
       key: "oxgfp", label: "Act. xGF%", align: "right", title: "Share of 5v5 xG that went their way together",
       render: (l) => pct(xgfPct(l)), sort: xgfPct,
     },
+    comp,
     goals,
     gp,
   ];
@@ -172,6 +198,11 @@ function LineDetail({ line }: { line: LineRating }) {
         })}
       </div>
       {st && <div className="text-xs text-muted-foreground">Special-teams ratings per player are on the Players tab (PP / PK columns).</div>}
+      {!st && line.ctx_toi_s ? (
+        <div className="max-w-3xl border-t border-border pt-3">
+          <Breakdown parts={unitParts(line)} toiS={line.ctx_toi_s} note="Own play is the unit's players; teammates are the other skaters with them." />
+        </div>
+      ) : null}
     </div>
   );
 }

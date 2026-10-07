@@ -92,3 +92,58 @@ def test_team_context_records_l10_streak_and_previous_season():
     assert ctx["LAK"]["record"]["w"] == 1 and ctx["LAK"]["l10"]["l"] == 2
     assert ctx["FLA"]["prev_record"] is None
     assert ctx["SEA"]["record"]["gp"] == 0 and ctx["SEA"]["prev_record"] is None and ctx["SEA"]["name"] == "Kraken"
+
+
+class _StubData:
+    """Just enough of :class:`SiteData` for the context routes."""
+
+    def __init__(self, tables: dict):
+        self.tables = tables
+
+    def rankings(self, day):
+        return {"season": 20252026, "players": pl.DataFrame({"player_id": [2], "ev_net": [0.3]})}
+
+    def games(self):
+        return pl.DataFrame({"season": [20252026], "home_team_id": [1], "home_abbr": ["PIT"]})
+
+    def player_names(self):
+        return {1: "Skater One", 2: "Skater Two"}
+
+    def processed(self, key, current):
+        return self.tables.get(key)
+
+
+def _client(tables: dict, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from nhl.api.deps import get_data
+    from nhl.api.main import app
+
+    monkeypatch.setitem(app.dependency_overrides, get_data, lambda: _StubData(tables))
+    return TestClient(app)
+
+
+def test_player_context_route_returns_parts_usage_and_linemates(monkeypatch):
+    season = 20252026
+    summary = pl.DataFrame([{
+        "season": season, "player_id": 1, "team_id": 1, "group": "F", "games": 10, "toi_s": 9000.0,
+        **{f"{p}_{s}": v for p, v in (("own", 0.2), ("mates", 0.1), ("comp", -0.05), ("zone", 0.0), ("ctx", 0.0),
+                                       ("resid", 0.05), ("actual", 2.9), ("league", 2.6)) for s in ("f",)},
+        **{f"{p}_a": 0.0 for p in ("own", "mates", "comp", "zone", "ctx", "resid")}, "actual_a": 2.6, "league_a": 2.6,
+        "qot_net": 0.01, "qoc_net": 0.02, "qot_net_pct": 0.7, "qoc_net_pct": 0.9, "qot_toi": 0.3, "qoc_toi": 0.31,
+    }])
+    usage = pl.DataFrame({"season": [season], "player_id": [1], "team_id": [1], "games_F1": [8], "tier_mode": ["F1"]})
+    mates = pl.DataFrame({"team_id": [1], "player_id": [1], "mate_id": [2], "shared_s": [4500], "games": [9]})
+    client = _client({keys.onice_context_summary(season): summary, keys.usage_summary(season): usage, keys.linemates(season): mates}, monkeypatch)
+    body = client.get("/api/ratings/players/1/context?date=2026-01-01").json()
+    row = body["rows"][0]
+    assert row["team_abbr"] == "PIT" and row["usage"]["games_F1"] == 8
+    assert abs(row["parts"]["own"]["d"] - 0.2) < 1e-12 and abs(row["parts"]["actual"]["d"] - 0.3) < 1e-9
+    assert row["linemates"] == [{"player_id": 2, "player_name": "Skater Two", "shared_s": 4500, "share": 0.5, "games": 9, "ev_net": 0.3}]
+
+
+def test_team_matchups_route_rejects_other_seasons_and_handles_no_data(monkeypatch):
+    client = _client({}, monkeypatch)
+    assert client.get("/api/ratings/teams/1/matchups?season=20102011&date=2026-01-01").status_code == 400
+    body = client.get("/api/ratings/teams/1/matchups?date=2026-01-01").json()
+    assert body["cells"] == [] and body["index"] is None

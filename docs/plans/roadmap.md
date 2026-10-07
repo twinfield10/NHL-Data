@@ -283,6 +283,11 @@ Pages:
 - **Game recaps:** xG timeline and who was on the ice.
 - **Model performance:** calibration and CLV tracker.
 
+## Next: usage and context (owner, 2026-10-07)
+
+Teammate and opponent quality, deployment tiers and line matchups, then player archetypes,
+then DANAH (player future value / WAR). Plan: [usage-context.md](usage-context.md).
+
 ## Later: late-season and playoff accuracy (owner, 2026-10-06)
 
 The honest pregame model matches or slightly beats the closing line from November to

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import MatchupGrid from "@/components/MatchupGrid";
 import SortTable, { type Column } from "@/components/SortTable";
 import IdentityCell from "@/components/IdentityCell";
 import { Card, ErrorState, Loading, Signed } from "@/components/ui";
@@ -174,14 +175,23 @@ export default function TeamsPage() {
               rowKey={(t) => t.team_id}
               initialSort={{ key: "gd60", desc: true }}
               onRowClick={(t) => setOpen(open === t.team_id ? null : t.team_id)}
-              expanded={(t) => (open === t.team_id ? <LineupDetail team={t} /> : null)}
+              expanded={(t) =>
+                open === t.team_id ? (
+                  <div className="space-y-6">
+                    <LineupDetail team={t} />
+                    <div className="border-t border-border pt-4">
+                      <MatchupGrid teamId={t.team_id} />
+                    </div>
+                  </div>
+                ) : null
+              }
             />
           </Card>
           <p className="text-xs text-muted-foreground">
             Each team is its projected lineup today (injuries, transactions and DailyFaceoff lines applied, as on the game
             pages) with every skater weighted by his ice-time shares, and its goalies weighted by recent starts — the same
             composition the simulator prices games with, against an average opponent on neutral ice. Rest, coaching and
-            in-season team residuals are left out. Cell colors run from red (worse) through neutral (league average) to green (better). Click a team for its lineup.
+            in-season team residuals are left out. Cell colors run from red (worse) through neutral (league average) to green (better). Click a team for its lineup and line matchups.
           </p>
         </>
       )}

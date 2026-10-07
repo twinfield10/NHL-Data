@@ -402,6 +402,46 @@ def cmd_game_state(args: argparse.Namespace) -> None:
     print("\n".join(r.summary() for r in reports))
 
 
+def cmd_usage(args: argparse.Namespace) -> None:
+    """Deployment tiers, TOI by strength, PP/PK units and zone starts per skater-game."""
+    from nhl.storage.s3 import Store
+    from nhl.usage.tiers import build_season
+
+    store = Store()
+    for year in config.parse_seasons(args.seasons):
+        checks = build_season(store, config.season_id(year))
+        print(config.season_id(year), "  ".join(f"{k} {v:.3f}" for k, v in checks.items()))
+
+
+def cmd_usage_matchups(args: argparse.Namespace) -> None:
+    """Line matchups: matching matrices, intensity, hard minutes and the interaction test."""
+    from nhl.storage.s3 import Store
+    from nhl.usage import matchups
+
+    res = matchups.run(Store(), [config.season_id(y) for y in config.parse_seasons(args.seasons)])
+    print(matchups.write_report(res, args.report))
+
+
+def cmd_usage_projection(args: argparse.Namespace) -> None:
+    """Phase D: does context improve rest-of-season on-ice forecasts?"""
+    from nhl.storage.s3 import Store
+    from nhl.usage import projection
+
+    _, scores = projection.run(Store(), [config.season_id(y) for y in config.parse_seasons(args.seasons)])
+    print(projection.write_report(scores, args.report))
+
+
+def cmd_onice(args: argparse.Namespace) -> None:
+    """5v5 on-ice decomposition per skater-game: own, teammates, competition, context, residual."""
+    from nhl.storage.s3 import Store
+    from nhl.usage.onice import build_season
+
+    store = Store()
+    for year in config.parse_seasons(args.seasons):
+        checks = build_season(store, config.season_id(year))
+        print(config.season_id(year), "  ".join(f"{k} {v:.4f}" for k, v in checks.items()))
+
+
 def cmd_validate_game_state(args: argparse.Namespace) -> None:
     """Check the M2 tables against official scores and NHL boxscores; write the report."""
     from pathlib import Path
@@ -414,7 +454,7 @@ def cmd_validate_game_state(args: argparse.Namespace) -> None:
 
 
 def cmd_update(args: argparse.Namespace) -> None:
-    """Nightly: catalog -> ingest -> rebuild -> features -> score -> game state -> ratings snapshot."""
+    """Nightly: catalog -> ingest -> rebuild -> features -> score -> game state -> usage -> ratings snapshot -> on-ice."""
     year = str(args.season or _current_start_year())
     cmd_catalog(argparse.Namespace(seasons=f"{config.FIRST_SEASON}-{year}", force=False))
     cmd_ingest(argparse.Namespace(seasons=year, workers=6, refetch=False, skip_catalog=True))
@@ -425,7 +465,9 @@ def cmd_update(args: argparse.Namespace) -> None:
     cmd_xg_monitor(argparse.Namespace(season=int(year), no_write=False))
     cmd_score_freeze(argparse.Namespace(seasons=year))
     cmd_game_state(argparse.Namespace(seasons=year, workers=16))
+    cmd_usage(argparse.Namespace(seasons=year))
     cmd_ratings(argparse.Namespace(backfill=None, as_of=None, every=7))
+    cmd_onice(argparse.Namespace(seasons=year))
 
 
 POLL_TARGETS = ("odds", "goalies", "lines", "injuries", "transactions", "officials")
@@ -720,6 +762,24 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--seasons", default=_default_seasons())
     p.add_argument("--workers", type=int, default=16, help="parallel reads of per-game raw payloads")
     p.set_defaults(func=cmd_game_state)
+
+    p = sub.add_parser("usage", help="deployment tiers and usage per skater-game (usage plan phase A)")
+    p.add_argument("--seasons", default=_default_seasons())
+    p.set_defaults(func=cmd_usage)
+
+    p = sub.add_parser("usage-matchups", help="line matchup study and per-team matching tables (usage plan phase C)")
+    p.add_argument("--seasons", default=f"2015-{_current_start_year() - 1}")
+    p.add_argument("--report", default="docs/reports/usage-matchups-numbers.md")
+    p.set_defaults(func=cmd_usage_matchups)
+
+    p = sub.add_parser("usage-projection", help="rest-of-season on-ice forecast test (usage plan phase D)")
+    p.add_argument("--seasons", default=f"2015-{_current_start_year() - 1}")
+    p.add_argument("--report", default="docs/reports/usage-projection-numbers.md")
+    p.set_defaults(func=cmd_usage_projection)
+
+    p = sub.add_parser("onice", help="5v5 on-ice decomposition and QoT/QoC per skater-game (usage plan phase B)")
+    p.add_argument("--seasons", default=_default_seasons())
+    p.set_defaults(func=cmd_onice)
 
     p = sub.add_parser("validate-game-state", help="validate M2 tables vs official scores and boxscores")
     p.add_argument("--seasons", default=_default_seasons())

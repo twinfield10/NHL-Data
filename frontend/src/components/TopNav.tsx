@@ -8,11 +8,8 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/games", label: "Games" },
-  { href: "/teams", label: "Teams" },
-  { href: "/lines", label: "Lines" },
-  { href: "/players", label: "Players" },
-  { href: "/edges", label: "Edges" },
-  { href: "/bets", label: "Bets" },
+  { href: "/ratings", label: "Ratings" },
+  { href: "/results", label: "Model Results" },
 ];
 
 export default function TopNav() {

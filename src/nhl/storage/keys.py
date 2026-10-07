@@ -216,6 +216,44 @@ def player_game_logs(season: int) -> str:
     return f"processed/game_logs/player/{season}.parquet"
 
 
+# --- usage and context (docs/plans/usage-context.md) -------------------------------------
+
+
+def usage(season: int) -> str:
+    """Deployment tier, TOI by strength, PP/PK unit and zone starts per skater-game."""
+    return f"processed/usage/{season}.parquet"
+
+
+def usage_summary(season: int) -> str:
+    """Usage per (season, player, team): games by tier, TOI per game, special-teams roles."""
+    return f"processed/usage_summary/{season}.parquet"
+
+
+def onice_context(season: int) -> str:
+    """5v5 on-ice xGF/xGA split into own, teammates, competition, zone, context, league, residual."""
+    return f"processed/onice_context/{season}.parquet"
+
+
+def onice_context_summary(season: int) -> str:
+    """On-ice decomposition per (season, player, team) with QoT/QoC percentiles."""
+    return f"processed/onice_context_summary/{season}.parquet"
+
+
+def usage_matchups(season: int) -> str:
+    """5v5 matching matrix per team, coach and venue: own tier x opponent tier seconds, share, ratio."""
+    return f"processed/usage_matchups/{season}.parquet"
+
+
+def unit_context(season: int) -> str:
+    """5v5 decomposition per forward line and D pair while the whole unit is on the ice."""
+    return f"processed/unit_context/{season}.parquet"
+
+
+def linemates(season: int) -> str:
+    """Season 5v5 time together per (team, player, teammate)."""
+    return f"processed/linemates/{season}.parquet"
+
+
 # --- ratings (M3) -------------------------------------------------------------------------
 
 

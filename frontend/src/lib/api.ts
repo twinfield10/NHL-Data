@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import type { BetsResponse, EdgesResponse, GameResponse, LinesResponse, PlayersResponse, SlateResponse, TeamsResponse } from "./types";
+import type {
+  BetsResponse, EdgesResponse, GameResponse, LinesResponse, PlayerContextResponse, PlayersResponse, SlateResponse, TeamMatchupsResponse, TeamsResponse,
+} from "./types";
 
 async function apiFetch<T>(path: string): Promise<T> {
   const res = await fetch(path);
@@ -40,4 +42,18 @@ export const useLineRatings = (season?: number | null) =>
   useQuery({
     queryKey: ["ratings", "lines", season],
     queryFn: () => apiFetch<LinesResponse>(`/api/ratings/lines${season ? `?season=${season}` : ""}`),
+  });
+
+export const usePlayerContext = (playerId: number | null) =>
+  useQuery({
+    queryKey: ["ratings", "player-context", playerId],
+    queryFn: () => apiFetch<PlayerContextResponse>(`/api/ratings/players/${playerId}/context`),
+    enabled: playerId != null,
+  });
+
+export const useTeamMatchups = (teamId: number | null, season?: number | null) =>
+  useQuery({
+    queryKey: ["ratings", "team-matchups", teamId, season],
+    queryFn: () => apiFetch<TeamMatchupsResponse>(`/api/ratings/teams/${teamId}/matchups${season ? `?season=${season}` : ""}`),
+    enabled: teamId != null,
   });
