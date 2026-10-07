@@ -231,8 +231,9 @@ stakes in **units** (bankroll 100 u); **¼ Kelly everywhere**, capped at 2 u per
   matrix) against every captured book's latest price; model at the exact line, market =
   consensus (or the book's own price at an off-consensus line), books more than 3 points
   off the consensus skipped as bad quotes; best book per side; flagged when the edge is
-  ≥ 2% (moneyline) or ≥ 3% (puck line). **Tiers:** `validated` (Nov-Feb moneyline),
-  `unvalidated` (other moneylines, puck lines), `track_only` (totals).
+  ≥ 2% (moneyline) or ≥ 3% (puck line, total). **Tiers:** `validated` (Nov-Feb moneyline),
+  `unvalidated` (other moneylines, puck lines, totals; totals were `track_only` until
+  2026-10-07).
 - **Ledger** (`bets/ledger.parquet`, `src/nhl/betting/ledger.py`): a paper bet the first
   time a (game, market, side) is flagged; `nhl record-bet` for real bets; `nhl grade-bets`
   (nightly) fills the closing consensus from our own captures, CLV, result and units, and

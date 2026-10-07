@@ -53,7 +53,7 @@ def _bet_id(*parts) -> str:
 
 def day_stakes(store: Store, day: date, exclude: pl.DataFrame | None = None) -> float:
     """Units of paper bets already flagged for ``day`` (not counting ``exclude`` keys)."""
-    led = load(store).filter((pl.col("kind") == "paper") & (pl.col("game_date") == day) & (pl.col("tier") != "track_only"))
+    led = load(store).filter((pl.col("kind") == "paper") & (pl.col("game_date") == day))
     if exclude is not None and exclude.height:
         led = led.join(exclude.cast({"side": pl.Int8}), on=["game_id", "market", "side"], how="anti")
     return float(led["stake_units"].sum())

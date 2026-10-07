@@ -41,8 +41,7 @@ local, and this machine runs on **America/New_York**, so every time below is ET.
 **Edges** (`--edges` on every poll): after a reprice, or whenever an odds poll stores a
 change, `nhl edges` compares the latest prices with the latest odds from every book, sizes
 stakes (¼ Kelly, 2 u per bet, 3 u per game, 10 u per day; bankroll 100 u) and writes
-`pregame/edges/{date}/{stamp}`. A newly flagged bet, and every qualifying totals edge
-(track-only), goes into the paper ledger `bets/ledger.parquet` at the price available then.
+`pregame/edges/{date}/{stamp}`. A newly flagged bet (moneyline, puck line or total) goes into the paper ledger `bets/ledger.parquet` at the price available then.
 Real bets go in with `nhl record-bet`. See `src/nhl/betting/edges.py`.
 
 **Each reprice** takes ~15 s and writes a new pregame snapshot: lineups, goalies, prices,
