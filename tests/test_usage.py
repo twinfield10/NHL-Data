@@ -165,3 +165,14 @@ def test_interaction_test_finds_a_planted_product_effect():
         normals[season] = season_normals(rows, 0.0, 0.0)
     res = interaction_test(normals)
     assert (res["gain_product"] > 0.1).all() and (res["gain_cells"].abs() < 0.01).all()
+
+
+def test_cut_dates_follow_the_schedule_and_shared_toi_pairs():
+    from nhl.usage.projection import cut_dates, shared_toi
+
+    games = pl.DataFrame({"season": [20202021] * 100, "game_date": [date(2021, 1, 13 + i // 10) for i in range(100)]})
+    assert cut_dates(games, 20202021) == [date(2021, 1, 15), date(2021, 1, 17), date(2021, 1, 18)]
+    pairs = shared_toi(_stints().with_columns(pl.lit(1, pl.Int8).alias("period")))
+    p = pairs.filter((pl.col("player_id") == 101) & (pl.col("mate_id") == 201))
+    assert p["shared_s"].item() == 200  # two 5v5 faceoff stints together; the 5v4 one is excluded
+    assert pairs.filter(pl.col("player_id") == pl.col("mate_id")).is_empty()

@@ -1,6 +1,6 @@
 # Plan: Usage and context (teammate and opponent quality)
 
-**Status:** planned 2026-10-07. **Phase A built 2026-10-07** (`src/nhl/usage/tiers.py`, `nhl usage`, nightly after game state; backfilled 2010-11 to 2026-27): see [Phase A results](#phase-a-results-2026-10-07). **Phase B built 2026-10-07** (`src/nhl/usage/onice.py`, `nhl onice`, nightly after the ratings snapshot; backfilled 2015-16 to 2026-27): see [Phase B results](#phase-b-results-2026-10-07). **Phase C done 2026-10-07**: matchups are real but don't move game prices; simulator unchanged ([report](../reports/usage-matchups.md)).
+**Status:** planned 2026-10-07. **Phase A built 2026-10-07** (`src/nhl/usage/tiers.py`, `nhl usage`, nightly after game state; backfilled 2010-11 to 2026-27): see [Phase A results](#phase-a-results-2026-10-07). **Phase B built 2026-10-07** (`src/nhl/usage/onice.py`, `nhl onice`, nightly after the ratings snapshot; backfilled 2015-16 to 2026-27): see [Phase B results](#phase-b-results-2026-10-07). **Phase C done 2026-10-07**: matchups are real but don't move game prices; simulator unchanged ([report](../reports/usage-matchups.md)). **Phase D done 2026-10-07**: gate passed, rating + context beats shrunk raw on-ice rates in every season ([report](../reports/usage-projection.md)).
 **Depends on:** M2 stints (`processed/stints/{season}`) and inferred units
 (`processed/lineups/{season}`), M3 point-in-time rating snapshots (`ratings/{date}/`,
 weekly 2015-16 on), M4 simulator inputs (`sim/inputs.py` deployment shares).
@@ -149,6 +149,16 @@ Does knowing a player's context improve the forecast of his future on-ice result
   linemates, the team's roster ratings, the opponent mix of the remaining schedule).
 - **Gate:** candidate beats baseline on held-out seasons. If it passes, the method is the
   context input to props and DANAH; if not, those use the rating alone.
+
+### Phase D results (2026-10-07)
+See [usage-projection.md](../reports/usage-projection.md) (`src/nhl/usage/projection.py`,
+`nhl usage-projection`). Cuts after 25/40/55% of each season's games (calendar cuts broke
+2020-21), 2015-16 to 2025-26.
+- **Gate: passed.** `blend` (2/3 rating + season-to-date context, 1/3 raw shrunk with 300
+  min) beats the tuned shrunk raw rate by 15% (xGF/60) and 11% (xGA/60), in 11 of 11 seasons.
+- The rating alone is the worst forecast; context is what makes ratings usable for player
+  numbers. Recent linemates ≈ season-to-date context.
+- 5v5 points/60 improve only 1.4% (7 of 11): points need their own model (DANAH).
 
 ## Phase E: Site
 API routes (`src/nhl/api/routers/`) and frontend panels:

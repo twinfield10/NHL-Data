@@ -422,6 +422,15 @@ def cmd_usage_matchups(args: argparse.Namespace) -> None:
     print(matchups.write_report(res, args.report))
 
 
+def cmd_usage_projection(args: argparse.Namespace) -> None:
+    """Phase D: does context improve rest-of-season on-ice forecasts?"""
+    from nhl.storage.s3 import Store
+    from nhl.usage import projection
+
+    _, scores = projection.run(Store(), [config.season_id(y) for y in config.parse_seasons(args.seasons)])
+    print(projection.write_report(scores, args.report))
+
+
 def cmd_onice(args: argparse.Namespace) -> None:
     """5v5 on-ice decomposition per skater-game: own, teammates, competition, context, residual."""
     from nhl.storage.s3 import Store
@@ -762,6 +771,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--seasons", default=f"2015-{_current_start_year() - 1}")
     p.add_argument("--report", default="docs/reports/usage-matchups-numbers.md")
     p.set_defaults(func=cmd_usage_matchups)
+
+    p = sub.add_parser("usage-projection", help="rest-of-season on-ice forecast test (usage plan phase D)")
+    p.add_argument("--seasons", default=f"2015-{_current_start_year() - 1}")
+    p.add_argument("--report", default="docs/reports/usage-projection-numbers.md")
+    p.set_defaults(func=cmd_usage_projection)
 
     p = sub.add_parser("onice", help="5v5 on-ice decomposition and QoT/QoC per skater-game (usage plan phase B)")
     p.add_argument("--seasons", default=_default_seasons())
