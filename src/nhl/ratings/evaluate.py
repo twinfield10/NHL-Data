@@ -66,6 +66,7 @@ def season_cutoffs(store: Store, start_year: int) -> pl.DataFrame:
     )
     frozen = None if prior is None else prior.with_columns(pl.lit(1e12).alias("precision"))
     frozen_hyper = rapm.Hyper(newcomer_s=1e12)
+    defence = rapm.defence_ids(store)
     dates = design.rows["game_date"]
     out = []
     for cut in _cutoff_dates(start_year, dates.min(), dates.max()):
@@ -74,8 +75,8 @@ def season_cutoffs(store: Store, start_year: int) -> pl.DataFrame:
         normal = rapm.normal_equations(design, early)
         actual = _team_rates(late_rows, None).select("team", "hours", "xgf60", "xga60", "gd60")
         preds = {
-            "ratings": rapm.predict(rapm.fit(normal, prior), design, ~early),
-            "last_season": rapm.predict(rapm.fit(normal, frozen, frozen_hyper), design, ~early),
+            "ratings": rapm.predict(rapm.fit(normal, prior, defence=defence), design, ~early),
+            "last_season": rapm.predict(rapm.fit(normal, frozen, frozen_hyper, defence), design, ~early),
         }
         frames = [
             _team_rates(late_rows, p).select("team", pl.lit(name).alias("model"), "xgf60", "xga60")

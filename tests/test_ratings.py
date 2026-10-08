@@ -87,6 +87,21 @@ def test_rapm_recovers_player_effects_and_centres():
     assert abs((offence["mean"] * offence["toi_s"]).sum() / offence["toi_s"].sum()) < 1e-6
 
 
+def test_defence_newcomers_get_position_prior_means():
+    from nhl.ratings import design as D, rapm as R
+
+    des = D.build(_stint_rows())
+    normal = R.normal_equations(des)
+    hyper = R.Hyper(newcomer_off_d=-0.25, newcomer_def_d=0.12)
+    _, mean, _ = R._penalties(normal, None, hyper, frozenset({99}))
+    by_col = dict(zip(normal.columns, mean))
+    assert by_col["O:99"] == -0.25 and by_col["D:99"] == 0.12
+    assert by_col["O:1"] == 0.0  # not a defenceman
+    prior = pl.DataFrame({"player_id": [99], "side": ["O"], "mean": [0.3], "precision": [1e5]})
+    _, mean, _ = R._penalties(normal, prior, hyper, frozenset({99}))
+    assert dict(zip(normal.columns, mean))["O:99"] == 0.3  # an existing prior wins
+
+
 def test_zone_shares_split_duration_by_second():
     from nhl.ratings.design import _zone_shares
 

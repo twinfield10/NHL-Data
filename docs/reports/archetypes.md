@@ -78,3 +78,7 @@ newcomer prior and shrinkage target is league average for everyone, while defenc
 offence terms average below it. The fix is a position-specific prior mean (newcomers and
 aging). Test it in the full re-chained `chain_eval` before adopting, since this one-step test
 doesn't re-chain later seasons.
+
+**Re-chained result (2026-10-08): adopted for newcomers.** D newcomer priors of offence −0.25,
+defence +0.12 xG/60 gain +0.93 bp, 13 of 13 seasons. A per-season shift on returning D priors
+adds < 0.1 bp on top and isn't used. See `rapm.Hyper` and the M3 plan.

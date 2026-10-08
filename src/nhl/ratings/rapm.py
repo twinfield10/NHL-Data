@@ -9,7 +9,8 @@ Solves, in closed form,
   decayed posterior precision from last season, or ``newcomer_s`` for players without
   one. Context terms get small ridges; coaches a large one.
 * ``β₀``: prior means. Last season's estimate for players (``newcomer_off`` /
-  ``newcomer_def`` for new ones); 0 for context.
+  ``newcomer_def`` for new ones, ``newcomer_off_d`` / ``newcomer_def_d`` for new
+  defencemen); 0 for context.
 * ``K``: structure. TOI-weighted zero-sum on skater offence and on skater defence, and
   second-difference smoothing on each zone-start type's per-second terms.
 
@@ -48,12 +49,19 @@ class Hyper:
     2012-2025): an interior optimum at decay 0.7-0.75 and a newcomer prior worth ~100k
     seconds, centred on league average (Magnus 9's below-average newcomer prior scored
     worse here). Results were flat in ``max_precision_s``; ``context_s`` 2k beat 50k.
+
+    Defencemen get their own newcomer means (tuned 2026-10-08, same test re-chained):
+    offence −0.25 and defence +0.12 xG/60 relative to forwards' league average gain
+    +0.93 bp on late-season MSE, in 13 of 13 seasons (the whole age curve adds +0.29 bp).
+    With newcomers of both positions at 0, carried-forward D offence ran high.
     """
 
     decay: float = 0.7
     newcomer_s: float = 1.0e5
     newcomer_off: float = 0.0
     newcomer_def: float = 0.0
+    newcomer_off_d: float = -0.25
+    newcomer_def_d: float = 0.12
     max_precision_s: float = 3.0e6
     context_s: float = 2000.0
     coach_s: float = 2.0e5
@@ -62,7 +70,8 @@ class Hyper:
 
 #: Special teams (PP offence / PK defence), tuned the same way: decay 0.9 and a 20k-second
 #: newcomer prior (+0.65% vs no player terms; EV gets +0.17%, PP skill is concentrated).
-ST_HYPER = Hyper(decay=0.9, newcomer_s=2.0e4, coach_s=2.0e4)
+#: Position-specific newcomer means are untested for ST, so defencemen start at 0 there.
+ST_HYPER = Hyper(decay=0.9, newcomer_s=2.0e4, coach_s=2.0e4, newcomer_off_d=0.0, newcomer_def_d=0.0)
 
 
 @dataclass
@@ -128,8 +137,12 @@ def normal_equations(design: Design, mask: np.ndarray | None = None) -> Normal:
     )
 
 
-def _penalties(normal: Normal, prior: pl.DataFrame | None, hyper: Hyper) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Prior precision and mean per column, and the dense structural matrix K."""
+def _penalties(normal: Normal, prior: pl.DataFrame | None, hyper: Hyper, defence: frozenset[int] = frozenset()
+               ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Prior precision and mean per column, and the dense structural matrix K.
+
+    ``defence``: player ids of defencemen (newcomers among them use the ``*_d`` means).
+    """
     k = len(normal.columns)
     prec = np.full(k, hyper.context_s)
     mean = np.zeros(k)
@@ -139,7 +152,11 @@ def _penalties(normal: Normal, prior: pl.DataFrame | None, hyper: Hyper) -> tupl
     for i, c in enumerate(normal.columns):
         if c.startswith(("O:", "D:")):
             side, pid = c[0], int(c[2:])
-            m, pr = lookup.get((pid, side), (hyper.newcomer_off if side == "O" else hyper.newcomer_def, hyper.newcomer_s))
+            if pid in defence:
+                new = hyper.newcomer_off_d if side == "O" else hyper.newcomer_def_d
+            else:
+                new = hyper.newcomer_off if side == "O" else hyper.newcomer_def
+            m, pr = lookup.get((pid, side), (new, hyper.newcomer_s))
             mean[i], prec[i] = m, pr
         elif c.startswith("coach:"):
             prec[i] = hyper.coach_s
@@ -160,17 +177,19 @@ def _penalties(normal: Normal, prior: pl.DataFrame | None, hyper: Hyper) -> tupl
     return prec, mean, big
 
 
-def fit(normal: Normal, prior: pl.DataFrame | None = None, hyper: Hyper | None = None) -> Fit:
+def fit(normal: Normal, prior: pl.DataFrame | None = None, hyper: Hyper | None = None,
+        defence: frozenset[int] = frozenset()) -> Fit:
     """Solve the penalized least squares.
 
     Args:
         normal: From :func:`normal_equations` (any span of rows).
         prior: ``player_id, side, mean, precision`` (``carry_forward`` output).
         hyper: Penalty settings.
+        defence: Player ids of defencemen (:func:`defence_ids`), for their newcomer means.
     """
     hyper = hyper or Hyper()
     k = len(normal.columns)
-    prec, mean, big = _penalties(normal, prior, hyper)
+    prec, mean, big = _penalties(normal, prior, hyper, defence)
     h = normal.gram.copy()
     h[:k, :k] += np.diag(prec) + big
     h[k, k] += 1e-6  # keeps an empty span (no rows) solvable
@@ -253,7 +272,7 @@ def age_prior(prior: pl.DataFrame | None, ages: pl.DataFrame | None, curve: AgeC
 
 def chain_eval(
     halves: dict[int, tuple[Normal, Normal]], hyper: Hyper, eval_years: list[int], baseline: Hyper | None = None,
-    ages: dict[int, pl.DataFrame] | None = None, curve: AgeCurve | None = None,
+    ages: dict[int, pl.DataFrame] | None = None, curve: AgeCurve | None = None, defence: frozenset[int] = frozenset(),
 ) -> dict[str, float]:
     """Point-in-time test: chain full seasons, then for each eval season fit through Dec 31
     and score the rest by weighted squared error of xG per 60.
@@ -267,25 +286,32 @@ def chain_eval(
     Returns:
         ``model`` and ``baseline`` weighted MSE and the relative ``improvement``.
         With ``ages`` (year -> ``player_id, age``) and ``curve``, priors are aged at
-        the start of every season.
+        the start of every season. ``defence`` enables the defencemen's newcomer means.
     """
-    baseline = baseline or Hyper(decay=1.0, newcomer_s=1e12, newcomer_off=0.0, newcomer_def=0.0)
+    baseline = baseline or Hyper(decay=1.0, newcomer_s=1e12, newcomer_off=0.0, newcomer_def=0.0,
+                                 newcomer_off_d=0.0, newcomer_def_d=0.0)
     prior, priors = None, {}
     for year in sorted(halves):
         prior = age_prior(prior, (ages or {}).get(year), curve)
         priors[year] = prior
         early, late = halves[year]
-        prior = carry_forward(prior, fit(early + late, prior, hyper))
+        prior = carry_forward(prior, fit(early + late, prior, hyper, defence))
     sse_m = sse_b = weight = 0.0
     for year in eval_years:
         early, late = halves[year]
-        sse_m += weighted_sse(fit(early, priors[year], hyper), late)
+        sse_m += weighted_sse(fit(early, priors[year], hyper, defence), late)
         sse_b += weighted_sse(fit(early, None, baseline), late)
         weight += late.weight
     return {"model": sse_m / weight, "baseline": sse_b / weight, "improvement": 1 - sse_m / sse_b}
 
 
 # --- production: season priors and point-in-time fits -----------------------------------
+
+
+def defence_ids(store: "Store") -> frozenset[int]:
+    """Player ids listed as defencemen."""
+    players = store.read_parquet_required(keys.PLAYERS)
+    return frozenset(players.filter(pl.col("position") == "D")["player_id"].to_list())
 
 
 def _ages(store: "Store", start_year: int) -> pl.DataFrame:
@@ -331,11 +357,11 @@ def build_priors(store: "Store", start_years: list[int], state: str = "EV", hype
     hyper = hyper or (Hyper() if state == "EV" else ST_HYPER)
     if curve is not None:
         store.put_bytes(curve_key(state), json.dumps({"coef": curve.coef, "scale": curve.scale}).encode())
-    prior = None
+    prior, defence = None, defence_ids(store)
     for year in sorted(start_years):
         season = config.season_id(year)
         prior = age_prior(prior, _ages(store, year), curve)
-        f = fit(normal_equations(season_design(store, season, state)), prior, hyper)
+        f = fit(normal_equations(season_design(store, season, state)), prior, hyper, defence)
         prior = carry_forward(prior, f)
         store.put_parquet(prior_key(state, config.season_id(year + 1)), prior)
         logger.info("%s prior for %s written (%d player-sides)", state, config.season_id(year + 1), prior.height)
@@ -365,6 +391,6 @@ def as_of(store: "Store", day: date, state: str = "EV", hyper: Hyper | None = No
     prior = age_prior(store.get_parquet(prior_key(state, season)), _ages(store, start), load_curve(store, state))
     design = season_design(store, season, state)
     mask = (design.rows["game_date"] < day).to_numpy()
-    f = fit(normal_equations(design, mask), prior, hyper)
+    f = fit(normal_equations(design, mask), prior, hyper, defence_ids(store))
     table = f.players.with_columns(pl.lit(day).alias("as_of"), (1 / pl.col("precision").sqrt()).alias("sd_s"))
     return f, table

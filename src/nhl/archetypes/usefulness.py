@@ -410,11 +410,11 @@ def aging_season(store: Store, season: int) -> dict | None:
     design = rapm.season_design(store, season, "EV")
     mask = (design.rows["game_date"] < date(start + 1, 1, 1)).to_numpy()
     early, late = rapm.normal_equations(design, mask), rapm.normal_equations(design, ~mask)
-    hyper = rapm.Hyper()
+    hyper, defence = rapm.Hyper(), rapm.defence_ids(store)
     k = len(early.columns)
 
     def solve(pr: pl.DataFrame):
-        prec, mean, big = rapm._penalties(early, pr, hyper)
+        prec, mean, big = rapm._penalties(early, pr, hyper, defence)
         h = early.gram.copy()
         h[:k, :k] += np.diag(prec) + big
         h[k, k] += 1e-6
