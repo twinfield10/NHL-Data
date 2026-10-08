@@ -16,7 +16,9 @@ export const WARN_EDGE = 0.09;
 const handicap = (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(1)}`;
 
 /** Biggest edge still bettable (−∞ without one, e.g. after the close); used for sorting the page. */
-export const maxEdge = (edges: Edge[]) => Math.max(...edges.filter((e) => e.point !== "close").map((e) => e.edge), -Infinity);
+/** A game's largest live (blended) edge, optionally in one market only. */
+export const maxEdge = (edges: Edge[], market?: Edge["market"]) =>
+  Math.max(...edges.filter((e) => e.point !== "close" && (!market || e.market === market)).map((e) => e.edge), -Infinity);
 
 /** Anything with a side label and a price; edges add the model's view. */
 type Priced = Pick<Edge, "selection" | "price"> & Partial<Pick<Edge, "edge" | "flagged" | "point">>;

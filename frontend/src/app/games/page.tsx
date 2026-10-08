@@ -12,10 +12,11 @@ import { stampToIso, todayET } from "@/lib/format";
 import type { Bet, Edge, MarketLine, ThreeWay } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type SortBy = "EDGE" | "TIME";
+type SortBy = "TIME" | "ML" | "OU";
 const SORT_OPTIONS: [SortBy, string][] = [
-  ["EDGE", "Edge"],
   ["TIME", "Game Start"],
+  ["ML", "ML Edge"],
+  ["OU", "O/U Edge"],
 ];
 
 function groupBy<T extends { game_id: number }>(rows: T[]): Record<number, T[]> {
@@ -35,13 +36,13 @@ function Games() {
   const betsByGame: Record<number, Bet[]> = data ? groupBy(data.bets) : {};
   const linesByGame: Record<number, MarketLine[]> = data ? groupBy(data.lines) : {};
   const threeWay: Record<number, ThreeWay> = Object.fromEntries((data?.three_way ?? []).map((t) => [t.game_id, t]));
+  // Game start, or the largest blended edge on either side of the moneyline / total (ties by start).
   const games = [...(data?.games ?? [])].sort((a, b) => {
-    if (sortBy === "TIME") {
-      const d = Date.parse(a.start_time) - Date.parse(b.start_time);
-      if (d !== 0) return d;
+    if (sortBy !== "TIME") {
+      const market = sortBy === "ML" ? "moneyline" : "total";
+      const [ea, eb] = [maxEdge(edgesByGame[a.game_id] ?? [], market), maxEdge(edgesByGame[b.game_id] ?? [], market)];
+      if (ea !== eb) return eb > ea ? 1 : -1; // guard: −∞ − −∞ is NaN
     }
-    const [ea, eb] = [maxEdge(edgesByGame[a.game_id] ?? []), maxEdge(edgesByGame[b.game_id] ?? [])];
-    if (ea !== eb) return eb > ea ? 1 : -1; // guard: −∞ − −∞ is NaN
     return Date.parse(a.start_time) - Date.parse(b.start_time) || a.game_id - b.game_id;
   });
   const plays = data ? new Set(data.edges.filter((e) => e.flagged && e.point !== "close").map((e) => e.game_id)).size : 0;
