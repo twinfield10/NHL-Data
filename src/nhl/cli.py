@@ -345,6 +345,17 @@ def cmd_grade_bets(args: argparse.Namespace) -> None:
     print(ledger.summary(store))
 
 
+def cmd_site_tables(args: argparse.Namespace) -> None:
+    """Build the site's precomputed ratings boards (also run after every pregame run)."""
+    from datetime import date
+
+    from nhl.api.serialize import today_et
+    from nhl.site import tables
+    from nhl.storage.s3 import Store
+
+    print(tables.build(Store(), date.fromisoformat(args.date) if args.date else today_et()))
+
+
 def cmd_pregame(args: argparse.Namespace) -> None:
     """M5: project lineups and starters, price today's games, write pregame snapshots."""
     from datetime import date
@@ -847,6 +858,10 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("update", help="nightly incremental update of the current season")
     p.add_argument("--season", type=int, default=None)
     p.set_defaults(func=cmd_update)
+
+    p = sub.add_parser("site-tables", help="precompute the site's ratings boards -> site/ratings/")
+    p.add_argument("--date", default=None, help="YYYY-MM-DD (default today, Eastern)")
+    p.set_defaults(func=cmd_site_tables)
 
     p = sub.add_parser("serve", help="run the site API (frontend/ talks to it)")
     p.add_argument("--host", default="127.0.0.1")
