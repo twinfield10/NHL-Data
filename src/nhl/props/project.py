@@ -139,12 +139,15 @@ def tail_probs(p: np.ndarray, dist: np.ndarray, ks: tuple[int, ...],
 
 
 def project_players(player_shares: pl.DataFrame, goal_dists: pl.DataFrame,
-                    concentration: dict[str, float | None] | None = None) -> pl.DataFrame:
+                    concentration: dict[str, float | None] | None = None,
+                    thresholds: dict[str, tuple[int, ...]] | None = None) -> pl.DataFrame:
     """Per player-game: P(goals/assists/points >= k) for :data:`THRESHOLDS`, and expected counts.
 
     Args:
         player_shares: :func:`shares`.
         goal_dists: :func:`team_goal_dists` (or any frame with ``game_id, team_id, dist, mean_goals``).
+        concentration: Beta-binomial κ per stat (default :data:`CONCENTRATION`).
+        thresholds: k per stat (default :data:`THRESHOLDS`).
     """
     df = player_shares.join(goal_dists, on=["game_id", "team_id"], how="inner")
     if df.is_empty():
@@ -154,10 +157,41 @@ def project_players(player_shares: pl.DataFrame, goal_dists: pl.DataFrame,
     for stat, pcol in (("goals", "p_goal"), ("ast", "p_assist"), ("points", "p_point")):
         p = df[pcol].to_numpy()
         kappa = (CONCENTRATION if concentration is None else concentration).get(stat)
-        for k, v in tail_probs(p, dist, THRESHOLDS[stat], kappa).items():
+        for k, v in tail_probs(p, dist, (thresholds or THRESHOLDS)[stat], kappa).items():
             cols[f"p_{stat}_{k}"] = v
         cols[f"exp_{stat}"] = p * df["mean_goals"].to_numpy()
     return df.drop("dist").with_columns(**{k: pl.Series(v) for k, v in cols.items()})
+
+
+#: Logit recalibration ``logit p' = a + b · logit p`` per (stat, k), fitted on the 2016-2026
+#: backtest (444,883 skater-games; out of sample on 2019-26 when fitted on 2016-19 it gained
+#: 0.0001-0.0005 log loss). b > 1: the raw projection is slightly too compressed (stars low,
+#: depth players high). A k above the fitted ones uses the stat's highest fitted k.
+CALIBRATION: dict[tuple[str, int], tuple[float, float]] = {
+    ("goals", 1): (0.105, 1.058), ("goals", 2): (0.059, 1.010),
+    ("ast", 1): (0.114, 1.095), ("ast", 2): (0.278, 1.074),
+    ("points", 1): (0.073, 1.114), ("points", 2): (0.255, 1.095), ("points", 3): (0.244, 1.038),
+}
+
+
+def calibrate(df: pl.DataFrame, thresholds: dict[str, tuple[int, ...]]) -> pl.DataFrame:
+    """Apply :data:`CALIBRATION` to every ``p_{stat}_{k}`` column, keeping P(>= k) non-increasing in k."""
+    out = df
+    for stat, ks in thresholds.items():
+        fitted = sorted(k for s, k in CALIBRATION if s == stat)
+        prev = None
+        for k in ks:
+            col = f"p_{stat}_{k}"
+            if col not in out.columns or not fitted:
+                continue
+            a, b = CALIBRATION[(stat, k if k in fitted else fitted[-1])]
+            p = pl.col(col).clip(1e-6, 1 - 1e-6)
+            new = 1 / (1 + (-(a + b * (p / (1 - p)).log())).exp())
+            if prev is not None:
+                new = pl.min_horizontal(new, pl.col(prev))
+            out = out.with_columns(new.alias(col))
+            prev = col
+    return out
 
 
 def poisson_goal_dists(team_games: pl.DataFrame, mean_goals: float) -> pl.DataFrame:
@@ -171,5 +205,5 @@ def poisson_goal_dists(team_games: pl.DataFrame, mean_goals: float) -> pl.DataFr
         pl.lit(list(map(float, d))).alias("dist"), pl.lit(mean_goals).alias("mean_goals"))
 
 
-__all__ = ["MAX_ASSIST_P", "SHARE_COL", "THRESHOLDS", "poisson_goal_dists", "project_players", "shares",
+__all__ = ["CALIBRATION", "MAX_ASSIST_P", "calibrate", "SHARE_COL", "THRESHOLDS", "poisson_goal_dists", "project_players", "shares",
            "tail_probs", "team_goal_dists"]
