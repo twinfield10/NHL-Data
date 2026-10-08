@@ -302,6 +302,19 @@ def cmd_pregame_history(args: argparse.Namespace) -> None:
     print(backtest.run_history(Store(), seasons, n_sims=args.sims))
 
 
+def cmd_props_backtest(args: argparse.Namespace) -> None:
+    """M9 phase B: player goals / assists / points projections vs baselines on past seasons."""
+    from pathlib import Path
+
+    from nhl.props import backtest
+    from nhl.storage.s3 import Store
+
+    seasons = [config.season_id(y) for y in config.parse_seasons(args.seasons)]
+    results = backtest.run(Store(), seasons)
+    backtest.write_report(results, Path(args.report))
+    print(f"report -> {args.report}")
+
+
 def cmd_fit_blend(args: argparse.Namespace) -> None:
     """M6: fit the model/market blend on the pregame history."""
     from nhl.betting import blend
@@ -776,6 +789,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--sims", type=int, default=1000)
     p.add_argument("--report", default="docs/reports/m5-pregame-backtest.md")
     p.set_defaults(func=cmd_backtest_pregame)
+
+    p = sub.add_parser("props-backtest", help="M9: player goals/assists/points projections vs baselines")
+    p.add_argument("--seasons", default="2016-2025")
+    p.add_argument("--report", default="docs/reports/props-backtest.md")
+    p.set_defaults(func=cmd_props_backtest)
 
     p = sub.add_parser("pregame-history", help="M6: honest pregame prices with score matrices for past seasons")
     p.add_argument("--seasons", default="2016-2025")

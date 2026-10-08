@@ -4,7 +4,10 @@
 `nhl poll --what props`, with every odds poll) and LowVig (`sources/dst.py`,
 `nhl poll --what props_lowvig`, every 15 min on game days and ~7 min inside T−90). First
 polls: FanDuel 4,064 prices over 14 games in 36 s, LowVig 4,227 over 10 games in 74 s, every
-player resolved to an NHL id.
+player resolved to an NHL id. **Phase B built 2026-10-08:** goals, assists and points
+(`src/nhl/props/`, `nhl props-backtest`): gate passed on 6 of 7 targets in every season, and
+on goals ≥ 2 in 9 of 10 (see [Phase B results](#phase-b-results-2026-10-08),
+[report](../reports/props-backtest.md)).
 **Depends on:** M2 game logs (`processed/game_logs/player/{season}`), M3 ratings and
 finishing terms, M4 simulator, M5 projected lineups and goalies, usage tiers and on-ice
 projection ([usage-context.md](usage-context.md)), the prop table (`nhl.odds.props`).
@@ -175,6 +178,55 @@ how to weight the blend.
 
 Phase A is worth starting now: every day not captured is lost, and the modeling
 phases need that history for F.
+
+## Phase B results (2026-10-08)
+
+**Method** (`src/nhl/props/`):
+- `rates.py`: point-in-time goal and assist rates per 60 by strength (even incl. empty net,
+  PP, SH), from this season's earlier games plus two prior seasons weighted 1 / 0.6 / 0.35,
+  shrunk toward the position group's league rate. Goals = individual xG rate × shrunk
+  finishing. Shrinkage tuned on 2016-17 to 2018-19: flat optimum (50 min xG, 250 min assists,
+  20 xG finishing).
+- `project.py`: each team goal goes to a scorer in proportion to projected deployment share
+  × goal rate (per strength, mixed by the league's goal share by strength) and to assisters
+  the same way, scaled to the league's assists per goal. Given team goals G, the player's
+  count is Binomial(G, p). G comes from the pregame score matrix with the shootout goal
+  removed.
+- `backtest.py`: 444,883 skater-games, 2016-17 to 2025-26, players who dressed and were in
+  that morning's projected lineup. Deployment is the morning projection (cached at
+  `predictions/pregame_deployment/`), outputs at `predictions/props_backtest/`.
+
+**Pooled log loss** (lower is better):
+
+| target | model | without the team term | season average | last 10 |
+|---|---|---|---|---|
+| goals ≥ 1 | **0.3926** | 0.3938 | 0.4105 | 0.4187 |
+| goals ≥ 2 | **0.0763** | 0.0766 | 0.0786 | 0.0838 |
+| assists ≥ 1 | **0.5186** | 0.5206 | 0.5331 | 0.5423 |
+| assists ≥ 2 | **0.1533** | 0.1544 | 0.1565 | 0.1642 |
+| points ≥ 1 | **0.5970** | 0.5997 | 0.6087 | 0.6178 |
+| points ≥ 2 | **0.2633** | 0.2654 | 0.2671 | 0.2769 |
+| points ≥ 3 | **0.0794** | 0.0804 | 0.0807 | 0.0847 |
+
+- The model beats both naive baselines by a wide margin (0.012-0.018 log loss at the ≥ 1
+  thresholds) and the version without the team term in every season, except goals ≥ 2 in
+  2017-18 (0.0732 vs 0.0731).
+- The team term (the simulator's goal distribution for this team against this opponent)
+  is worth 0.001-0.003. That's small next to the player shares, but it is the part that ties
+  props to the game lines.
+
+**Tested and rejected:**
+- Spreading players apart with rate^γ (γ 1.1-1.6): worse on every target.
+- A beta-binomial for game-to-game variation in the player's share (κ 5-100): worse or
+  equal on every target.
+- A logit recalibration fitted on 2016-19 and tested on 2019-26: +0.0001 to +0.0005 (slopes
+  1.03-1.08). Left to the market blend in phase F.
+
+**Open items:**
+- Stars' 2+ point nights are under-predicted (top decile 24.0% vs 26.7% realized), and
+  low-usage players are slightly over-predicted. Candidates: team-specific PP goal share
+  (stars carry the PP), and score-state ice time.
+- Shots on goal, blocks and saves wait for the team shot-volume layer (phase C).
 
 ## Open questions
 - **Limits:** LowVig/BetOnline prop limits are probably small. FanDuel and DraftKings limit
