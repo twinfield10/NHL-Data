@@ -128,6 +128,13 @@ class SiteData:
             self._players = dict(zip(players["player_id"].to_list(), players["player_name"].to_list()))
         return self._players
 
+    def player_hands(self) -> dict[int, str]:
+        """``player_id -> "L" | "R"`` (shoots / catches) for every player in the catalog."""
+        def load() -> dict[int, str]:
+            players = self.store.read_parquet_required(keys.PLAYERS).filter(pl.col("shoots_catches").is_in(["L", "R"]))
+            return dict(zip(players["player_id"].to_list(), players["shoots_catches"].to_list()))
+        return self._timed_get("hands", DAY_SECONDS, load)
+
     def games(self) -> pl.DataFrame:
         """The game catalog (dates, teams, final scores), re-read every few minutes."""
         return self._timed_get("games", GAMES_TTL_SECONDS, lambda: self.store.read_parquet_required(keys.GAMES))

@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from nhl.api.data import SiteData
 from nhl.api.deps import game_day, get_data
+from nhl.api.lineorder import order_lineup, order_unit
 from nhl.api.serialize import rows
 from nhl.api.routers.style import archetype_lookup
 from nhl.api.teaminfo import team_context
@@ -70,6 +71,7 @@ def get_teams(day: date = Depends(game_day), data: SiteData = Depends(get_data))
         pl.col("player_name").fill_null("Replacement"),
     ).sort("_slot", -pl.col("s5"))
 
+    hands = data.player_hands()
     teams = []
     for row in rows(board):
         tid = row["team_id"]
@@ -77,8 +79,8 @@ def get_teams(day: date = Depends(game_day), data: SiteData = Depends(get_data))
             **row,
             **context.get(row["abbr"], {}),
             "goalies": rows(goalies.filter(pl.col("team_id") == tid).sort("weight", descending=True), drop=("team_id",)),
-            "lineup": rows(dep.filter(pl.col("team_id") == tid).select(
-                "player_id", "player_name", "position", "slot", "s5", "spp", "spk", "ev_off", "ev_def", "ev_net")),
+            "lineup": order_lineup(rows(dep.filter(pl.col("team_id") == tid).select(
+                "player_id", "player_name", "position", "slot", "s5", "spp", "spk", "ev_off", "ev_def", "ev_net")), hands),
         })
     return {**_meta(r), "league": r["league"], "teams": teams}
 
@@ -130,13 +132,13 @@ def get_lines(
         "player_id", "player_name", "position", "ev_off", "ev_def", "ev_net").to_dicts()}
     names = data.player_names()
     styles = archetype_lookup(data, season)
-    order = {"L": 0, "C": 1, "R": 2, "D": 3}  # forwards then defensemen (PP/PK units mix both)
+    hands = data.player_hands()
     out = []
     for row in rows(lines):
         players = [{**skaters.get(pid, {}), "player_id": pid,
                     "player_name": (skaters.get(pid) or {}).get("player_name") or names.get(pid) or str(pid),
                     "archetype": (styles.get(pid) or {}).get("archetype")}
                    for pid in row.pop("player_ids")]
-        row["players"] = sorted(players, key=lambda p: order.get(p.get("position") or "", 9))
+        row["players"] = order_unit(players, hands)
         out.append(row)
     return {**_meta(r), "line_season": season, "seasons": [current, current - 10001], "lines": out}

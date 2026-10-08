@@ -11,6 +11,7 @@ from nhl.api import lineupstats
 from nhl.api import markets as mk
 from nhl.api.data import SiteData
 from nhl.api.deps import get_data
+from nhl.api.lineorder import order_lineup, order_unit
 from nhl.api.routers.slate import with_venue
 from nhl.api.serialize import rows, with_selection
 from nhl.api.teaminfo import team_context
@@ -30,8 +31,8 @@ def _named(df: pl.DataFrame, names: dict[int, str]) -> pl.DataFrame:
     return df.with_columns(pl.Series("player_name", labels, dtype=pl.String))
 
 
-def _lineup(df: pl.DataFrame | None, team_id: int, names: dict[int, str]) -> list[dict]:
-    """One team's projected lineup, ordered by slot then position."""
+def _lineup(df: pl.DataFrame | None, team_id: int, names: dict[int, str], hands: dict[int, str] | None = None) -> list[dict]:
+    """One team's projected lineup, ordered by slot, then LW-C-RW / LD-RD within each line and pair."""
     if df is None or df.is_empty():
         return []
     team = _named(df.filter(pl.col("team_id") == team_id), names)
@@ -41,7 +42,7 @@ def _lineup(df: pl.DataFrame | None, team_id: int, names: dict[int, str]) -> lis
         pl.col("slot").replace_strict(order, default=len(SLOT_ORDER), return_dtype=pl.Int32).alias("_slot"),
         pl.col("position").replace_strict(pos, default=9, return_dtype=pl.Int32).alias("_pos"),
     ).sort("_slot", "_pos", -pl.col("s5"))
-    return rows(team, drop=("_slot", "_pos", "as_of", "stamp", "game_id"))
+    return order_lineup(rows(team, drop=("_slot", "_pos", "as_of", "stamp", "game_id")), hands)
 
 
 def _goalies(df: pl.DataFrame | None, team_id: int, names: dict[int, str]) -> list[dict]:
@@ -99,8 +100,8 @@ def get_game(game_id: int, data: SiteData = Depends(get_data)) -> dict:
         "game": {**game, "venue_name": venue["venue_name"], "venue_location": venue["venue_location"]},
         "teams": teams,
         "pregame": (rows(row) or [None])[0],
-        "lineups": {"home": _lineup(lineups, game["home_team_id"], names),
-                    "away": _lineup(lineups, game["away_team_id"], names)},
+        "lineups": {"home": _lineup(lineups, game["home_team_id"], names, data.player_hands()),
+                    "away": _lineup(lineups, game["away_team_id"], names, data.player_hands())},
         "goalies": {"home": _goalies(goalies, game["home_team_id"], names),
                     "away": _goalies(goalies, game["away_team_id"], names)},
         "edges": rows(edges),
@@ -149,13 +150,15 @@ def get_game_lineups(game_id: int, data: SiteData = Depends(get_data)) -> dict:
     out = {}
     for side in ("home", "away"):
         team_id, abbr = game[f"{side}_team_id"], game[f"{side}_abbr"]
-        players = _lineup(lineups, team_id, names)
+        players = _lineup(lineups, team_id, names, data.player_hands())
         pids = [p["player_id"] for p in players if p["player_id"] is not None]
         onice = {k: lineupstats.onice(t["onice"], pids) for k, t in seasons.items()}
         for p in players:
             p["rating"] = skaters.get(p["player_id"])
             p["onice"] = {k: onice[k].get(p["player_id"]) for k in seasons}
-        units = [{**u, "record": {k: lineupstats.unit_record(t["units"], u["kind"], u["player_ids"]) for k, t in seasons.items()}}
+        by_id = {p["player_id"]: p for p in players}
+        units = [{**u, "player_ids": [p["player_id"] for p in order_unit([by_id[i] for i in u["player_ids"]], data.player_hands())],
+                  "record": {k: lineupstats.unit_record(t["units"], u["kind"], u["player_ids"]) for k, t in seasons.items()}}
                  for u in lineupstats.unit_groups(players)]
         gs = _goalies(goalies, team_id, names)
         for g in gs:

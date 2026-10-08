@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import DateNav from "@/components/DateNav";
 import FreshnessStrip from "@/components/FreshnessStrip";
 import GameCard, { maxEdge, UnpricedGameCard } from "@/components/GameCard";
@@ -12,10 +12,11 @@ import { stampToIso, todayET } from "@/lib/format";
 import type { Bet, Edge, MarketLine, ThreeWay } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type SortBy = "EDGE" | "TIME";
+type SortBy = "TIME" | "ML" | "OU";
 const SORT_OPTIONS: [SortBy, string][] = [
-  ["EDGE", "Edge"],
   ["TIME", "Game Start"],
+  ["ML", "ML Edge"],
+  ["OU", "O/U Edge"],
 ];
 
 function groupBy<T extends { game_id: number }>(rows: T[]): Record<number, T[]> {
@@ -26,20 +27,22 @@ function groupBy<T extends { game_id: number }>(rows: T[]): Record<number, T[]> 
 
 function Games() {
   const date = useSearchParams().get("date") ?? todayET();
-  const [sortBy, setSortBy] = useState<SortBy>("EDGE");
+  const [sortBy, setSortBy] = useState<SortBy>("TIME");
+  // Cards show moneyline and total; expanding adds the puck line and the regulation three-way.
+  const [expanded, setExpanded] = useState(false);
   const { data, isLoading, error } = useSlate(date);
 
   const edgesByGame: Record<number, Edge[]> = data ? groupBy(data.edges) : {};
   const betsByGame: Record<number, Bet[]> = data ? groupBy(data.bets) : {};
   const linesByGame: Record<number, MarketLine[]> = data ? groupBy(data.lines) : {};
   const threeWay: Record<number, ThreeWay> = Object.fromEntries((data?.three_way ?? []).map((t) => [t.game_id, t]));
+  // Game start, or the largest blended edge on either side of the moneyline / total (ties by start).
   const games = [...(data?.games ?? [])].sort((a, b) => {
-    if (sortBy === "TIME") {
-      const d = Date.parse(a.start_time) - Date.parse(b.start_time);
-      if (d !== 0) return d;
+    if (sortBy !== "TIME") {
+      const market = sortBy === "ML" ? "moneyline" : "total";
+      const [ea, eb] = [maxEdge(edgesByGame[a.game_id] ?? [], market), maxEdge(edgesByGame[b.game_id] ?? [], market)];
+      if (ea !== eb) return eb > ea ? 1 : -1; // guard: −∞ − −∞ is NaN
     }
-    const [ea, eb] = [maxEdge(edgesByGame[a.game_id] ?? []), maxEdge(edgesByGame[b.game_id] ?? [])];
-    if (ea !== eb) return eb > ea ? 1 : -1; // guard: −∞ − −∞ is NaN
     return Date.parse(a.start_time) - Date.parse(b.start_time) || a.game_id - b.game_id;
   });
   const plays = data ? new Set(data.edges.filter((e) => e.flagged && e.point !== "close").map((e) => e.game_id)).size : 0;
@@ -85,6 +88,14 @@ function Games() {
                   ))}
                 </div>
               </div>
+              <button
+                onClick={() => setExpanded((e) => !e)}
+                aria-pressed={expanded}
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                {expanded ? "Collapse Bets" : "Expand All Bets"}
+              </button>
             </div>
             {data.stamp && (
               <span>
@@ -105,10 +116,10 @@ function Games() {
           <div className="grid grid-cols-1 gap-4 min-[1280px]:grid-cols-2">
             {games.map((g) => (
               <GameCard key={g.game_id} g={g} edges={edgesByGame[g.game_id] ?? []} bets={betsByGame[g.game_id] ?? []} teams={data.teams}
-                threeWay={threeWay[g.game_id]} />
+                threeWay={threeWay[g.game_id]} expanded={expanded} />
             ))}
             {data.unpriced.map((g) => (
-              <UnpricedGameCard key={g.game_id} g={g} teams={data.teams} lines={linesByGame[g.game_id] ?? []} threeWay={threeWay[g.game_id]} />
+              <UnpricedGameCard key={g.game_id} g={g} teams={data.teams} lines={linesByGame[g.game_id] ?? []} threeWay={threeWay[g.game_id]} expanded={expanded} />
             ))}
           </div>
         </>

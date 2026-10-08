@@ -4,6 +4,8 @@ export interface Team {
   name: string;
   primary: string;
   secondary: string;
+  /** Always use the primary as given (skip the dark-mode readability swap). */
+  exact?: boolean;
 }
 
 export const TEAMS: Record<string, Team> = {
@@ -27,13 +29,13 @@ export const TEAMS: Record<string, Team> = {
   NYI: { name: "New York Islanders", primary: "#00539B", secondary: "#F47D30" },
   NYR: { name: "New York Rangers", primary: "#0038A8", secondary: "#CE1126" },
   OTT: { name: "Ottawa Senators", primary: "#C52032", secondary: "#C2912C" },
-  PHI: { name: "Philadelphia Flyers", primary: "#F74902", secondary: "#000000" },
+  PHI: { name: "Philadelphia Flyers", primary: "#FA4616", secondary: "#000000", exact: true },
   PIT: { name: "Pittsburgh Penguins", primary: "#000000", secondary: "#FCB514" },
   SEA: { name: "Seattle Kraken", primary: "#001628", secondary: "#99D9D9" },
   SJS: { name: "San Jose Sharks", primary: "#006D75", secondary: "#EA7200" },
   STL: { name: "St. Louis Blues", primary: "#002F87", secondary: "#FCB514" },
-  TBL: { name: "Tampa Bay Lightning", primary: "#002868", secondary: "#FFFFFF" },
-  TOR: { name: "Toronto Maple Leafs", primary: "#00205B", secondary: "#FFFFFF" },
+  TBL: { name: "Tampa Bay Lightning", primary: "#002868", secondary: "#FFFFFF", exact: true },
+  TOR: { name: "Toronto Maple Leafs", primary: "#00205B", secondary: "#FFFFFF", exact: true },
   UTA: { name: "Utah Mammoth", primary: "#6CACE4", secondary: "#010101" },
   VAN: { name: "Vancouver Canucks", primary: "#00205B", secondary: "#00843D" },
   VGK: { name: "Vegas Golden Knights", primary: "#B4975A", secondary: "#333F42" },
@@ -78,6 +80,7 @@ function lighten(hex: string, amount: number): string {
  * the secondary unless that is near-white (a white bar reads as empty), else a lightened primary.
  */
 function visible(t: Team, dark: boolean): string {
+  if (t.exact) return t.primary;
   const ok = (c: string) => (dark ? luminance(c) > 0.04 && luminance(c) < 0.8 : luminance(c) < 0.8);
   if (ok(t.primary)) return t.primary;
   if (ok(t.secondary)) return t.secondary;
@@ -90,24 +93,30 @@ export const teamColor = (abbr: string, dark: boolean) => visible(team(abbr), da
 /** Hex color with an alpha channel, for gradients. */
 export const alpha = (hex: string, a: number) => `${hex}${Math.round(a * 255).toString(16).padStart(2, "0")}`;
 
-/** Bar colors for a matchup; the away team falls back to its secondary when the two clash. */
+/** ``t``'s secondary-first color, or a neutral grey when that still clashes with ``other``. */
+function alternate(t: Team, other: string, dark: boolean): string {
+  const alt = visible({ ...t, primary: t.secondary, secondary: t.primary, exact: false }, dark);
+  return distance(alt, other) >= 90 ? alt : dark ? "#94a3b8" : "#475569";
+}
+
+/**
+ * Bar colors for a matchup. When the two clash, one team falls back to its secondary: the away
+ * team, unless only the away team has a fixed (``exact``) color, in which case the home team does.
+ */
 export function matchupColors(away: string, home: string, dark: boolean): { away: string; home: string } {
   const a = team(away);
   const h = team(home);
-  const homeColor = visible(h, dark);
-  let awayColor = visible(a, dark);
-  if (distance(awayColor, homeColor) < 90) {
-    const alt = visible({ ...a, primary: a.secondary, secondary: a.primary }, dark);
-    awayColor = distance(alt, homeColor) >= 90 ? alt : dark ? "#94a3b8" : "#475569";
-  }
-  return { away: awayColor, home: homeColor };
+  const [awayColor, homeColor] = [visible(a, dark), visible(h, dark)];
+  if (distance(awayColor, homeColor) >= 90) return { away: awayColor, home: homeColor };
+  if (a.exact && !h.exact) return { away: awayColor, home: alternate(h, awayColor, dark) };
+  return { away: alternate(a, homeColor, dark), home: homeColor };
 }
 
 /** Black or white, whichever reads better on ``hex``. */
 export const textOn = (hex: string) => (luminance(hex) > 0.45 ? "#0f172a" : "#ffffff");
 
 /** Over / under colors (not team specific). */
-export const OVER_COLOR = "#16a34a";
-export const UNDER_COLOR = "#dc2626";
+export const OVER_COLOR = "#85D4A1";
+export const UNDER_COLOR = "#D48585";
 /** The three-way's draw (overtime) segment. */
 export const DRAW_COLOR = "#64748b";
