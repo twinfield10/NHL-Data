@@ -3,16 +3,27 @@
 from __future__ import annotations
 
 import os
+import threading
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
 from nhl import config
+from nhl.api.deps import get_data
 from nhl.api.routers import betting, context, games, ratings, slate, style
 from nhl.api.serialize import today_et
 
-app = FastAPI(title="NHL-Data API", description="Pregame prices, edges and bets", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """Warm the expensive caches in the background so the first ratings request doesn't pay."""
+    threading.Thread(target=lambda: get_data().warm(today_et()), daemon=True).start()
+    yield
+
+
+app = FastAPI(title="NHL-Data API", description="Pregame prices, edges and bets", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
