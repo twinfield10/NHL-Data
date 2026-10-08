@@ -55,18 +55,23 @@ function EdgeChip({ s, closed, align }: { s?: BarSide; closed?: boolean; align: 
 
 const sideFlag = (s: BarSide, closed?: boolean) => (!closed && (s.warn ? "WARN" : s.play ? "PLAY" : null)) || null;
 
-function SideLabel({ s, align, closed, flagRow }: { s: BarSide; align: "left" | "right" | "center"; closed?: boolean; flagRow: boolean }) {
+/** PLAY (with the units to risk) or WARN under the side's edge chip. */
+function FlagBadge({ s, closed, align }: { s: BarSide; closed?: boolean; align: "left" | "right" }) {
   const flag = sideFlag(s, closed);
+  if (!flag) return <span />;
+  return (
+    <span className={cn("flex", align === "right" ? "justify-end" : "justify-start")}>
+      <span className={cn("whitespace-nowrap rounded px-1.5 text-[11px] font-bold leading-4 tracking-wide text-white", flag === "WARN" ? "bg-red-600" : "bg-emerald-600")}>
+        {flag}
+        {flag === "PLAY" && s.stake ? ` · RISK ${s.stake.toFixed(2)}u` : ""}
+      </span>
+    </span>
+  );
+}
+
+function SideLabel({ s, align }: { s: BarSide; align: "left" | "right" | "center" }) {
   return (
     <div className={cn("min-w-0", align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left")}>
-      <div className={cn(flagRow ? "flex h-4 items-center gap-1" : "hidden", align === "right" ? "justify-end" : align === "center" ? "justify-center" : "justify-start")}>
-        {flag && (
-          <span className={cn("rounded px-1.5 text-[10px] font-bold leading-4 tracking-wide text-white", flag === "WARN" ? "bg-red-600" : "bg-emerald-600")}>
-            {flag}
-            {s.stake ? ` · ${s.stake.toFixed(2)}u` : ""}
-          </span>
-        )}
-      </div>
       <div className="truncate text-sm">
         <span className="font-semibold">{s.label}</span>
         {s.price != null && <span className="ml-1 tabular text-muted-foreground">{american(s.price)}</span>}
@@ -77,8 +82,8 @@ function SideLabel({ s, align, closed, flagRow }: { s: BarSide; align: "left" | 
 
 /**
  * One market as a thick split bar: each side's probability inside its segment, the market's split
- * as ticks, side labels with the best price above (PLAY over the side to bet), and each side's edge
- * at its end of the bar.
+ * as ticks, side labels with the best price above, each side's edge at its end of the bar, and
+ * PLAY (units to risk) or WARN under the side it applies to.
  */
 export default function MarketBar({ title, sides, basis = "model", closed, neutralEdges }: MarketBarProps) {
   const total = sides.reduce((a, s) => a + (s.p ?? 0), 0) || 1;
@@ -95,8 +100,8 @@ export default function MarketBar({ title, sides, basis = "model", closed, neutr
   // side's edge is large enough to be a bad quote.
   const tone = closed ? null : sides.some((s) => s.warn) ? "warn" : sides.some((s) => s.play) ? "play" : null;
   const draw = three ? sides[1] : null;
-  // Reserve the PLAY / WARN badge row only on bars that show a badge.
-  const flagRow = sides.some((s) => sideFlag(s, closed) != null);
+  // The row under the bar holds PLAY / WARN badges and the 3-way's OT line; bars without either skip it.
+  const footer = draw != null || sideFlag(first, closed) != null || sideFlag(last, closed) != null;
 
   return (
     <div
@@ -106,9 +111,9 @@ export default function MarketBar({ title, sides, basis = "model", closed, neutr
       )}
     >
       <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
-        <SideLabel s={first} align="left" closed={closed} flagRow={flagRow} />
+        <SideLabel s={first} align="left" />
         <div className="text-center text-xs font-bold uppercase leading-5 tracking-wider text-foreground">{title}</div>
-        <SideLabel s={last} align="right" closed={closed} flagRow={flagRow} />
+        <SideLabel s={last} align="right" />
       </div>
       <div className="mt-1 grid grid-cols-[3.5rem_1fr_3.5rem] items-center gap-2">
         <EdgeChip s={first} closed={closed || neutralEdges} align="left" />
@@ -131,8 +136,8 @@ export default function MarketBar({ title, sides, basis = "model", closed, neutr
         </div>
         <EdgeChip s={last} closed={closed || neutralEdges} align="right" />
       </div>
-      <div className="mt-0.5 grid grid-cols-[1fr_auto_1fr] gap-2 text-[11px] text-muted-foreground tabular">
-        <span>{first.pMarket != null && basis === "model" ? `Mkt ${pct(first.pMarket, 1)}` : ""}</span>
+      {footer && <div className="mt-1 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-[11px] text-muted-foreground tabular">
+        <FlagBadge s={first} closed={closed} align="left" />
         <span className="text-center text-xs font-semibold text-foreground">
           {draw && (
             <>
@@ -141,8 +146,8 @@ export default function MarketBar({ title, sides, basis = "model", closed, neutr
             </>
           )}
         </span>
-        <span className="text-right">{last.pMarket != null && basis === "model" ? `Mkt ${pct(last.pMarket, 1)}` : ""}</span>
-      </div>
+        <FlagBadge s={last} closed={closed} align="right" />
+      </div>}
     </div>
   );
 }
