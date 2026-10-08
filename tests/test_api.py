@@ -195,3 +195,37 @@ def test_timed_get_serves_stale_and_refreshes_in_background():
         time.sleep(0.01)
     assert data._timed["k"][1] == 2  # refreshed in the background
     assert data._timed_get("k", 0.0, load) == 3  # without stale_ok an expired value blocks
+
+
+def _site_store(manifest_day: str, snapshot: str) -> FakeStore:
+    from nhl.site import tables as T
+
+    objs = {f"ratings/{snapshot}/{k}.parquet": pl.DataFrame({"x": [1]}) for k in ("ev", "st", "finishing", "penalties")}
+    objs.update({f"{T.PREFIX}{n}.parquet": pl.DataFrame({"board": [n]}) for n in T.BOARDS})
+    objs[T.units_key(20262027)] = pl.DataFrame({"unit": ["precomputed"]})
+    objs[T.MANIFEST] = json.dumps({
+        "day": manifest_day, "snapshot": snapshot, "as_of": "2026-10-08T13:00:00+00:00", "season": 20262027,
+        "league": {"xg60_5v5": 2.5, "xg60_pp": 6.5}, "unit_seasons": [20262027], "built_at": "2026-10-08T13:00:05+00:00",
+    }).encode()
+    return FakeStore(objs)
+
+
+def test_rankings_and_units_come_from_site_tables_when_current(monkeypatch):
+    from nhl.site import tables as T
+
+    data = SiteData(_site_store("2026-10-08", "2026-10-08"))
+    monkeypatch.setattr(data, "rating_snapshot", lambda day: date(2026, 10, 8))
+    monkeypatch.setattr(T, "build_rankings", lambda *a: (_ for _ in ()).throw(AssertionError("built live")))
+    r = data.rankings(date(2026, 10, 8))
+    assert r["teams"]["board"][0] == "teams" and r["season"] == 20262027 and r["snapshot"] == date(2026, 10, 8)
+    assert data.units(20262027, True)["unit"][0] == "precomputed"
+
+
+def test_rankings_build_live_when_site_tables_are_stale(monkeypatch):
+    from nhl.site import tables as T
+
+    data = SiteData(_site_store("2026-10-07", "2026-10-07"))
+    monkeypatch.setattr(data, "rating_snapshot", lambda day: date(2026, 10, 8))
+    monkeypatch.setattr(data, "games", lambda: pl.DataFrame())
+    monkeypatch.setattr(T, "build_rankings", lambda store, day, snap, games: {"live": True, "snapshot": snap})
+    assert data.rankings(date(2026, 10, 8)) == {"live": True, "snapshot": date(2026, 10, 8)}

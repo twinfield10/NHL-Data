@@ -1,7 +1,8 @@
 """Read-side data access for the site: the pregame/betting contract in S3, cached in-process.
 
 Everything the API serves comes from objects the pipeline already writes (see
-:mod:`nhl.pregame.slate` for the data contract). Snapshots under a ``stamp`` never change,
+:mod:`nhl.pregame.slate` for the data contract, and :mod:`nhl.site.tables` for the
+precomputed ratings boards). Snapshots under a ``stamp`` never change,
 so they are cached for the life of the process; the two mutable objects (the ``latest``
 pointer and the bets ledger) are re-read after :data:`MUTABLE_TTL_SECONDS`. The one
 exception is rankings, which compose team ratings from a fresh lineup projection
@@ -19,16 +20,14 @@ import logging
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, datetime, timezone
+from datetime import date
 
 import polars as pl
 
 from nhl.betting import edges as edges_mod
 from nhl.odds.store import load_live_odds
-from nhl.pregame import lineups
-from nhl.ratings import rankings
-from nhl.sim import constants as sim_constants
 from nhl.sim.inputs import snapshot_dates
+from nhl.site import tables as site_tables
 from nhl.storage import keys
 from nhl.storage.s3 import Store
 
@@ -303,51 +302,38 @@ class SiteData:
         days = [d for d in self._timed_get("rating-days", LIST_TTL_SECONDS, load) if d <= day]
         return days[-1] if days else None
 
+    def site_manifest(self) -> dict | None:
+        """The precomputed site tables' manifest (:mod:`nhl.site.tables`), re-read every
+        :data:`MUTABLE_TTL_SECONDS`."""
+        return self._timed_get("site-manifest", MUTABLE_TTL_SECONDS, lambda: site_tables.read_manifest(self.store))
+
     def rankings(self, day: date) -> dict | None:
         """Player, goalie, team and line boards from ``day``'s rating snapshot, or None without one.
 
-        Team boards project every team's lineup as of now, so the whole thing is cached for
-        :data:`RANKINGS_TTL_SECONDS` (injury news moves it within a day).
+        Served from the pipeline's precomputed tables when they were built for ``day`` from
+        the snapshot in force (reloaded when a new build lands); otherwise built live and
+        cached for :data:`RANKINGS_TTL_SECONDS` (injury news moves team boards within a day).
         """
         snap = self.rating_snapshot(day)
         if snap is None:
             return None
-
-        def load() -> dict:
-            season = int(self.games().filter(pl.col("game_date") <= day)["season"].max())
-            span = [season - 10001, season]
-            games = self.games()
-            tables = rankings.snapshot_tables(self.store, snap)
-            players = self.store.read_parquet_required(keys.PLAYERS)
-            teams = rankings.current_teams(self.store, span, games)
-            team_ids = sorted(set(games.filter(pl.col("season") == season)["home_team_id"].cast(pl.Int64).to_list()))
-            as_of = datetime.now(timezone.utc)
-            dep = lineups.project(self.store, rankings.lineup_targets(team_ids, day), span, as_of=as_of)
-            starts = pl.concat([s for y in span if (s := self.store.get_parquet(keys.goalie_starts(y))) is not None],
-                               how="vertical_relaxed")
-            goalies = rankings.goalie_weights(starts, games, teams)
-            constants = sim_constants.estimate(self.store, season)
-            board = rankings.team_board(tables, dep, goalies, constants)
-            lines = rankings.line_board(tables, dep)
-            return {
-                "snapshot": snap, "as_of": as_of, "season": season,
-                "league": {"xg60_5v5": constants["xg60_5v5"], "xg60_pp": constants["xg60_pp"]},
-                "players": rankings.player_board(tables, players, teams, day),
-                "goalies": rankings.goalie_board(tables, players, teams, day),
-                "teams": board, "goalie_weights": goalies, "lineups": dep,
-                "lines": lines, "tables": tables,
-            }
-        return self._timed_get(f"rankings/{day}", RANKINGS_TTL_SECONDS, load, stale_ok=True)
+        m = self.site_manifest()
+        if m and m["day"] == day.isoformat() and m["snapshot"] == snap.isoformat():
+            return self._timed_get(f"site-rankings/{m['built_at']}", DAY_SECONDS,
+                                   lambda: site_tables.load_rankings(self.store, m))
+        return self._timed_get(f"rankings/{day}", RANKINGS_TTL_SECONDS,
+                               lambda: site_tables.build_rankings(self.store, day, snap, self.games()), stale_ok=True)
 
     def units(self, season: int, current: bool) -> pl.DataFrame | None:
-        """Every forward line and D pair iced at 5v5 in ``season`` (:func:`nhl.ratings.rankings.observed_units`).
-        A finished season is cached for a day, the current one for :data:`RANKINGS_TTL_SECONDS`."""
-        def load() -> pl.DataFrame | None:
-            stints, rosters = self.store.get_parquet(keys.stints(season)), self.store.get_parquet(keys.rosters(season))
-            if stints is None or rosters is None:
-                return None
-            return rankings.observed_units(stints, rosters)
-        return self._timed_get(f"units/{season}", RANKINGS_TTL_SECONDS if current else DAY_SECONDS, load, stale_ok=True)
+        """Every forward line and D pair iced at 5v5 in ``season`` (:func:`nhl.ratings.rankings.observed_units`):
+        precomputed when the latest site build has it, otherwise built live (a finished season
+        cached for a day, the current one for :data:`RANKINGS_TTL_SECONDS`)."""
+        m = self.site_manifest()
+        if m and season in m.get("unit_seasons", []):
+            return self._timed_get(f"site-units/{season}/{m['built_at']}", DAY_SECONDS,
+                                   lambda: self.store.get_parquet(site_tables.units_key(season)))
+        return self._timed_get(f"units/{season}", RANKINGS_TTL_SECONDS if current else DAY_SECONDS,
+                               lambda: site_tables.build_units(self.store, season), stale_ok=True)
 
     def processed(self, key: str, current: bool) -> pl.DataFrame | None:
         """A season table under ``processed/`` (usage, on-ice context, matchups, linemates): the

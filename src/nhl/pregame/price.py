@@ -207,7 +207,13 @@ def run(store: Store, day: date | None = None, as_of: datetime | None = None, n_
     moment the lock is taken, so a waiting run uses everything captured until then.
     """
     with _run_lock():
-        return _run(store, day, as_of, n_sims, write)
+        out = _run(store, day, as_of, n_sims, write)
+    if write and out is not None:
+        from nhl.site import tables as site_tables
+
+        # Team boards use the same "now" lineup projection; refresh them with every run.
+        site_tables.rebuild_quietly(store, (day or out.as_of.astimezone(EASTERN).date()))
+    return out
 
 
 def _run(store: Store, day: date | None, as_of: datetime | None, n_sims: int, write: bool) -> Pregame | None:
