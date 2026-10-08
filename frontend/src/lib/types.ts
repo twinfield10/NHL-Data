@@ -273,6 +273,10 @@ export interface Skater {
   ixg: number | null;
   pen_drawn60: number | null;
   pen_taken60: number | null;
+  /** Forward archetype from the current style view (null for defensemen and unplaced skaters). */
+  archetype: string | null;
+  archetype_conf: number | null;
+  style_group: "F" | "D" | null;
 }
 
 export interface Goalie {
@@ -346,6 +350,8 @@ export interface LinePlayer {
   /** Prevention (higher is better), as on the player board. */
   ev_def?: number | null;
   ev_net?: number | null;
+  /** Forward archetype (null for defensemen). */
+  archetype?: string | null;
 }
 
 export interface LineRating {
@@ -466,4 +472,45 @@ export interface TeamMatchupsResponse {
     d1_f1_away: number | null;
     teams: number;
   } | null;
+}
+
+export interface StyleAxis {
+  key: string;
+  name: string;
+  /** What the positive end means. */
+  label: string;
+  /** Standardised score (league sd = 1). */
+  value: number | null;
+  /** Percentile within F or D (0-100) among 500+-minute skaters that season. */
+  pct: number | null;
+}
+
+export interface StyleComp {
+  player_id: number;
+  player_name: string;
+  season: number;
+  distance: number;
+}
+
+export interface StyleView {
+  season: number;
+  window: "2yr" | "season";
+  label: string;
+  group: "F" | "D";
+  toi_5v5_min: number;
+  /** At least 500 5v5 minutes behind the view. */
+  reliable: boolean;
+  archetype: string | null;
+  confidence: number | null;
+  probs: { name: string; p: number }[];
+  axes: StyleAxis[];
+  comps: StyleComp[];
+}
+
+export interface PlayerStyleResponse {
+  player_id: number;
+  player_name: string | null;
+  season: number;
+  views: StyleView[];
+  history: { season: number; archetype: string | null; confidence: number | null; toi_5v5_min: number }[];
 }

@@ -6,6 +6,7 @@ add-on layer, run all three Phase C tests. **Phase A built 2026-10-07** ([result
 for forwards only, because defence has no stable clusters ([results](#phase-b-results-2026-10-07)).
 **Phase C done 2026-10-08** ([report](../reports/archetypes.md)): the axes pass the point-attribution
 test (small but in every season); labels, chemistry and archetype aging fail.
+**Phase D built 2026-10-08** ([site](#phase-d-site)).
 **Depends on:** M1 shots and events (`processed/shots`, `processed/events`), rink-adjusted
 locations (`processed/shots_rink`), M2 stints and units, the usage tables
 (`processed/usage_summary`, `processed/onice_context_summary`), M3 rating snapshots,
@@ -195,6 +196,22 @@ See [archetypes.md](../reports/archetypes.md) (`src/nhl/archetypes/usefulness.py
 - **Lines tab:** each unit's archetype mix.
 - **Team page:** roster archetype composition against the league.
 - API: `/api/ratings/players/{id}/style` and archetype fields on `/api/ratings/players`.
+
+**Built 2026-10-08.**
+- **API:** `src/nhl/api/routers/style.py`, with `/api/ratings/players/{id}/style`. It returns two
+  views: current (the `2yr` window) and last season. Each view has the axes with percentiles,
+  the forward archetype probabilities and five comps, plus archetype history from 2010-11.
+  `archetype`, `archetype_conf` and `style_group` were added to each skater on
+  `/api/ratings/players`, and `archetype` to each player on `/api/ratings/lines`. Both fall
+  back to the previous season's table before the current one exists.
+- **Players tab:** a Type column (archetype chip; hover for the blurb) and a type filter for
+  forwards. The expanded row switches between On-ice context and Style. Style shows the axes
+  as bars diverging from the median, the archetype with its probabilities (or a note for
+  defencemen), "Plays like" comps, and archetype by season. A warning appears under 500
+  minutes. Components: `PlayerStyle`, `ArchetypeBadge`; colors in `lib/archetypes.ts`.
+- **Lines tab:** a Mix column of forward archetype chips, and chips in the expanded unit
+  detail. The header tooltip notes that chemistry was tested and failed.
+- Not built: a team page roster composition (low value after Phase C).
 
 ## Open decisions
 | Decision | Options | Recommendation |
