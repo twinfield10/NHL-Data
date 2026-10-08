@@ -54,7 +54,7 @@ export default function BetsPage() {
 
           {data.breakdown.length > 0 && (
             <div>
-              <SectionTitle>By market</SectionTitle>
+              <SectionTitle>By Market</SectionTitle>
               <Card className="overflow-x-auto">
                 <table className="w-full text-sm tabular">
                   <thead className="text-left text-xs text-muted-foreground">

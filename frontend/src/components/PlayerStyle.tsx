@@ -41,7 +41,7 @@ function View({ view }: { view: StyleView }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)]">
       <div className="space-y-2.5">
-        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Style axes</div>
+        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Style Axes</div>
         {view.axes.map((a) => <AxisBar key={a.key} axis={a} group={view.group} />)}
         {!view.reliable && (
           <div className="text-[11px] text-amber-600 dark:text-amber-400">
@@ -76,7 +76,7 @@ function View({ view }: { view: StyleView }) {
         )}
       </div>
       <div>
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Plays like</div>
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Plays Like</div>
         {view.comps.length ? (
           <ul className="space-y-1 text-sm">
             {view.comps.map((c) => (
@@ -116,7 +116,7 @@ export default function PlayerStyle({ playerId }: { playerId: number }) {
       <View view={view} />
       {history.length > 1 && (
         <div>
-          <div className="mb-1 text-xs text-muted-foreground">Archetype by season</div>
+          <div className="mb-1 text-xs text-muted-foreground">Archetype by Season</div>
           <div className="flex flex-wrap gap-1.5">
             {history.map((h) => (
               <span key={h.season} className={cn("inline-flex items-center gap-1 text-[11px]", h.toi_5v5_min < 500 && "opacity-50")}

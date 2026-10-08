@@ -97,7 +97,7 @@ function columns(s: TeamScales, open: number | null): Column<TeamRating>[] {
       render: (t) => t.pk_xga60.toFixed(2), sort: (t) => -t.pk_xga60, style: (t) => heat(t.pk_xga60, s.pk, { center: pp, lowerIsBetter: true }),
     },
     {
-      key: "pen", label: "Pen drawn/taken", align: "right", title: "Penalty drawing and taking rates relative to league average (1.00 = average)",
+      key: "pen", label: "Pen Drawn/Taken", align: "right", title: "Penalty drawing and taking rates relative to league average (1.00 = average)",
       render: (t) => <span className="text-muted-foreground">{t.draw_f.toFixed(2)} / {t.take_f.toFixed(2)}</span>, sort: (t) => t.draw_f - t.take_f,
     },
   ];
@@ -112,7 +112,7 @@ function LineupDetail({ team }: { team: TeamRating }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_16rem]">
       <div className="space-y-1.5">
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Projected lineup · 5v5 net per player</div>
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Projected Lineup · 5v5 Net per Player</div>
         {[...groups.entries()].map(([slot, ps]) => (
           <div key={slot} className={cn("grid grid-cols-[2.25rem_1fr] items-start gap-2", slot === "d1" && "mt-3")}>
             <span className="pt-0.5 text-xs text-muted-foreground">{SLOT_LABEL[slot] ?? "Other"}</span>
@@ -156,7 +156,7 @@ export default function TeamsPage() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="text-xl font-semibold">Team ratings</h1>
+        <h1 className="text-xl font-semibold">Team Ratings</h1>
         {data && (
           <span className="text-xs text-muted-foreground">
             Snapshot {longDate(data.snapshot)} · lineups as of {dateTimeET(data.as_of)} ET

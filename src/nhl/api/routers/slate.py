@@ -4,13 +4,19 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+import logging
+
+import numpy as np
 import polars as pl
 from fastapi import APIRouter, Depends
 
+from nhl.api import markets as mk
 from nhl.api.data import SiteData
 from nhl.api.deps import game_day, get_data
 from nhl.api.serialize import rows, with_selection
 from nhl.api.teaminfo import team_context
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["slate"])
 
@@ -88,6 +94,30 @@ def _market_lines(data: SiteData, games: pl.DataFrame, day: date, unpriced: pl.D
     return with_selection(lines).sort("game_id", "market", "side")
 
 
+def _three_way(data: SiteData, games: pl.DataFrame, day: date) -> list[dict]:
+    """Regulation three-way per game on ``day``: the model (from its last pregame run) against the
+    market's consensus and best prices before puck drop (see :func:`nhl.api.markets.three_way_card`)."""
+    todays = games.filter(pl.col("game_date") == day)
+    if todays.is_empty():
+        return []
+    try:
+        odds = data.live_odds(int(todays["season"][0]))
+        odds = odds.filter(pl.col("market") == "moneyline_3way") if odds.height else odds
+    except Exception:  # a bad odds file must not take the page down
+        logger.exception("three-way odds failed for %s", day)
+        odds = pl.DataFrame()
+    prices = data.day_prices(day)
+    matrices = {} if prices is None else dict(zip(prices["game_id"].to_list(), prices["score_matrix"].to_list()))
+    out = []
+    for g in todays.iter_rows(named=True):
+        history, _ = mk.replay(mk.game_quotes(odds, g["game_id"], mk.start_utc(g)))
+        m = matrices.get(g["game_id"])
+        card = mk.three_way_card(None if m is None else np.asarray(m), mk.current(history).get("moneyline_3way"))
+        if card is not None:
+            out.append({"game_id": g["game_id"], **card})
+    return out
+
+
 @router.get("/slate")
 def get_slate(day: date = Depends(game_day), data: SiteData = Depends(get_data)) -> dict:
     """Each game's final pregame view for ``date``: prices, starters, flags, edges, bets, freshness."""
@@ -109,4 +139,5 @@ def get_slate(day: date = Depends(game_day), data: SiteData = Depends(get_data))
         "edges": rows(_day_edges(data, day)),
         "lines": rows(_market_lines(data, games, day, unpriced)),
         "bets": rows(_day_bets(data, day, games)),
+        "three_way": _three_way(data, games, day),
     }

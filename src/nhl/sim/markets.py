@@ -78,3 +78,13 @@ def line_probs(matrix: np.ndarray, market: str, line: float | np.ndarray | None 
     else:
         raise ValueError(f"unknown market {market!r}")
     return (grid * (value > 0)).sum(axis=(1, 2)), (grid * (value == 0)).sum(axis=(1, 2))
+
+
+def three_way(matrix: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """``(p_home_reg, p_draw, p_away_reg)`` per game: the regulation three-way moneyline, where
+    a game that reaches overtime (or a shootout) is the draw."""
+    k = MAX_GOALS + 1
+    reg = np.asarray(matrix, dtype=np.float64).reshape(-1, 3, k, k)[:, 0]
+    i, j = np.meshgrid(np.arange(k), np.arange(k), indexing="ij")
+    home, away = (reg * (i > j)).sum(axis=(1, 2)), (reg * (i < j)).sum(axis=(1, 2))
+    return home, 1.0 - home - away, away

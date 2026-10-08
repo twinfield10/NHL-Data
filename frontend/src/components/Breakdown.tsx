@@ -15,12 +15,12 @@ type Mode = (typeof MODES)[number]["key"];
 
 /** Parts in display order, with what each one means. */
 export const PART_ROWS: { key: PartKey; label: string; title: string }[] = [
-  { key: "own", label: "Own play", title: "His own rating (for a unit, its members' ratings)" },
+  { key: "own", label: "Own Play", title: "His own rating (for a unit, its members' ratings)" },
   { key: "mates", label: "Teammates", title: "The ratings of the teammates he was on the ice with" },
   { key: "comp", label: "Competition", title: "The ratings of the opponents he was on the ice against" },
-  { key: "zone", label: "Zone starts", title: "Offensive / defensive zone faceoff starts and line changes" },
-  { key: "ctx", label: "Score, venue, rest, coach", title: "Score state, home ice, rest days, coaching and post-penalty time" },
-  { key: "resid", label: "Luck / unexplained", title: "What actually happened minus everything above: finishing variance, model miss, noise" },
+  { key: "zone", label: "Zone Starts", title: "Offensive / defensive zone faceoff starts and line changes" },
+  { key: "ctx", label: "Score, Venue, Rest, Coach", title: "Score state, home ice, rest days, coaching and post-penalty time" },
+  { key: "resid", label: "Luck / Unexplained", title: "What actually happened minus everything above: finishing variance, model miss, noise" },
 ];
 
 export type Parts = Partial<Record<PartKey, PartValue>>;
@@ -76,7 +76,7 @@ export default function Breakdown({ parts, toiS, note }: { parts: Parts; toiS?: 
       </div>
       <div className="grid grid-cols-[11rem_1fr_3.5rem] items-center gap-x-3 gap-y-1 text-sm">
         <div className="font-medium" title={`On-ice ${mode === "d" ? "xGD" : mode === "f" ? "xGF" : "xGA"}/60 minus the league average`}>
-          On-ice vs average
+          On-Ice vs. Average
         </div>
         <Bar v={total} mode={mode} scale={scale} strong />
         <div className="tabular text-right font-semibold">{signed(total)}</div>

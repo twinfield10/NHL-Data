@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type {
-  BetsResponse, EdgesResponse, GameResponse, LinesResponse, PlayerContextResponse, PlayersResponse, PlayerStyleResponse, SlateResponse, TeamMatchupsResponse, TeamsResponse,
+  BetsResponse, EdgesResponse, GameLineupsResponse, GameResponse, LinesResponse, PlayerContextResponse, PlayersResponse, PlayerStyleResponse, SlateResponse, TeamMatchupsResponse, TeamsResponse,
 } from "./types";
 
 async function apiFetch<T>(path: string): Promise<T> {
@@ -22,6 +22,13 @@ export const useSlate = (date?: string | null) =>
 
 export const useGame = (gameId: string) =>
   useQuery({ queryKey: ["game", gameId], queryFn: () => apiFetch<GameResponse>(`/api/games/${gameId}`) });
+
+export const useGameLineups = (gameId: string, enabled = true) =>
+  useQuery({
+    queryKey: ["game-lineups", gameId],
+    queryFn: () => apiFetch<GameLineupsResponse>(`/api/games/${gameId}/lineups`),
+    enabled,
+  });
 
 export const useEdges = (date?: string | null) =>
   useQuery({ queryKey: ["edges", date], queryFn: () => apiFetch<EdgesResponse>(`/api/edges${dateParam(date)}`) });

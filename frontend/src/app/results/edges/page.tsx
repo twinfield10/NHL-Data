@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 const FILTERS = [
   { key: "flagged", label: "Flagged" },
-  { key: "positive", label: "Positive edge" },
+  { key: "positive", label: "Positive Edge" },
   { key: "all", label: "All" },
 ] as const;
 

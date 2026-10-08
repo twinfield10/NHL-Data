@@ -61,7 +61,7 @@ function Deployment({ row }: { row: PlayerContextRow }) {
         <div><div className="text-xs text-muted-foreground">PK / GP</div>{fmt(u.toi_pk_pg)}</div>
         <div title="Games on the first / second power-play unit"><div className="text-xs text-muted-foreground">PP1 / PP2</div>{u.games_pp1 ?? 0} / {u.games_pp2 ?? 0}</div>
         <div title="Games on the first / second penalty-kill unit"><div className="text-xs text-muted-foreground">PK1 / PK2</div>{u.games_pk1 ?? 0} / {u.games_pk2 ?? 0}</div>
-        <div title="Offensive-zone share of his 5v5 offensive + defensive zone faceoff starts"><div className="text-xs text-muted-foreground">OZ starts</div>{pct(u.oz_start_share, 0)}</div>
+        <div title="Offensive-zone share of his 5v5 offensive + defensive zone faceoff starts"><div className="text-xs text-muted-foreground">OZ Starts</div>{pct(u.oz_start_share, 0)}</div>
       </div>
     </div>
   );
@@ -82,7 +82,7 @@ function Season({ row }: { row: PlayerContextRow }) {
         </div>
       </div>
       <div>
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Most common linemates</div>
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Most Common Linemates</div>
         {row.linemates.length ? (
           <ul className="space-y-1 text-sm">
             {row.linemates.map((m) => (

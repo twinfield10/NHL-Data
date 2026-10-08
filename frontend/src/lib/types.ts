@@ -96,6 +96,8 @@ export interface SlateResponse {
   /** Best market price per side for games the model hasn't priced yet (no model numbers). */
   lines: MarketLine[];
   bets: Bet[];
+  /** Regulation three-way per game (model where priced, market where quoted). */
+  three_way: ThreeWay[];
 }
 
 export interface MarketLine {
@@ -203,6 +205,7 @@ export interface GameResponse {
   goalies: { home: GoalieProb[]; away: GoalieProb[] };
   edges: Edge[];
   history: PricePoint[];
+  markets: MarketView;
 }
 
 export interface Bet {
@@ -513,4 +516,140 @@ export interface PlayerStyleResponse {
   season: number;
   views: StyleView[];
   history: { season: number; archetype: string | null; confidence: number | null; toi_5v5_min: number }[];
+}
+
+// ---------------------------------------------------------------- markets (game page and cards)
+
+export type MarketKey = "moneyline" | "moneyline_3way" | "puckline" | "total";
+export type SideKey = "home" | "away" | "draw" | "over" | "under";
+
+/** Regulation three-way for a card: model vs market and the best price per side (never flagged). */
+export interface ThreeWaySide {
+  side: "home" | "draw" | "away";
+  p_model: number | null;
+  p_market: number | null;
+  price: number | null;
+  book: string | null;
+  edge: number | null;
+}
+
+export interface ThreeWay {
+  game_id?: number;
+  sides: ThreeWaySide[];
+  books: number;
+}
+
+/** Market consensus at one moment: devigged, averaged over the books at the main line. */
+export interface Consensus {
+  t: string;
+  market: MarketKey;
+  /** Home handicap for puck lines, the total for totals. */
+  line: number | null;
+  books: number;
+  fair: Partial<Record<SideKey, number>>;
+  best: Partial<Record<SideKey, { price: number; book: string }>>;
+}
+
+export interface ModelPoint {
+  t: string;
+  market: MarketKey;
+  line: number | null;
+  p: Partial<Record<SideKey, number>>;
+}
+
+export interface BookQuote {
+  book: string;
+  line: number | null;
+  prices: Partial<Record<SideKey, number>>;
+  fair: Partial<Record<SideKey, number>>;
+  captured_at: string;
+}
+
+export interface MarketView {
+  start: string | null;
+  history: Consensus[];
+  model: ModelPoint[];
+  books: Partial<Record<MarketKey, BookQuote[]>>;
+  consensus: Partial<Record<MarketKey, Consensus>>;
+  three_way: ThreeWay | null;
+}
+
+// ---------------------------------------------------------------- lineups tab
+
+export interface SeasonPair<T> {
+  cur: T | null;
+  prev: T | null;
+}
+
+export interface OnIce {
+  games: number;
+  toi_s: number;
+  xgf60: number;
+  xga60: number;
+}
+
+export interface LineupPlayerStats extends LineupPlayer {
+  /** 5v5 ratings per 60 vs average (``ev_def`` is prevention: higher is better). */
+  rating: { ev_off: number; ev_def: number; ev_net: number; ev_toi_s: number } | null;
+  onice: SeasonPair<OnIce>;
+}
+
+export interface UnitRecord {
+  toi_s: number;
+  games: number;
+  xgf: number;
+  xga: number;
+  gf: number;
+  ga: number;
+}
+
+export interface LineupUnit {
+  slot: string;
+  kind: "F" | "D" | "PP" | "PK";
+  player_ids: number[];
+  record: SeasonPair<UnitRecord>;
+}
+
+export interface GoalieSeason {
+  starts: number;
+  shots_against: number;
+  goals_against: number;
+  xga: number;
+  gsax: number;
+  sv_pct: number | null;
+}
+
+export interface GoalieStats extends GoalieProb {
+  rating: { save: number; save_sd: number; save_prior: number | null } | null;
+  season: SeasonPair<GoalieSeason>;
+}
+
+export interface Tweet {
+  text: string | null;
+  author_name: string | null;
+  author_handle: string | null;
+  created_at: string | null;
+}
+
+export interface LineupSource {
+  source_name: string | null;
+  url: string | null;
+  updated_at: string | null;
+  tweet: Tweet | null;
+  goalie_name?: string | null;
+  status?: string | null;
+  details?: string | null;
+}
+
+export interface TeamLineup {
+  players: LineupPlayerStats[];
+  units: LineupUnit[];
+  goalies: GoalieStats[];
+  sources: { lines: LineupSource | null; goalie: LineupSource | null };
+}
+
+export interface GameLineupsResponse {
+  season: number;
+  home: TeamLineup;
+  away: TeamLineup;
 }

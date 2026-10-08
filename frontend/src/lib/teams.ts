@@ -102,3 +102,12 @@ export function matchupColors(away: string, home: string, dark: boolean): { away
   }
   return { away: awayColor, home: homeColor };
 }
+
+/** Black or white, whichever reads better on ``hex``. */
+export const textOn = (hex: string) => (luminance(hex) > 0.45 ? "#0f172a" : "#ffffff");
+
+/** Over / under colors (not team specific). */
+export const OVER_COLOR = "#16a34a";
+export const UNDER_COLOR = "#dc2626";
+/** The three-way's draw (overtime) segment. */
+export const DRAW_COLOR = "#64748b";

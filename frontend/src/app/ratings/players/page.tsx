@@ -25,7 +25,7 @@ const POSITIONS = [
 ] as const;
 
 const DETAIL = [
-  { key: "context", label: "On-ice context" },
+  { key: "context", label: "On-Ice Context" },
   { key: "style", label: "Style" },
 ] as const;
 
@@ -96,7 +96,7 @@ function skaterColumns(s: Scales): Column<Skater>[] {
       render: (p) => signed(xga(p.ev_def)), sort: (p) => p.ev_def, style: (p) => heat(p.ev_def, s.xga),
     },
     {
-      key: "move", label: "Δ prior", align: "right", title: "xGD/60 now minus the preseason prior: what this season has changed",
+      key: "move", label: "Δ Prior", align: "right", title: "xGD/60 now minus the preseason prior: what this season has changed",
       render: (p) => {
         const d = p.ev_net_prior == null ? null : p.ev_net - p.ev_net_prior;
         return <Signed value={d}>{signed(d, 3)}</Signed>;
@@ -131,7 +131,7 @@ function goalieColumns(s: Scales): Column<Goalie>[] {
     nameColumn<Goalie>("Goalie"),
     { key: "age", label: "Age", align: "right", render: (g) => (g.age == null ? "–" : Math.floor(g.age)), sort: (g) => g.age },
     {
-      key: "save", label: "Save talent", align: "right", className: "font-semibold",
+      key: "save", label: "Save Talent", align: "right", className: "font-semibold",
       title: "Share of expected goals stopped beyond an average goalie (shrunk rating)",
       render: (g) => signedPct(g.save), sort: (g) => g.save, style: (g) => heat(g.save, s.save),
     },
@@ -140,7 +140,7 @@ function goalieColumns(s: Scales): Column<Goalie>[] {
       render: (g) => <span className="text-muted-foreground">{(g.save_sd * 100).toFixed(1)}</span>, sort: (g) => g.save_sd,
     },
     {
-      key: "move", label: "Δ prior", align: "right", title: "Save talent now minus the preseason prior",
+      key: "move", label: "Δ Prior", align: "right", title: "Save talent now minus the preseason prior",
       render: (g) => {
         const d = g.save_prior == null ? null : g.save - g.save_prior;
         return <Signed value={d}>{signedPct(d)}</Signed>;
@@ -185,7 +185,7 @@ export default function PlayersPage() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="text-xl font-semibold">Player ratings</h1>
+        <h1 className="text-xl font-semibold">Player Ratings</h1>
         {data && (
           <span className="text-xs text-muted-foreground">
             Snapshot {longDate(data.snapshot)} · built {dateTimeET(data.as_of)} ET
@@ -205,7 +205,7 @@ export default function PlayersPage() {
               onChange={(e) => setTeam(e.target.value)}
               className="rounded-md border border-border bg-card px-2 py-1 text-sm"
             >
-              <option value="">All teams</option>
+              <option value="">All Teams</option>
               {teams.map((t) => (
                 <option key={t} value={t}>
                   {t}
@@ -219,7 +219,7 @@ export default function PlayersPage() {
                 className="rounded-md border border-border bg-card px-2 py-1 text-sm"
                 title="Forward archetype"
               >
-                <option value="">All types</option>
+                <option value="">All Types</option>
                 {Object.keys(ARCHETYPES).map((t) => (
                   <option key={t} value={t}>
                     {t[0].toUpperCase() + t.slice(1)}
