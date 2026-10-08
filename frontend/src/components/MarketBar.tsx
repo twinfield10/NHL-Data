@@ -55,15 +55,14 @@ function EdgeChip({ s, closed, align }: { s?: BarSide; closed?: boolean; align: 
 
 const sideFlag = (s: BarSide, closed?: boolean) => (!closed && (s.warn ? "WARN" : s.play ? "PLAY" : null)) || null;
 
-/** PLAY (with the units to risk) or WARN under the side's edge chip. */
+/** The units to risk on a play ("PLAY" without a stake), or WARN, under the side's edge chip. */
 function FlagBadge({ s, closed, align }: { s: BarSide; closed?: boolean; align: "left" | "right" }) {
   const flag = sideFlag(s, closed);
   if (!flag) return <span />;
   return (
     <span className={cn("flex", align === "right" ? "justify-end" : "justify-start")}>
       <span className={cn("whitespace-nowrap rounded px-1.5 text-[11px] font-bold leading-4 tracking-wide text-white", flag === "WARN" ? "bg-red-600" : "bg-emerald-600")}>
-        {flag}
-        {flag === "PLAY" && s.stake ? ` · RISK ${s.stake.toFixed(2)}u` : ""}
+        {flag === "PLAY" && s.stake ? `RISK ${s.stake.toFixed(2)}u` : flag}
       </span>
     </span>
   );
