@@ -351,3 +351,14 @@ def blend_model() -> str:
 def betting_edges(day: date, stamp: str) -> str:
     """Live edges snapshot for a game date, one per `nhl edges` run."""
     return f"pregame/edges/{day.isoformat()}/{stamp}.parquet"
+
+
+def pregame_deployment(season: int) -> str:
+    """Projected deployment per team-game as known the morning of each game (M5 lineups;
+    cached for the props backtest)."""
+    return f"predictions/pregame_deployment/{season}.parquet"
+
+
+def props_backtest(season: int) -> str:
+    """Player goals / assists / points projections and baselines per skater-game (M9 phase B)."""
+    return f"predictions/props_backtest/{season}.parquet"
