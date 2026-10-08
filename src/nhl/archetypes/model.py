@@ -116,10 +116,14 @@ def season_norms(style: pl.DataFrame, group: str, prev: dict[str, tuple[float, f
 
 
 def axis_raw(df: pl.DataFrame, group: str, norms: dict[str, tuple[float, float]]) -> np.ndarray:
-    """Unscaled axis composites (rows of ``df`` × axes of ``group``)."""
+    """Unscaled axis composites (rows of ``df`` × axes of ``group``).
+
+    A missing feature (e.g. no height/weight yet for a debutant) scores as the league norm
+    (z = 0) rather than poisoning the whole row with NaN.
+    """
     feats = _features(group)
     t = transform(df, feats)
-    z = {f: (t[f].to_numpy() - norms[f][0]) / norms[f][1] for f in feats}
+    z = {f: np.nan_to_num((t[f].to_numpy() - norms[f][0]) / norms[f][1], nan=0.0) for f in feats}
     return np.column_stack([sum(s * z[f] for f, s in axis.items()) / len(axis) for axis in AXES[group].values()])
 
 
