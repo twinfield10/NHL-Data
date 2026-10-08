@@ -6,6 +6,10 @@ so they are cached for the life of the process; the two mutable objects (the ``l
 pointer and the bets ledger) are re-read after :data:`MUTABLE_TTL_SECONDS`. The one
 exception is rankings, which compose team ratings from a fresh lineup projection
 (:mod:`nhl.ratings.rankings`) and are cached for :data:`RANKINGS_TTL_SECONDS`.
+
+Expensive entries (rankings, units, processed season tables) are served stale while a
+background thread refreshes them, and :meth:`SiteData.warm` fills them at startup, so no
+request waits on a recompute.
 """
 
 from __future__ import annotations
@@ -52,6 +56,7 @@ class SiteData:
         self._immutable: dict[str, pl.DataFrame | None] = {}
         self._timed: dict[str, tuple[float, object]] = {}
         self._players: dict[int, str] | None = None
+        self._refreshing: set[str] = set()
 
     # ------------------------------------------------------------------ cache helpers
     def _parquet(self, key: str) -> pl.DataFrame | None:
@@ -71,17 +76,50 @@ class SiteData:
         with ThreadPoolExecutor(READ_WORKERS) as pool:
             return [df for df in pool.map(self._parquet, keys_) if df is not None]
 
-    def _timed_get(self, key: str, ttl: float, load):
-        """``load()`` cached under ``key`` for ``ttl`` seconds."""
+    def _timed_get(self, key: str, ttl: float, load, stale_ok: bool = False):
+        """``load()`` cached under ``key`` for ``ttl`` seconds.
+
+        With ``stale_ok``, an expired value is returned immediately and refreshed in a
+        background thread (one refresh per key at a time); only a missing value blocks.
+        """
         now = time.monotonic()
         with self._lock:
             hit = self._timed.get(key)
             if hit and now - hit[0] < ttl:
                 return hit[1]
+            if hit and stale_ok:
+                if key not in self._refreshing:
+                    self._refreshing.add(key)
+                    threading.Thread(target=self._refresh, args=(key, load), daemon=True).start()
+                return hit[1]
         value = load()
         with self._lock:
             self._timed[key] = (now, value)
         return value
+
+    def _refresh(self, key: str, load) -> None:
+        """Background reload for :meth:`_timed_get` (a failure keeps the stale value)."""
+        try:
+            value = load()
+            with self._lock:
+                self._timed[key] = (time.monotonic(), value)
+        except Exception:
+            logger.exception("background refresh failed for %s", key)
+        finally:
+            with self._lock:
+                self._refreshing.discard(key)
+
+    def warm(self, day: date) -> None:
+        """Fill the expensive caches (rankings, this and last season's units) for ``day``."""
+        start = time.monotonic()
+        try:
+            r = self.rankings(day)
+            if r is not None:
+                for season in (r["season"], r["season"] - 10001):
+                    self.units(season, season == r["season"])
+            logger.info("caches warmed in %.1fs", time.monotonic() - start)
+        except Exception:
+            logger.exception("cache warm-up failed")
 
     # ------------------------------------------------------------------ lookups
     def player_names(self) -> dict[int, str]:
@@ -299,7 +337,7 @@ class SiteData:
                 "teams": board, "goalie_weights": goalies, "lineups": dep,
                 "lines": lines, "tables": tables,
             }
-        return self._timed_get(f"rankings/{day}", RANKINGS_TTL_SECONDS, load)
+        return self._timed_get(f"rankings/{day}", RANKINGS_TTL_SECONDS, load, stale_ok=True)
 
     def units(self, season: int, current: bool) -> pl.DataFrame | None:
         """Every forward line and D pair iced at 5v5 in ``season`` (:func:`nhl.ratings.rankings.observed_units`).
@@ -309,14 +347,14 @@ class SiteData:
             if stints is None or rosters is None:
                 return None
             return rankings.observed_units(stints, rosters)
-        return self._timed_get(f"units/{season}", RANKINGS_TTL_SECONDS if current else DAY_SECONDS, load)
+        return self._timed_get(f"units/{season}", RANKINGS_TTL_SECONDS if current else DAY_SECONDS, load, stale_ok=True)
 
     def processed(self, key: str, current: bool) -> pl.DataFrame | None:
         """A season table under ``processed/`` (usage, on-ice context, matchups, linemates): the
         current season re-read every :data:`RANKINGS_TTL_SECONDS` (the nightly job rewrites it),
         finished seasons once a day."""
         return self._timed_get(f"processed/{key}", RANKINGS_TTL_SECONDS if current else DAY_SECONDS,
-                               lambda: self.store.get_parquet(key))
+                               lambda: self.store.get_parquet(key), stale_ok=True)
 
     def ledger(self) -> pl.DataFrame | None:
         """The paper/real bet ledger (re-read every :data:`MUTABLE_TTL_SECONDS`)."""

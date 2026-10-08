@@ -17,6 +17,10 @@ async function apiFetch<T>(path: string): Promise<T> {
 
 const dateParam = (date?: string | null) => (date ? `?date=${date}` : "");
 
+// Ratings change once a day (nightly snapshot) and team boards every few minutes at most, so
+// they don't need the global one-minute poll; slate, edges and bets keep it.
+const STATIC = { staleTime: 15 * 60_000, refetchInterval: false as const, refetchOnWindowFocus: false };
+
 export const useSlate = (date?: string | null) =>
   useQuery({ queryKey: ["slate", date], queryFn: () => apiFetch<SlateResponse>(`/api/slate${dateParam(date)}`) });
 
@@ -40,19 +44,21 @@ export const useBets = (kind?: string | null) =>
   });
 
 export const usePlayerRatings = () =>
-  useQuery({ queryKey: ["ratings", "players"], queryFn: () => apiFetch<PlayersResponse>("/api/ratings/players") });
+  useQuery({ ...STATIC, queryKey: ["ratings", "players"], queryFn: () => apiFetch<PlayersResponse>("/api/ratings/players") });
 
 export const useTeamRatings = () =>
-  useQuery({ queryKey: ["ratings", "teams"], queryFn: () => apiFetch<TeamsResponse>("/api/ratings/teams") });
+  useQuery({ ...STATIC, queryKey: ["ratings", "teams"], queryFn: () => apiFetch<TeamsResponse>("/api/ratings/teams") });
 
 export const useLineRatings = (season?: number | null) =>
   useQuery({
+    ...STATIC,
     queryKey: ["ratings", "lines", season],
     queryFn: () => apiFetch<LinesResponse>(`/api/ratings/lines${season ? `?season=${season}` : ""}`),
   });
 
 export const usePlayerContext = (playerId: number | null) =>
   useQuery({
+    ...STATIC,
     queryKey: ["ratings", "player-context", playerId],
     queryFn: () => apiFetch<PlayerContextResponse>(`/api/ratings/players/${playerId}/context`),
     enabled: playerId != null,
@@ -60,6 +66,7 @@ export const usePlayerContext = (playerId: number | null) =>
 
 export const usePlayerStyle = (playerId: number | null) =>
   useQuery({
+    ...STATIC,
     queryKey: ["ratings", "player-style", playerId],
     queryFn: () => apiFetch<PlayerStyleResponse>(`/api/ratings/players/${playerId}/style`),
     enabled: playerId != null,
@@ -67,6 +74,7 @@ export const usePlayerStyle = (playerId: number | null) =>
 
 export const useTeamMatchups = (teamId: number | null, season?: number | null) =>
   useQuery({
+    ...STATIC,
     queryKey: ["ratings", "team-matchups", teamId, season],
     queryFn: () => apiFetch<TeamMatchupsResponse>(`/api/ratings/teams/${teamId}/matchups${season ? `?season=${season}` : ""}`),
     enabled: teamId != null,

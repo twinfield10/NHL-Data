@@ -175,3 +175,23 @@ def test_archetype_lookup_falls_back_to_previous_season():
     stub = _StubData({keys.archetypes(20242025): _archetypes(20242025)})
     assert archetype_lookup(stub, 20252026)[1] == {"archetype": "skill winger", "archetype_conf": 0.8, "style_group": "F"}
     assert archetype_lookup(_StubData({}), 20252026) == {}
+
+
+def test_timed_get_serves_stale_and_refreshes_in_background():
+    import time
+
+    data = SiteData(FakeStore({}))
+    calls = []
+
+    def load():
+        calls.append(1)
+        return len(calls)
+
+    assert data._timed_get("k", 0.0, load, stale_ok=True) == 1  # nothing cached: blocks
+    assert data._timed_get("k", 0.0, load, stale_ok=True) == 1  # expired: stale value now
+    for _ in range(100):
+        if data._timed.get("k", (0, None))[1] == 2:
+            break
+        time.sleep(0.01)
+    assert data._timed["k"][1] == 2  # refreshed in the background
+    assert data._timed_get("k", 0.0, load) == 3  # without stale_ok an expired value blocks
