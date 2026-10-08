@@ -168,8 +168,13 @@ January, so they are split at their median game date instead.
 - **Centering matters.** Without a zero-sum constraint on each group of talent terms,
   the free intercept and the talent terms drift against each other. The first finishing
   tuning showed a spurious +1.5% gain for exactly this reason.
-- **Newcomers start at league average.** Below-average newcomer priors (Magnus 9's ±10%)
-  scored worse in both the EV and the finishing tuning.
+- **Newcomers start at league average, by position.** Below-average newcomer priors for
+  everyone (Magnus 9's ±10%) scored worse in both the EV and the finishing tuning.
+  Defencemen are the exception (2026-10-08, re-chained `chain_eval`, 13 seasons): new D
+  start at offence −0.25 and defence +0.12 xG/60. That gains +0.93 bp on late-season MSE
+  and wins every season (the age curve adds +0.29 bp re-chained). Optimum is flat from
+  −0.20 to −0.30 offence and +0.08 to +0.16 defence. A per-season shift on returning D priors
+  on top adds < 0.1 bp, so it isn't used. ST keeps 0 for D (untested).
 - **EV context terms (2024-25).** Home ice is +0.12 xG/60 (about 5%). The attacking team
   on a back-to-back is −0.08; an opponent on a back-to-back is +0.12. An offensive-zone
   faceoff adds +5.6 xG/60 in its first second, decaying over about 10 s. Trailing teams

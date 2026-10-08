@@ -186,8 +186,8 @@ See [archetypes.md](../reports/archetypes.md) (`src/nhl/archetypes/usefulness.py
   about 0.05 xG/60 per stint. No simulator change.
 - **Aging: fail for style.** Archetypes and axes add ≤ 0.01% on top of an F/D term (7-9 of
   13 seasons). Side finding: the F/D term itself helps (+0.03%, 12 of 13). D offence priors run
-  ≈ 0.12 xG/60 high relative to forwards; a position-specific prior mean is a candidate
-  M3 fix, to be tested with re-chaining.
+  ≈ 0.12 xG/60 high relative to forwards. Re-chained, a D-specific newcomer prior
+  (offence −0.25, defence +0.12) gains +0.93 bp in 13 of 13 seasons and is adopted in M3.
 
 ## Phase D: Site
 - **Players tab:** lead with the style axes (percentiles within F / D); show the forward

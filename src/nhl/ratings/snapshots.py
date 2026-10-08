@@ -47,6 +47,7 @@ class _SeasonCache:
         self.season = config.season_id(start_year)
         ages = rapm._ages(store, start_year)
         self.designs, self.priors = {}, {}
+        self.defence = rapm.defence_ids(store)
         for state in ("EV", "ST"):
             self.designs[state] = rapm.season_design(store, self.season, state)
             self.priors[state] = rapm.age_prior(
@@ -67,7 +68,7 @@ def snapshot(store: Store, day: date, cache: _SeasonCache | None = None) -> dict
         design = cache.designs[state]
         mask = (design.rows["game_date"] < day).to_numpy()
         hyper = rapm.Hyper() if state == "EV" else rapm.ST_HYPER
-        f = rapm.fit(rapm.normal_equations(design, mask), cache.priors[state], hyper)
+        f = rapm.fit(rapm.normal_equations(design, mask), cache.priors[state], hyper, cache.defence)
         tables[state.lower()] = f.players.with_columns(pl.lit(day).alias("as_of"), (1 / pl.col("precision").sqrt()).alias("sd_s"))
         tables[f"context_{state.lower()}"] = _context(f, day)
 
