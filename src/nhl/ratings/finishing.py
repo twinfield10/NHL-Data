@@ -16,7 +16,8 @@ posterior mean, with precision = ``decay`` × last season's posterior precision 
 change, so old evidence fades). Players without a previous estimate start at
 ``newcomer_mean`` with the precision of ``newcomer_shots`` imaginary shots. Within a
 season the MAP estimate is found by Newton's method (IRLS). Fitting on shots before a date
-gives the point-in-time rating as of that date.
+gives the point-in-time rating as of that date. Priors are aged into each new season with
+:data:`AGE_CURVES` (:func:`age_prior`).
 """
 
 from __future__ import annotations
@@ -60,6 +61,22 @@ DEFAULT_HYPER = {
     "shooter": Hyper(decay=0.8, newcomer_shots=1000.0, newcomer_mean=-0.05),
     "goalie": Hyper(decay=0.8, newcomer_shots=10000.0, newcomer_mean=0.025),
 }
+#: Expected season-to-season change in each role's term (logit) by age: c0 + c1·a + c2·a²,
+#: a = age − 27 (clipped to 19-38). Fitted 2026-10-08 by the delta method on chained
+#: full-season estimates and scaled ×2 (they are shrunk). Shooters improve about +0.015 a
+#: season at 21 and decline −0.014 at 33; goalies get worse (allow more) after about 30.
+#: Re-chained fit-to-Dec-31 test, 13 seasons: +1.68 bp log loss, 13 of 13 (shooters alone
+#: +1.27 bp, 13/13; goalies alone +0.41 bp, 10/13).
+#:
+#: Tested and rejected with it: a defenceman-specific newcomer shooter mean (the ``d`` term
+#: already carries the gap, ±0.5 bp); goalie back-to-back, heavy workload (4+ starts in 7 days)
+#: and long rest as goal-rate effects (pooled 2010-2026: +0.015 ± 0.016, +0.034 ± 0.027,
+#: −0.009 ± 0.011 logit; refit each season they cost 1-4 bp, held fixed they add +0.04 bp).
+AGE_CURVES: dict[str, tuple[float, float, float]] = {
+    "shooter": (-0.00313, -0.00234, 0.000101),
+    "goalie": (-0.00240, 0.000611, 0.0000443),
+}
+
 #: Talent terms switched off (pinned at 0): the intercept + position baseline.
 NO_TALENT = {"shooter": Hyper(1.0, 1e9, 0.0), "goalie": Hyper(1.0, 1e9, 0.0)}
 
@@ -97,6 +114,27 @@ def load_shots(store: Store, season: int) -> pl.DataFrame:
         .select("season", "game_id", "game_date", "event_idx", "shooter_id", "goalie_id", "xg", "is_goal",
                 pl.col("is_defense").fill_null(False))
     )
+
+
+def age_prior(prior: pl.DataFrame | None, ages: pl.DataFrame | None,
+              curves: dict[str, tuple[float, float, float]] | None = None) -> pl.DataFrame | None:
+    """Shift prior means by each player's expected change into the new season.
+
+    Args:
+        prior: ``role, player_id, mean, precision``.
+        ages: ``player_id, age`` at the start of the new season (missing ages count as 27).
+        curves: Role -> quadratic coefficients (default :data:`AGE_CURVES`).
+    """
+    if prior is None or ages is None:
+        return prior
+    curves = AGE_CURVES if curves is None else curves
+    j = prior.join(ages, on="player_id", how="left")
+    a = np.clip(j["age"].fill_null(27.0).to_numpy().astype(float), 19, 38) - 27
+    role = j["role"].to_numpy()
+    shift = np.zeros(len(a))
+    for r, (c0, c1, c2) in curves.items():
+        shift = np.where(role == r, c0 + c1 * a + c2 * a * a, shift)
+    return j.with_columns((pl.col("mean") + pl.Series(shift)).alias("mean")).drop("age")
 
 
 def _priors(shots: pl.DataFrame, prior: pl.DataFrame | None, hyper: dict[str, Hyper]) -> pl.DataFrame:
@@ -282,9 +320,12 @@ def build_priors(store: Store, start_years: list[int], hyper: dict[str, Hyper] |
     ``ratings/finishing/prior/{s}`` holds what is known before season *s* starts, so a
     point-in-time fit for any date in *s* needs only that file and *s*'s own shots.
     """
+    from nhl.ratings.rapm import _ages
+
     hyper = hyper or DEFAULT_HYPER
     prior = None
     for year in sorted(start_years):
+        prior = age_prior(prior, _ages(store, year))
         f = fit(load_shots(store, config.season_id(year)), prior, hyper)
         prior = carry_forward(prior, f)
         store.put_parquet(season_prior_key(config.season_id(year + 1)), prior)
@@ -298,8 +339,11 @@ def as_of(store: Store, day: date, hyper: dict[str, Hyper] | None = None) -> pl.
         ``as_of, role, player_id, mean, sd, prior_mean, shots, goals, xg`` plus the fit's
         ``intercept`` and ``defense`` as columns.
     """
-    season = config.season_id(day.year if day.month >= 9 else day.year - 1)
-    prior = store.get_parquet(season_prior_key(season))
+    from nhl.ratings.rapm import _ages
+
+    start = day.year if day.month >= 9 else day.year - 1
+    season = config.season_id(start)
+    prior = age_prior(store.get_parquet(season_prior_key(season)), _ages(store, start))
     shots = load_shots(store, season).filter(pl.col("game_date") < day)
     if shots.is_empty():
         terms = (prior if prior is not None else pl.DataFrame(schema={"role": pl.Utf8, "player_id": pl.Int64, "mean": pl.Float64, "precision": pl.Float64}))

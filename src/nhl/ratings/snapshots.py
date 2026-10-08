@@ -54,7 +54,7 @@ class _SeasonCache:
                 store.get_parquet(rapm.prior_key(state, self.season)), ages, rapm.load_curve(store, state)
             )
         self.shots = finishing.load_shots(store, self.season)
-        self.finishing_prior = store.get_parquet(finishing.season_prior_key(self.season))
+        self.finishing_prior = finishing.age_prior(store.get_parquet(finishing.season_prior_key(self.season)), ages)
         self.penalty_games = penalties.season_events(store, self.season)
         self.penalty_prior = store.get_parquet(penalties.prior_key(self.season))
 

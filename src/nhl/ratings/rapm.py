@@ -70,8 +70,12 @@ class Hyper:
 
 #: Special teams (PP offence / PK defence), tuned the same way: decay 0.9 and a 20k-second
 #: newcomer prior (+0.65% vs no player terms; EV gets +0.17%, PP skill is concentrated).
-#: Position-specific newcomer means are untested for ST, so defencemen start at 0 there.
-ST_HYPER = Hyper(decay=0.9, newcomer_s=2.0e4, coach_s=2.0e4, newcomer_off_d=0.0, newcomer_def_d=0.0)
+#: Defencemen (tuned 2026-10-08, re-chained :func:`chain_eval`, 13 seasons): new D start at
+#: −1.0 PP xG/60 (+15 bp alone; forwards are best left at 0, and PK defence shows nothing).
+ST_HYPER = Hyper(decay=0.9, newcomer_s=2.0e4, coach_s=2.0e4, newcomer_off_d=-1.0, newcomer_def_d=0.0)
+#: ST priors age with the EV curve's shape at this scale (the EV curve itself uses 2). With the
+#: D newcomer mean: +19.3 bp late-season MSE, 13 of 13 seasons. The optimum is flat over 3-6.
+ST_AGE_SCALE = 4.0
 
 
 @dataclass

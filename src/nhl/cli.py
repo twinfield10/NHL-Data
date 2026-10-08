@@ -217,8 +217,10 @@ def cmd_build_priors(args: argparse.Namespace) -> None:
     store, years = Store(), config.parse_seasons(args.seasons)
     finishing.build_priors(store, years)
     penalties.build_priors(store, years)
-    for state in ("EV", "ST"):
-        rapm.build_priors(store, years, state, curve=rapm.load_curve(store, state))
+    ev_curve = rapm.load_curve(store, "EV")
+    st_curve = rapm.AgeCurve(coef=ev_curve.coef, scale=rapm.ST_AGE_SCALE) if ev_curve else None
+    rapm.build_priors(store, years, "EV", curve=ev_curve)
+    rapm.build_priors(store, years, "ST", curve=st_curve)
     print(f"priors stored for {config.season_id(years[-1] + 1)} and earlier")
 
 
