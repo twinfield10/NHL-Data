@@ -523,7 +523,7 @@ def cmd_update(args: argparse.Namespace) -> None:
     cmd_archetypes(argparse.Namespace(seasons=year, fit=False, version=None))
 
 
-POLL_TARGETS = ("odds", "goalies", "lines", "injuries", "transactions", "officials")
+POLL_TARGETS = ("odds", "props", "props_lowvig", "goalies", "lines", "injuries", "transactions", "officials")
 #: Targets whose changes move pregame prices (odds don't: the model never reads them).
 REPRICE_TARGETS = ("goalies", "lines", "injuries", "transactions", "officials")
 
@@ -594,6 +594,16 @@ def cmd_poll(args: argparse.Namespace) -> None:
                 n = {"lowvig": lowvig.poll(store, games), "fourcasters": fourcasters.poll(store, games),
                      "espn": espn_odds.poll(store, games)}
                 results[target] = ", ".join(f"{k} {v}" for k, v in n.items())
+            elif target == "props":
+                # Player props from books polled over plain HTTP (DraftKings props come with ESPN odds).
+                from nhl.sources import fanduel
+
+                results[target] = f"fanduel {fanduel.poll(store, games)}"
+            elif target == "props_lowvig":
+                # LowVig/BetOnline props need a headless-browser walk (~minutes), so they poll on their own.
+                from nhl.sources import dst
+
+                results[target] = f"lowvig {dst.poll(store, games)}"
             elif target == "goalies":
                 from nhl.sources import dailyfaceoff
 
@@ -704,7 +714,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--version", default=None)
     p.set_defaults(func=cmd_score_xg)
 
-    p = sub.add_parser("poll", help="poll odds / goalies / lines / injuries / transactions / officials once")
+    p = sub.add_parser("poll", help="poll odds / props / goalies / lines / injuries / transactions / officials once")
     p.add_argument("--what", default="all", help=f"comma list of {', '.join(POLL_TARGETS)} or 'all'")
     p.add_argument("--window", type=int, default=None,
                    help="only run if a game starts within this many minutes")

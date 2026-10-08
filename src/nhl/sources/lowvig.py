@@ -45,7 +45,8 @@ Feed shape, confirmed on the NHL board:
   ``moneyline_3way`` / ``period="reg"`` with sides home/away/draw.
 * **No player props for anonymous clients.** BetOnline's player props are a third-party
   widget whose URL comes from ``api-offering-ext.../offexternal/get-url-widget``, which
-  answers 401 without a customer login; nothing is captured.
+  answers 401 without a customer login. The widget itself (Digital Sports Tech) can be
+  driven by a headless browser instead: see :mod:`nhl.sources.dst`.
 """
 
 from __future__ import annotations

@@ -23,6 +23,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
 api = ["fastapi>=0.115", "uvicorn[standard]>=0.30"]
+# DST prop widget (LowVig/BetOnline props): also run `playwright install chromium`.
+browser = ["playwright>=1.57"]
 notebooks = ["jupyterlab>=4.0", "ipykernel>=6.0", "matplotlib>=3.8", "seaborn>=0.13"]
 
 [project.scripts]
