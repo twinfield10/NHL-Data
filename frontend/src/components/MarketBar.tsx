@@ -101,9 +101,9 @@ export default function MarketBar({ title, sides, basis = "model", closed, neutr
         tone === "warn" ? "border-red-600 bg-red-500/10" : tone === "play" ? "border-emerald-600 bg-emerald-500/10" : "border-transparent"
       )}
     >
-      <div className="mb-0.5 text-center text-[11px] font-bold uppercase tracking-wider text-foreground">{title}</div>
-      <div className="grid grid-cols-2 items-end gap-2">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
         <SideLabel s={first} align="left" closed={closed} />
+        <div className="text-center text-[11px] font-bold uppercase leading-4 tracking-wider text-foreground">{title}</div>
         <SideLabel s={last} align="right" closed={closed} />
       </div>
       <div className="mt-1 grid grid-cols-[3.5rem_1fr_3.5rem] items-center gap-2">
