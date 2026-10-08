@@ -471,6 +471,15 @@ def cmd_archetypes(args: argparse.Namespace) -> None:
         print("persistence", "  ".join(f"{k} {v:.2f}" for k, v in am.persistence(store, seasons).items()))
 
 
+def cmd_archetypes_tests(args: argparse.Namespace) -> None:
+    """Archetypes phase C: point attribution, line chemistry and aging tests; writes the numbers report."""
+    from nhl.archetypes import usefulness
+    from nhl.storage.s3 import Store
+
+    res = usefulness.run(Store(), [config.season_id(y) for y in config.parse_seasons(args.seasons)])
+    print(usefulness.write_report(res, args.report))
+
+
 def cmd_validate_game_state(args: argparse.Namespace) -> None:
     """Check the M2 tables against official scores and NHL boxscores; write the report."""
     from pathlib import Path
@@ -821,6 +830,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--fit", action="store_true", help="refit the model on the pooled fit seasons first")
     p.add_argument("--version", default=None, help="model version to fit as / assign with (default LATEST)")
     p.set_defaults(func=cmd_archetypes)
+
+    p = sub.add_parser("archetypes-tests", help="point attribution, line chemistry and aging tests (archetypes phase C)")
+    p.add_argument("--seasons", default=f"2011-{_current_start_year() - 1}")
+    p.add_argument("--report", default="docs/reports/archetypes-numbers.md")
+    p.set_defaults(func=cmd_archetypes_tests)
 
     p = sub.add_parser("validate-game-state", help="validate M2 tables vs official scores and boxscores")
     p.add_argument("--seasons", default=_default_seasons())

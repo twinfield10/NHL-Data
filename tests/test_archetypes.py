@@ -125,3 +125,57 @@ def test_comps_exclude_self_and_dedupe_players():
     c = am.comps(q, pool, model, n=5)["comps"].item()
     assert [x["player_id"] for x in c] == [2, 3]
     assert c[0]["season"] == 2  # the closer of player 2's seasons
+
+
+# --- phase C: usefulness tests ------------------------------------------------------------------
+
+from nhl.archetypes import usefulness as uf  # noqa: E402
+
+
+def _goal(game: int, idx: int, scorer: int, a1, a2, home_on=(1, 2, 3, 4, 5), away_on=(6, 7, 8, 9, 10), n=(5, 5)):
+    return {"event_type": "GOAL", "season_type": "R", "season": 20252026, "game_id": game, "event_idx": idx,
+            "game_date": date(2025, 10, game), "is_home_event": True, "home_skaters_on": n[0], "away_skaters_on": n[1],
+            "home_net_empty": False, "away_net_empty": False, "home_skater_ids": list(home_on),
+            "away_skater_ids": list(away_on), "player_1_id": scorer, "player_2_id": a1, "player_3_id": a2}
+
+
+def test_goal_rows_outcomes_and_states():
+    ev = pl.DataFrame([_goal(1, 1, 1, 2, None), _goal(1, 2, 3, 4, 5, home_on=(1, 2, 3, 4, 5), n=(5, 4)),
+                       _goal(2, 1, 1, None, None, n=(4, 4))])
+    rows = uf.goal_rows(ev)
+    assert rows.filter(pl.col("event_idx") == 1, pl.col("game_id") == 1).sort("player_id")["outcome"].to_list() == \
+        ["G", "A1", "none", "none", "none"]
+    assert set(rows["state"]) == {"5v5", "PP"}  # the 4v4 goal is dropped
+
+
+def test_history_counts_exclude_same_game():
+    ev = pl.DataFrame([_goal(1, 1, 1, 2, None), _goal(1, 2, 1, 2, None), _goal(2, 1, 3, 1, None)])
+    rows = uf.goal_rows(ev)
+    hist = rows.head(0).with_columns(pl.lit(0.0).alias("w"))
+    h = uf.history_counts(rows, hist)
+    p1 = h.filter(pl.col("player_id") == 1).sort("game_id", "event_idx")
+    assert p1["h_G"].to_list() == [0, 0, 2]  # game 1 goals don't count for each other
+    assert p1["h_n"].to_list() == [0, 0, 2]
+
+
+def test_pair_terms_match_explicit_sum():
+    style = pl.DataFrame({"player_id": [1, 2, 3], "has_style": [True] * 3, "p_a": [0.2, 0.5, 1.0], "p_b": [0.8, 0.5, 0.0],
+                          **{f"{g}_{a}": [0.0] * 3 for g, axes in am.AXES.items() for a in axes}})
+    rows = pl.DataFrame({"_i": [0], "offence": [[1, 2, 3]]})
+    pos = pl.DataFrame({"player_id": [1, 2, 3], "is_d": [False] * 3})
+    u = uf._unit_features(rows, "offence", style, pos)
+    p = {1: (0.2, 0.8), 2: (0.5, 0.5), 3: (1.0, 0.0)}
+    pairs = [(1, 2), (1, 3), (2, 3)]
+    aa = sum(p[i][0] * p[j][0] for i, j in pairs)
+    ab = sum(p[i][0] * p[j][1] + p[i][1] * p[j][0] for i, j in pairs)
+    assert abs(u["att_pair_p_a_p_a"].item() - aa) < 1e-12
+    assert abs(u["att_pair_p_a_p_b"].item() - ab) < 1e-12
+
+
+def test_aging_features_are_side_specific():
+    players = pl.DataFrame({"side": ["O", "D"], "age": [32.0, 22.0], "is_d": [True, False], "p_a": [0.5, 0.5],
+                            "p_b": [0.5, 0.5], "F_x": [1.0, 2.0]})
+    f, names = uf._aging_features(players, "position", ["p_a", "p_b"])
+    assert names == ["O:one", "O:a", "O:a2", "O:is_d", "O:is_d*a", "D:one", "D:a", "D:a2", "D:is_d", "D:is_d*a"]
+    assert f[0, names.index("O:is_d*a")] == 1.0 and f[0, names.index("D:one")] == 0.0
+    assert f[1, names.index("D:a")] == -1.0

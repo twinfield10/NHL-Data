@@ -4,6 +4,8 @@
 add-on layer, run all three Phase C tests. **Phase A built 2026-10-07** ([results](#phase-a-results-2026-10-07)).
 **Phase B built 2026-10-07** with a changed design: named style axes for every skater, archetypes
 for forwards only, because defence has no stable clusters ([results](#phase-b-results-2026-10-07)).
+**Phase C done 2026-10-08** ([report](../reports/archetypes.md)): the axes pass the point-attribution
+test (small but in every season); labels, chemistry and archetype aging fail.
 **Depends on:** M1 shots and events (`processed/shots`, `processed/events`), rink-adjusted
 locations (`processed/shots_rink`), M2 stints and units, the usage tables
 (`processed/usage_summary`, `processed/onice_context_summary`), M3 rating snapshots,
@@ -173,10 +175,23 @@ Phase B changed the inputs: tests use the forward archetype probabilities *and* 
    `ratings/ev/age_curve.json`. **Gate:** next-season rating prediction improves on held-out
    seasons (for example, do physical depth forwards decline earlier than playmakers?).
 
+### Phase C results (2026-10-08)
+See [archetypes.md](../reports/archetypes.md) (`src/nhl/archetypes/usefulness.py`, `nhl archetypes-tests`).
+- **Point attribution: axes pass.** Position + axes as the G / A1 / A2 prior beats position
+  alone by +0.12% (5v5) and +0.18% (PP) log loss, in 15 of 15 seasons each. Beyond the
+  shot-volume axis alone: +0.05% (14 of 15) and +0.16% (15 of 15). Archetype labels add
+  ≈ +0.02%. Use the axes prior in player props.
+- **Line chemistry: fail.** +0.001% held out, 8 of 11 seasons; in-sample adjustments are
+  about 0.05 xG/60 per stint. No simulator change.
+- **Aging: fail for style.** Archetypes and axes add ≤ 0.01% on top of an F/D term (7-9 of
+  13 seasons). Side finding: the F/D term itself helps (+0.03%, 12 of 13). D offence priors run
+  ≈ 0.12 xG/60 high relative to forwards; a position-specific prior mean is a candidate
+  M3 fix, to be tested with re-chaining.
+
 ## Phase D: Site
-- **Players tab:** archetype badge (top type and its probability), a style profile
-  (percentiles of the defining features within position), membership over time, and the
-  five closest style comps with their ratings.
+- **Players tab:** lead with the style axes (percentiles within F / D); show the forward
+  archetype (top type and probability) as a summary badge; the five closest style comps
+  with their ratings; membership over time.
 - **Lines tab:** each unit's archetype mix.
 - **Team page:** roster archetype composition against the league.
 - API: `/api/ratings/players/{id}/style` and archetype fields on `/api/ratings/players`.
