@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import DateNav from "@/components/DateNav";
 import FreshnessStrip from "@/components/FreshnessStrip";
 import GameCard, { maxEdge, UnpricedGameCard } from "@/components/GameCard";
@@ -27,6 +27,8 @@ function groupBy<T extends { game_id: number }>(rows: T[]): Record<number, T[]> 
 function Games() {
   const date = useSearchParams().get("date") ?? todayET();
   const [sortBy, setSortBy] = useState<SortBy>("TIME");
+  // Cards show moneyline and total; expanding adds the puck line and the regulation three-way.
+  const [expanded, setExpanded] = useState(false);
   const { data, isLoading, error } = useSlate(date);
 
   const edgesByGame: Record<number, Edge[]> = data ? groupBy(data.edges) : {};
@@ -85,6 +87,14 @@ function Games() {
                   ))}
                 </div>
               </div>
+              <button
+                onClick={() => setExpanded((e) => !e)}
+                aria-pressed={expanded}
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                {expanded ? "Collapse Bets" : "Expand All Bets"}
+              </button>
             </div>
             {data.stamp && (
               <span>
@@ -105,10 +115,10 @@ function Games() {
           <div className="grid grid-cols-1 gap-4 min-[1280px]:grid-cols-2">
             {games.map((g) => (
               <GameCard key={g.game_id} g={g} edges={edgesByGame[g.game_id] ?? []} bets={betsByGame[g.game_id] ?? []} teams={data.teams}
-                threeWay={threeWay[g.game_id]} />
+                threeWay={threeWay[g.game_id]} expanded={expanded} />
             ))}
             {data.unpriced.map((g) => (
-              <UnpricedGameCard key={g.game_id} g={g} teams={data.teams} lines={linesByGame[g.game_id] ?? []} threeWay={threeWay[g.game_id]} />
+              <UnpricedGameCard key={g.game_id} g={g} teams={data.teams} lines={linesByGame[g.game_id] ?? []} threeWay={threeWay[g.game_id]} expanded={expanded} />
             ))}
           </div>
         </>

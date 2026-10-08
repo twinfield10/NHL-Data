@@ -83,9 +83,10 @@ export function gameStatus(g: { is_final: boolean | null; home_score: number | n
   return start ? `${timeET(start)} ET` : "TBD";
 }
 
-/** One game: teams and starters, the model's win split in team colors, best prices and edges, bets. */
-export default function GameCard({ g, edges, bets, teams, threeWay }: {
-  g: SlateGame; edges: Edge[]; bets: Bet[]; teams: Record<string, TeamInfo>; threeWay?: ThreeWay;
+/** One game: teams and starters, the model's win split in team colors, best prices and edges, bets.
+ *  Moneyline and total always; puck line and the regulation three-way when ``expanded``. */
+export default function GameCard({ g, edges, bets, teams, threeWay, expanded = false }: {
+  g: SlateGame; edges: Edge[]; bets: Bet[]; teams: Record<string, TeamInfo>; threeWay?: ThreeWay; expanded?: boolean;
 }) {
   const dark = useDark();
   const colors = matchupColors(g.away_team_abbr, g.home_team_abbr, dark);
@@ -147,9 +148,9 @@ export default function GameCard({ g, edges, bets, teams, threeWay }: {
       <div className="space-y-1.5 px-3 pb-3 pt-2">
         {closing && <div className="-mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Closing Prices</div>}
         <MarketBar title="Moneyline" sides={ml} closed={closing} />
-        {tw && <MarketBar title="3-Way (Regulation)" sides={tw} closed={closing} neutralEdges />}
-        {pl && <MarketBar title="Puck Line" sides={pl} closed={closing} />}
         {ou && <MarketBar title="Total" sides={ou} closed={closing} />}
+        {expanded && pl && <MarketBar title="Puck Line" sides={pl} closed={closing} />}
+        {expanded && tw && <MarketBar title="3-Way (Regulation)" sides={tw} closed={closing} neutralEdges />}
         {edges.length === 0 && <div className="text-xs italic text-muted-foreground">No lines captured</div>}
         {(issues || g.stale_inputs) && (
           <div className="flex justify-end gap-2 border-t border-border pt-2 text-[11px]">
@@ -163,8 +164,8 @@ export default function GameCard({ g, edges, bets, teams, threeWay }: {
 }
 
 /** A game with no pregame run yet: the same banner, and the market's best prices without the model. */
-export function UnpricedGameCard({ g, teams, lines, threeWay }: {
-  g: UnpricedGame; teams: Record<string, TeamInfo>; lines: MarketLine[]; threeWay?: ThreeWay;
+export function UnpricedGameCard({ g, teams, lines, threeWay, expanded = false }: {
+  g: UnpricedGame; teams: Record<string, TeamInfo>; lines: MarketLine[]; threeWay?: ThreeWay; expanded?: boolean;
 }) {
   const dark = useDark();
   const colors = matchupColors(g.away_abbr, g.home_abbr, dark);
@@ -195,9 +196,9 @@ export function UnpricedGameCard({ g, teams, lines, threeWay }: {
       />
       <div className="space-y-1.5 px-3 pb-3 pt-2">
         {ml && <MarketBar title="Moneyline · Market" sides={ml} basis="market" />}
-        {tw && <MarketBar title="3-Way (Regulation) · Market" sides={tw} basis="market" />}
-        {pl && <MarketBar title="Puck Line · Market" sides={pl} basis="market" />}
         {ou && <MarketBar title="Total · Market" sides={ou} basis="market" />}
+        {expanded && pl && <MarketBar title="Puck Line · Market" sides={pl} basis="market" />}
+        {expanded && tw && <MarketBar title="3-Way (Regulation) · Market" sides={tw} basis="market" />}
         <div className={cn("text-xs italic text-muted-foreground", lines.length > 0 && "border-t border-border pt-2")}>
           {g.is_final
             ? "No pregame price was recorded for this game."
