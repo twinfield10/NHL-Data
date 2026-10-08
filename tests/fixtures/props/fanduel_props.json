@@ -1,0 +1,606 @@
+{
+ "board": {
+  "attachments": {
+   "events": {
+    "36141732": {
+     "eventId": 36141732,
+     "name": "Philadelphia Flyers @ Ottawa Senators",
+     "openDate": "2026-10-08T23:11:00.000Z"
+    },
+    "99": {
+     "eventId": 99,
+     "name": "Stanley Cup 2026-27 Winner",
+     "openDate": "2027-06-01T00:00:00.000Z"
+    }
+   }
+  }
+ },
+ "events": {
+  "36141732": {
+   "goals": {
+    "attachments": {
+     "markets": {
+      "751.190585871": {
+       "marketId": "751.190585871",
+       "marketName": "First Goal Scorer",
+       "marketType": "FIRST_GOAL_SCORER",
+       "marketStatus": "OPEN",
+       "inPlay": false,
+       "runners": [
+        {
+         "runnerName": "No Goalscorer",
+         "handicap": 0,
+         "runnerStatus": "SUSPENDED",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": 25000,
+           "americanOddsInt": 25000
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 251
+           },
+           "fractionalOdds": {
+            "numerator": 250,
+            "denominator": 1
+           }
+          }
+         }
+        },
+        {
+         "runnerName": "Tim Stützle",
+         "handicap": 0,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/ottawa_senators_jersey.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": 1100,
+           "americanOddsInt": 1100
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 12
+           },
+           "fractionalOdds": {
+            "numerator": 11,
+            "denominator": 1
+           }
+          }
+         }
+        },
+        {
+         "runnerName": "Drake Batherson (OTT)",
+         "handicap": 0,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/ottawa_senators_jersey.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": 1200,
+           "americanOddsInt": 1200
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 13
+           },
+           "fractionalOdds": {
+            "numerator": 12,
+            "denominator": 1
+           }
+          }
+         }
+        }
+       ]
+      },
+      "751.190585861": {
+       "marketId": "751.190585861",
+       "marketName": "Anytime Goal Scorer",
+       "marketType": "ANY_TIME_GOAL_SCORER",
+       "marketStatus": "OPEN",
+       "inPlay": false,
+       "runners": [
+        {
+         "runnerName": "Tim Stützle",
+         "handicap": 0,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/ottawa_senators_jersey.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": 180,
+           "americanOddsInt": 180
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 2.8
+           },
+           "fractionalOdds": {
+            "numerator": 180,
+            "denominator": 100
+           }
+          }
+         }
+        },
+        {
+         "runnerName": "Drake Batherson (OTT)",
+         "handicap": 0,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/ottawa_senators_jersey.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": 180,
+           "americanOddsInt": 180
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 2.8
+           },
+           "fractionalOdds": {
+            "numerator": 180,
+            "denominator": 100
+           }
+          }
+         }
+        }
+       ]
+      },
+      "751.190586103": {
+       "marketId": "751.190586103",
+       "marketName": "Tim Stützle Total Goals",
+       "marketType": "PLAYER_TOTAL_GOALS",
+       "marketStatus": "OPEN",
+       "inPlay": false,
+       "runners": [
+        {
+         "runnerName": "Tim Stützle - Over",
+         "handicap": 0.5,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/ottawa_senators_jersey.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": 180,
+           "americanOddsInt": 180
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 2.8
+           },
+           "fractionalOdds": {
+            "numerator": 180,
+            "denominator": 100
+           }
+          }
+         }
+        },
+        {
+         "runnerName": "Tim Stützle - Under",
+         "handicap": 0.5,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/ottawa_senators_jersey.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": -250,
+           "americanOddsInt": -250
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 1.4
+           },
+           "fractionalOdds": {
+            "numerator": 100,
+            "denominator": 250
+           }
+          }
+         }
+        }
+       ]
+      },
+      "751.189574388": {
+       "marketId": "751.189574388",
+       "marketName": "Moneyline",
+       "marketType": "MONEY_LINE",
+       "marketStatus": "OPEN",
+       "inPlay": false,
+       "runners": [
+        {
+         "runnerName": "Philadelphia Flyers",
+         "handicap": 0,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/philadelphia_flyers.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": 146,
+           "americanOddsInt": 146
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 2.46
+           },
+           "fractionalOdds": {
+            "numerator": 146,
+            "denominator": 100
+           }
+          }
+         }
+        },
+        {
+         "runnerName": "Ottawa Senators",
+         "handicap": 0,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/ottawa_senators.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": -176,
+           "americanOddsInt": -176
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 1.568181818181818
+           },
+           "fractionalOdds": {
+            "numerator": 100,
+            "denominator": 176
+           }
+          }
+         }
+        }
+       ]
+      },
+      "751.190585886": {
+       "marketId": "751.190585886",
+       "marketName": "1st Period Any Time Goal Scorer",
+       "marketType": "1ST_PERIOD_ANY_TIME_GOAL_SCORER",
+       "marketStatus": "OPEN",
+       "inPlay": false,
+       "runners": [
+        {
+         "runnerName": "Tim Stützle",
+         "handicap": 0,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/ottawa_senators_jersey.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": 700,
+           "americanOddsInt": 700
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 8
+           },
+           "fractionalOdds": {
+            "numerator": 70,
+            "denominator": 10
+           }
+          }
+         }
+        }
+       ]
+      }
+     }
+    }
+   },
+   "points-assists": {
+    "attachments": {
+     "markets": {
+      "751.189574388": {
+       "marketId": "751.189574388",
+       "marketName": "Moneyline",
+       "marketType": "MONEY_LINE",
+       "marketStatus": "OPEN",
+       "inPlay": false,
+       "runners": [
+        {
+         "runnerName": "Philadelphia Flyers",
+         "handicap": 0,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/philadelphia_flyers.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": 146,
+           "americanOddsInt": 146
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 2.46
+           },
+           "fractionalOdds": {
+            "numerator": 146,
+            "denominator": 100
+           }
+          }
+         }
+        },
+        {
+         "runnerName": "Ottawa Senators",
+         "handicap": 0,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/ottawa_senators.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": -176,
+           "americanOddsInt": -176
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 1.568181818181818
+           },
+           "fractionalOdds": {
+            "numerator": 100,
+            "denominator": 176
+           }
+          }
+         }
+        }
+       ]
+      }
+     }
+    }
+   },
+   "goalies": {
+    "attachments": {
+     "markets": {
+      "751.189574388": {
+       "marketId": "751.189574388",
+       "marketName": "Moneyline",
+       "marketType": "MONEY_LINE",
+       "marketStatus": "OPEN",
+       "inPlay": false,
+       "runners": [
+        {
+         "runnerName": "Philadelphia Flyers",
+         "handicap": 0,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/philadelphia_flyers.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": 146,
+           "americanOddsInt": 146
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 2.46
+           },
+           "fractionalOdds": {
+            "numerator": 146,
+            "denominator": 100
+           }
+          }
+         }
+        },
+        {
+         "runnerName": "Ottawa Senators",
+         "handicap": 0,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/ottawa_senators.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": -176,
+           "americanOddsInt": -176
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 1.568181818181818
+           },
+           "fractionalOdds": {
+            "numerator": 100,
+            "denominator": 176
+           }
+          }
+         }
+        }
+       ]
+      },
+      "751.190769215": {
+       "marketId": "751.190769215",
+       "marketName": "Joseph Woll Alt Saves",
+       "marketType": "PLAYER_ALT_SAVES",
+       "marketStatus": "OPEN",
+       "inPlay": false,
+       "runners": [
+        {
+         "runnerName": "26+",
+         "handicap": 0,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/new_york_islanders_jersey.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": -118,
+           "americanOddsInt": -118
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 1.847457627118644
+           },
+           "fractionalOdds": {
+            "numerator": 100,
+            "denominator": 118
+           }
+          }
+         }
+        },
+        {
+         "runnerName": "27+",
+         "handicap": 0,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/new_york_islanders_jersey.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": 108,
+           "americanOddsInt": 108
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 2.08
+           },
+           "fractionalOdds": {
+            "numerator": 108,
+            "denominator": 100
+           }
+          }
+         }
+        }
+       ]
+      }
+     }
+    }
+   },
+   "shots": {
+    "attachments": {
+     "markets": {
+      "751.190774103": {
+       "marketId": "751.190774103",
+       "marketName": "Trevor Zegras Shots on Goal",
+       "marketType": "PLAYER_TOTAL_SHOTS",
+       "marketStatus": "OPEN",
+       "inPlay": false,
+       "runners": [
+        {
+         "runnerName": "Trevor Zegras - Over",
+         "handicap": 1.5,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/philadelphia_flyers_jersey.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": -118,
+           "americanOddsInt": -118
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 1.847457627118644
+           },
+           "fractionalOdds": {
+            "numerator": 100,
+            "denominator": 118
+           }
+          }
+         }
+        },
+        {
+         "runnerName": "Trevor Zegras - Under",
+         "handicap": 1.5,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/philadelphia_flyers_jersey.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": -110,
+           "americanOddsInt": -110
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 1.909090909090909
+           },
+           "fractionalOdds": {
+            "numerator": 100,
+            "denominator": 110
+           }
+          }
+         }
+        }
+       ]
+      },
+      "751.190594982": {
+       "marketId": "751.190594982",
+       "marketName": "Player to Record 3+ Shots on Goal",
+       "marketType": "PLAYER_TO_RECORD_3+_SHOTS_ON_GOAL",
+       "marketStatus": "OPEN",
+       "inPlay": false,
+       "runners": [
+        {
+         "runnerName": "Dylan Cozens",
+         "handicap": 0,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/ottawa_senators_jersey.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": -102,
+           "americanOddsInt": -102
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 1.980392156862745
+           },
+           "fractionalOdds": {
+            "numerator": 100,
+            "denominator": 102
+           }
+          }
+         }
+        },
+        {
+         "runnerName": "Owen Tippett",
+         "handicap": 0,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/philadelphia_flyers_jersey.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": 125,
+           "americanOddsInt": 125
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 2.25
+           },
+           "fractionalOdds": {
+            "numerator": 125,
+            "denominator": 100
+           }
+          }
+         }
+        }
+       ]
+      },
+      "751.189574388": {
+       "marketId": "751.189574388",
+       "marketName": "Moneyline",
+       "marketType": "MONEY_LINE",
+       "marketStatus": "OPEN",
+       "inPlay": false,
+       "runners": [
+        {
+         "runnerName": "Philadelphia Flyers",
+         "handicap": 0,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/philadelphia_flyers.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": 146,
+           "americanOddsInt": 146
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 2.46
+           },
+           "fractionalOdds": {
+            "numerator": 146,
+            "denominator": 100
+           }
+          }
+         }
+        },
+        {
+         "runnerName": "Ottawa Senators",
+         "handicap": 0,
+         "runnerStatus": "ACTIVE",
+         "logo": "https://assets.sportsbook.fanduel.com/images/team/nhl/ottawa_senators.png",
+         "winRunnerOdds": {
+          "americanDisplayOdds": {
+           "americanOdds": -176,
+           "americanOddsInt": -176
+          },
+          "trueOdds": {
+           "decimalOdds": {
+            "decimalOdds": 1.568181818181818
+           },
+           "fractionalOdds": {
+            "numerator": 100,
+            "denominator": 176
+           }
+          }
+         }
+        }
+       ]
+      }
+     }
+    }
+   }
+  }
+ }
+}

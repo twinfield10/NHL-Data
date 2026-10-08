@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Poll third-party sources once:  scripts/poll.sh WHAT [--window MINUTES] [--reprice]
 #
-# WHAT is a comma list of odds,goalies,lines,injuries,transactions,officials (or "all").
+# WHAT is a comma list of odds,props,props_lowvig,goalies,lines,injuries,transactions,officials (or "all").
 # --reprice reruns `nhl pregame` when a lineup source changed. Schedule: docs/scheduler.md.
 # A snapshot not taken is
 # not recoverable later, and only transitions are stored, so an extra poll is close to

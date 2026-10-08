@@ -127,6 +127,20 @@ def norm_name(name: str | None) -> str:
     return re.sub(r"[^a-z]", "", ascii_name.lower())
 
 
+def name_variants(name: str | None) -> list[str]:
+    """Other keys a book may have meant: surname first ("Yurov Danila") and German
+    transliterations ("Stuetzle" for "Stützle"). Used only after the exact keys fail."""
+    if not name:
+        return []
+    parts = name.split()
+    out = [norm_name(" ".join(parts[1:] + parts[:1]))] if len(parts) == 2 else []
+    key = norm_name(name)
+    for a, b in (("ue", "u"), ("oe", "o"), ("ae", "a")):
+        if a in key:
+            out.append(key.replace(a, b))
+    return [v for v in dict.fromkeys(out) if v and v != key]
+
+
 # --------------------------------------------------------------------------- player ids
 class PlayerResolver:
     """Map third-party (team, name, jersey) to NHL ``player_id``.
@@ -226,6 +240,10 @@ class PlayerResolver:
                 pid = same_last[0]["player_id"]
         if pid is None:
             pid = self._league.get(key)
+        for alt in name_variants(name) if pid is None else []:
+            pid = next((p["player_id"] for p in roster if p["first"] + p["last"] == alt), None) or self._league.get(alt)
+            if pid is not None:
+                break
         self.stats["resolved" if pid is not None else "unresolved"] += 1
         if pid is None:
             self.unresolved.add((team, name or ""))

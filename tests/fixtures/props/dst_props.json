@@ -1,0 +1,221 @@
+{
+ "games": [
+  {
+   "date": "2026-10-08T23:00:00.000Z",
+   "providers": [
+    {
+     "id": 282744,
+     "name": "nix",
+     "isPrimary": false
+    }
+   ],
+   "team1": [
+    {
+     "title": "tampa bay lightning",
+     "abbreviation": "tb",
+     "providers": [
+      {
+       "id": 6176,
+       "name": "nix",
+       "isPrimary": null,
+       "abbreviation": "tam"
+      }
+     ]
+    }
+   ],
+   "team2": [
+    {
+     "title": "minnesota wild",
+     "abbreviation": "min",
+     "providers": [
+      {
+       "id": 6170,
+       "name": "nix",
+       "isPrimary": null,
+       "abbreviation": "min"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "markets": [
+  {
+   "route": "dfm/marketsByOu",
+   "game_id": "282744",
+   "statistic": "Points",
+   "payload": [
+    {
+     "statistic": "Points",
+     "players": [
+      {
+       "name": "Brayden Point",
+       "team": "TB",
+       "markets": [
+        {
+         "condition": 3,
+         "value": 0.5,
+         "odds": 1.6,
+         "isActive": true
+        },
+        {
+         "condition": 1,
+         "value": 0.5,
+         "odds": 2.28,
+         "isActive": true
+        }
+       ]
+      },
+      {
+       "name": "Kirill Kaprizov",
+       "team": "MIN",
+       "markets": [
+        {
+         "condition": 3,
+         "value": 0.5,
+         "odds": 1.47,
+         "isActive": true
+        },
+        {
+         "condition": 1,
+         "value": 0.5,
+         "odds": 2.62,
+         "isActive": true
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "route": "dfm/marketsBySs",
+   "game_id": "282744",
+   "statistic": "Goals",
+   "payload": [
+    {
+     "statistic": "Goals",
+     "players": [
+      {
+       "name": "Brayden Point",
+       "team": "TB",
+       "markets": [
+        {
+         "condition": 3,
+         "value": 1,
+         "odds": 2.8,
+         "isActive": true
+        },
+        {
+         "condition": 3,
+         "value": 2,
+         "odds": 10,
+         "isActive": true
+        },
+        {
+         "condition": 3,
+         "value": 3,
+         "odds": 50,
+         "isActive": true
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "route": "dfm/marketsBySs",
+   "game_id": "282744",
+   "statistic": "Shots on goal",
+   "payload": [
+    {
+     "statistic": "Shots on goal",
+     "players": [
+      {
+       "name": "Brayden Point",
+       "team": "TB",
+       "markets": [
+        {
+         "condition": 3,
+         "value": 5,
+         "odds": 8.5,
+         "isActive": true
+        },
+        {
+         "condition": 3,
+         "value": 4,
+         "odds": 3.9,
+         "isActive": true
+        },
+        {
+         "condition": 3,
+         "value": 2,
+         "odds": 1.28,
+         "isActive": true
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "route": "custom-markets/marketsByField",
+   "game_id": "282744",
+   "statistic": "First Goalscorer",
+   "payload": [
+    {
+     "selections": [
+      {
+       "type": "Kirill Kaprizov",
+       "odds": 11,
+       "isActive": true
+      },
+      {
+       "type": "Matt Boldy",
+       "odds": 11,
+       "isActive": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "route": "dfm/marketsBySs",
+   "game_id": "999",
+   "statistic": "Goals",
+   "payload": [
+    {
+     "statistic": "Goals",
+     "players": [
+      {
+       "name": "Brayden Point",
+       "team": "TB",
+       "markets": [
+        {
+         "condition": 3,
+         "value": 1,
+         "odds": 2.8,
+         "isActive": true
+        },
+        {
+         "condition": 3,
+         "value": 2,
+         "odds": 10,
+         "isActive": true
+        },
+        {
+         "condition": 3,
+         "value": 3,
+         "odds": 50,
+         "isActive": true
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
