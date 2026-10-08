@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/games", label: "Games" },
+  { href: "/props", label: "Props" },
   { href: "/ratings", label: "Ratings" },
   { href: "/results", label: "Model Results" },
 ];

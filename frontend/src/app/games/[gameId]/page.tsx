@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import GameBanner from "@/components/GameBanner";
 import { gameStatus } from "@/components/GameCard";
 import GameLineups from "@/components/GameLineups";
+import GameProps from "@/components/GameProps";
 import MarketTab from "@/components/MarketTab";
 import { Card, ErrorState, Loading } from "@/components/ui";
 import { useGame } from "@/lib/api";
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 const TABS = [
   { key: "market", label: "Market" },
   { key: "lineups", label: "Lineups" },
+  { key: "props", label: "Props" },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
 
@@ -26,7 +28,7 @@ function Game({ gameId }: { gameId: string }) {
   const search = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const tab: Tab = search.get("tab") === "lineups" ? "lineups" : "market";
+  const tab: Tab = TABS.find((t) => t.key === search.get("tab"))?.key ?? "market";
   const setTab = (t: Tab) => router.replace(t === "market" ? pathname : `${pathname}?tab=${t}`, { scroll: false });
   const dark = useDark();
 
@@ -72,11 +74,9 @@ function Game({ gameId }: { gameId: string }) {
         ))}
       </nav>
 
-      {tab === "market" ? (
-        <MarketTab data={data} colors={colors} />
-      ) : (
-        <GameLineups gameId={gameId} away={game.away_abbr} home={game.home_abbr} />
-      )}
+      {tab === "market" && <MarketTab data={data} colors={colors} />}
+      {tab === "lineups" && <GameLineups gameId={gameId} away={game.away_abbr} home={game.home_abbr} />}
+      {tab === "props" && <GameProps gameId={gameId} away={game.away_abbr} home={game.home_abbr} />}
     </div>
   );
 }
