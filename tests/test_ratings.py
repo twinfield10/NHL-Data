@@ -102,6 +102,18 @@ def test_defence_newcomers_get_position_prior_means():
     assert dict(zip(normal.columns, mean))["O:99"] == 0.3  # an existing prior wins
 
 
+def test_finishing_age_prior_shifts_by_role():
+    from nhl.ratings import finishing as F
+
+    prior = pl.DataFrame({"role": ["shooter", "goalie", "shooter"], "player_id": [1, 2, 3],
+                          "mean": [0.0, 0.0, 0.1], "precision": [1.0, 1.0, 1.0]})
+    ages = pl.DataFrame({"player_id": [1, 2], "age": [21.0, 33.0]})
+    curves = {"shooter": (0.0, -0.01, 0.0), "goalie": (0.0, 0.01, 0.0)}
+    out = F.age_prior(prior, ages, curves).sort("player_id")
+    assert np.allclose(out["mean"].to_list(), [0.06, 0.06, 0.1])  # player 3: no age -> 27, no shift
+    assert F.age_prior(None, ages) is None
+
+
 def test_zone_shares_split_duration_by_second():
     from nhl.ratings.design import _zone_shares
 

@@ -174,7 +174,36 @@ January, so they are split at their median game date instead.
   start at offence −0.25 and defence +0.12 xG/60. That gains +0.93 bp on late-season MSE
   and wins every season (the age curve adds +0.29 bp re-chained). Optimum is flat from
   −0.20 to −0.30 offence and +0.08 to +0.16 defence. A per-season shift on returning D priors
-  on top adds < 0.1 bp, so it isn't used. ST keeps 0 for D (untested).
+  on top adds < 0.1 bp, so it isn't used.
+- **Special teams: D newcomers and aging (2026-10-08).** Same re-chained test. New D start
+  at −1.0 PP xG/60 (+15 bp alone; −0.75 to −1.25 within 1.5 bp; forwards best at 0; PK
+  defence shows nothing), and ST priors age with the EV curve's shape at scale 4 (+2.8 bp
+  alone; flat over 3-6). Together **+19.3 bp, 13 of 13 seasons** (9-32 bp each), twenty
+  times the EV gain: power-play skill is concentrated and few defencemen run a PP.
+- **Finishing aging (2026-10-08).** Shooter and goalie terms age into each season with a
+  delta-method quadratic per role, ×2 (`finishing.AGE_CURVES`): shooters +0.015 logit a
+  season at 21, −0.014 at 33; goalies decline after about 30. Re-chained fit-to-Dec-31
+  log loss: **+1.68 bp, 13 of 13** (shooters +1.27, 13/13; goalies +0.41, 10/13).
+  Rejected: a D-specific newcomer shooter mean (the `d` term already carries the gap).
+- **Goalie rest and workload: no effect (2026-10-08).** Pooled 2010-2026 logit effects on
+  goals allowed: second of a back-to-back +0.015 ± 0.016, 4+ starts in 7 days
+  +0.034 ± 0.027, 10+ days' rest −0.009 ± 0.011. Refit each half-season they cost 1-4 bp;
+  held fixed they add +0.04 bp. Relief appearances do allow more (+0.077 ± 0.018, 14 of 16
+  seasons), but that's in-game information the pregame simulator can't use; held fixed it
+  adds +0.47 bp (10 of 13) to the ratings. Not adopted.
+- **Tested and rejected: Marcel-style per-lag weights (2026-10-08).** Each season's prior
+  rebuilt as one joint fit of the previous seasons' stints, season *y−L* weighted by w_L,
+  newcomer prior added once, then aged (verified to reproduce a single-season fit exactly).
+  Same re-chained test against the production chain:
+  - **EV: loses in every season, every shape.** Geometric 0.5-0.95 −2.1 to −0.9 bp;
+    Marcel 5/4/3 −1.0 to −1.4; truncated at 3/2/1 lags −1.5/−1.8/−2.7; flat −1.0 (all 0/13).
+    Longer memory is consistently better, so Marcel's 3-season cutoff hurts.
+  - **ST: +1.4 to +1.7 bp, 9 of 13, for any shape** (geometric 0.6/0.7, 3 lags, Marcel).
+    A faster chain decay instead costs −2.7 bp (0.8) and −8.6 bp (0.7), so the gain is the
+    joint fit across seasons (plausibly separating PP linemates who share units), not the
+    weights. Too small for a separate ST prior builder; revisit if ST accuracy becomes a focus.
+  - **Finishing: not tested.** One shooter and one goalie per shot leaves nothing for a
+    joint fit to untangle, and the weights didn't matter elsewhere.
 - **EV context terms (2024-25).** Home ice is +0.12 xG/60 (about 5%). The attacking team
   on a back-to-back is −0.08; an opponent on a back-to-back is +0.12. An offensive-zone
   faceoff adds +5.6 xG/60 in its first second, decaying over about 10 s. Trailing teams
@@ -190,10 +219,10 @@ January, so they are split at their median game date instead.
   terms are not the cause. M4 adds finishing and goaltending to the ratings anyway; test
   there whether a shrunk team term is still needed.
 - **Line chemistry** (roadmap hypothesis): not tested yet.
-- **Goalie workload and back-to-back effects** on save skill: not modelled yet;
-  `goalie_starts` has the inputs.
+- **Goalie workload and back-to-back effects** on save skill: tested 2026-10-08, no
+  effect (see the results above).
 - **Goal-based RAPM**: not built (diagnostic only).
-- **ST aging**: special-teams priors aren't aged yet.
+- **ST aging**: done 2026-10-08 (EV curve shape × 4).
 - **Season rollover:** run `nhl build-priors` once each season is complete, so the
   next season starts from it.
 
