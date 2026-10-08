@@ -337,6 +337,17 @@ def cmd_edges(args: argparse.Namespace) -> None:
     print(edges.render(e))
 
 
+def cmd_props_edges(args: argparse.Namespace) -> None:
+    """M9: player-prop edges and stakes for today's games (adds new paper prop bets)."""
+    from datetime import date
+
+    from nhl.props import live
+    from nhl.storage.s3 import Store
+
+    e = live.run(Store(), date.fromisoformat(args.date) if args.date else None, write=not args.no_write)
+    print(live.render(e))
+
+
 def cmd_record_bet(args: argparse.Namespace) -> None:
     """M6: record a bet you placed (graded with the paper bets)."""
     from nhl.betting import ledger
@@ -351,11 +362,15 @@ def cmd_record_bet(args: argparse.Namespace) -> None:
 def cmd_grade_bets(args: argparse.Namespace) -> None:
     """M6: grade finished bets (CLV against our captured close, result, units) and summarise."""
     from nhl.betting import ledger
+    from nhl.props import ledger as props_ledger
     from nhl.storage.s3 import Store
 
     store = Store()
     print(f"graded {ledger.grade(store)} bets")
     print(ledger.summary(store))
+    # Player props need the night's game logs, so the nightly job grades them after `nhl update`.
+    print(f"graded {props_ledger.grade(store)} prop bets")
+    print(props_ledger.summary(store))
 
 
 def cmd_site_tables(args: argparse.Namespace) -> None:
@@ -659,6 +674,16 @@ def cmd_poll(args: argparse.Namespace) -> None:
             logging.exception("reprice failed")
             failed = True
     odds_moved = "odds" in results and any(int(n) > 0 for n in re.findall(r"\b(\d+)\b", results["odds"]))
+    props_moved = any(int(n) > 0 for t in ("props", "props_lowvig") for n in re.findall(r"\b(\d+)\b", results.get(t, "")))
+    if args.edges and (repriced or odds_moved or props_moved):
+        from nhl.props import live as props_live
+
+        try:
+            p = props_live.run(store)
+            print(f"prop edges: {0 if p.is_empty() else int(p['flagged'].sum())} flagged")
+        except Exception:  # noqa: BLE001 - reported; game-line edges still run
+            logging.exception("prop edges failed")
+            failed = True
     if args.edges and (repriced or odds_moved):
         from nhl.betting import edges
 
@@ -808,6 +833,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--date", help="game date (default: today, Eastern)")
     p.add_argument("--no-write", action="store_true", help="don't snapshot or touch the ledger")
     p.set_defaults(func=cmd_edges)
+
+    p = sub.add_parser("props-edges", help="M9: player-prop edges and stakes for today's games (adds paper prop bets)")
+    p.add_argument("--date", help="game date (default: today, Eastern)")
+    p.add_argument("--no-write", action="store_true", help="don't cache projections, snapshot or touch the ledger")
+    p.set_defaults(func=cmd_props_edges)
 
     p = sub.add_parser("record-bet", help="M6: record a bet you placed")
     p.add_argument("game_id", type=int)

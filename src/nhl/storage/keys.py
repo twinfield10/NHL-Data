@@ -362,3 +362,16 @@ def pregame_deployment(season: int) -> str:
 def props_backtest(season: int) -> str:
     """Player goals / assists / points projections and baselines per skater-game (M9 phase B)."""
     return f"predictions/props_backtest/{season}.parquet"
+
+
+def props_projections(day: date, stamp: str) -> str:
+    """Player goals / assists / points projections for a game date, keyed by the newest pregame run used."""
+    return f"pregame/props/{day.isoformat()}/{stamp}.parquet"
+
+
+def props_edges(day: date, stamp: str) -> str:
+    """Live player-prop edges snapshot for a game date, one per props edges run."""
+    return f"pregame/props_edges/{day.isoformat()}/{stamp}.parquet"
+
+
+PROPS_LEDGER = "bets/props_ledger.parquet"

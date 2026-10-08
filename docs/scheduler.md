@@ -44,6 +44,12 @@ stakes (¼ Kelly, 2 u per bet, 3 u per game, 10 u per day; bankroll 100 u) and w
 `pregame/edges/{date}/{stamp}`. A newly flagged bet (moneyline, puck line or total) goes into the paper ledger `bets/ledger.parquet` at the price available then.
 Real bets go in with `nhl record-bet`. See `src/nhl/betting/edges.py`.
 
+**Prop edges** run alongside: after a reprice, an odds poll that stores a change (ESPN's
+DraftKings props come with it), or a props poll that stores one, `nhl props-edges` prices
+goals / assists / points props, writes `pregame/props_edges/{date}/{stamp}` and puts new flags
+in `bets/props_ledger.parquet` (caps 0.5 u per bet, 1 u per player-game, 5 u per day). The
+nightly `nhl grade-bets` grades both ledgers. See `src/nhl/props/live.py`.
+
 **Each reprice** takes ~15 s and writes a new pregame snapshot: lineups, goalies, prices,
 the one-row-per-game slate and input freshness, plus `pregame/latest/{date}.json`
 (see `src/nhl/pregame/slate.py`). One reprice runs at a time; a second waits for the
@@ -61,8 +67,8 @@ first and then prices with everything captured so far.
 | Lines, pregame | `26,41,56 * * * *` | same, `--window 90` | game within 90 min | `lines` | `logs/poll_lines.log` | same |
 | Odds, baseline | `3,18,33,48 * * * *` | `poll.sh odds,props --window 1440` | game within 24 h | `odds,props` | `logs/poll_odds.log` | ~55-75 s (FanDuel props ~35 s of it) |
 | Odds, closing | `8,13,23,28,38,43,53,58 * * * *` | `poll.sh odds,props --window 90` | game within 90 min | `odds,props` | `logs/poll_odds.log` | same |
-| LowVig props, game day | `4,19,34,49 9-23 * * *` | `poll.sh props_lowvig --window 960` | game within 16 h | `props_lowvig` | `logs/poll_props.log` | ~75 s (headless Chromium) |
-| LowVig props, pregame | `9,24,39,54 * * * *` | same, `--window 90` | game within 90 min | `props_lowvig` | `logs/poll_props.log` | same |
+| LowVig props, game day | `4,19,34,49 9-23 * * *` | `poll.sh props_lowvig --window 960 --edges` | game within 16 h | `props_lowvig` | `logs/poll_props.log` | ~75 s (headless Chromium) |
+| LowVig props, pregame | `9,24,39,54 * * * *` | same, `--window 90 --edges` | game within 90 min | `props_lowvig` | `logs/poll_props.log` | same |
 
 ¹ 40 s early in the season; a few minutes later on. See [Timing](#timing).
 

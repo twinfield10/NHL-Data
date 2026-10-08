@@ -7,7 +7,10 @@ polls: FanDuel 4,064 prices over 14 games in 36 s, LowVig 4,227 over 10 games in
 player resolved to an NHL id. **Phase B built 2026-10-08:** goals, assists and points
 (`src/nhl/props/`, `nhl props-backtest`): gate passed on 6 of 7 targets in every season, and
 on goals ≥ 2 in 9 of 10 (see [Phase B results](#phase-b-results-2026-10-08),
-[report](../reports/props-backtest.md)).
+[report](../reports/props-backtest.md)). **Phase D built 2026-10-08:** live projections,
+edges and a props paper ledger (`src/nhl/props/live.py`, `ledger.py`; `nhl props-edges`; run on
+every odds / props poll that moves and every reprice; graded nightly by `nhl grade-bets`).
+See [Phase D](#phase-d-live-edges-and-the-paper-ledger-2026-10-08).
 **Depends on:** M2 game logs (`processed/game_logs/player/{season}`), M3 ratings and
 finishing terms, M4 simulator, M5 projected lineups and goalies, usage tiers and on-ice
 projection ([usage-context.md](usage-context.md)), the prop table (`nhl.odds.props`).
@@ -172,7 +175,7 @@ how to weight the blend.
 | A | FanDuel + LowVig pollers in the odds schedule; nightly coverage report per book | ≥95% of scheduled games with props from each book; ≥98% player resolution |
 | B | Projection backtest for goals, assists, points (simulator attribution + TOI model) | Beats all three baselines in log loss at ≥1 thresholds, every season |
 | C | Team shot-volume layer; SOG, blocks, saves | Same gate; shots calibrated by decile |
-| D | Daily projections, edges, paper ledger, nightly grading | Runs in the pregame cron |
+| D | Daily projections, edges, paper ledger, nightly grading | Runs in the pregame cron (**built 2026-10-08**) |
 | E | Props tab and game sub-tab | — |
 | F | After ~4-6 weeks: blend fit, thresholds, which markets/books to bet | CLV > 0 on flagged plays |
 
@@ -227,6 +230,35 @@ phases need that history for F.
   low-usage players are slightly over-predicted. Candidates: team-specific PP goal share
   (stars carry the PP), and score-state ice time.
 - Shots on goal, blocks and saves wait for the team shot-volume layer (phase C).
+
+## Phase D: live edges and the paper ledger (2026-10-08)
+
+- **Projections:** each game's last pregame snapshot (score matrix and projected lineup) plus
+  rates from every game logged before today (`rates.rates_for_day`, the backtest's math).
+  Then the backtest's logit calibration per (stat, k) (`project.CALIBRATION`, slopes
+  1.01-1.11), which corrects the compression found in phase B. Cached per pregame run at
+  `pregame/props/{date}/{stamp}.parquet`, with slot, PP unit, P(dressed) and lineup source.
+- **Market:**
+  - Two-way markets are devigged multiplicatively.
+  - A one-sided ladder rung is divided by 1 + that book's median two-way margin on the same
+    stat that day (7% without any).
+  - The consensus is the median across books. A book more than 10 points from it is
+    skipped as a bad quote.
+- **Blend:** a 50/50 logit average of model and market. This is a placeholder until phase F
+  fits it on graded props.
+- **Flags:** edge ≥ 5%, price ≤ +400, ≥ 2 books, and the player projected to dress for
+  certain with high lineup confidence.
+- **Stakes:** ¼ Kelly, ≤ 0.5 u per bet, 1 u per player-game, 5 u per day of props (separate
+  from the game-line caps).
+- **Storage:**
+  - Every best quote per (game, player, stat, line, side) is snapshotted at
+    `pregame/props_edges/{date}/{stamp}.parquet`.
+  - New flags go to `bets/props_ledger.parquet` (first price only).
+  - `nhl grade-bets` grades them nightly from game logs: result (void if he didn't play),
+    the book's closing price, the devigged closing consensus, CLV and units.
+- **Known:** the props table stores price changes, not withdrawals, so a quote a book has
+  pulled still looks live until it changes. First night (2026-10-08): 3,104 quotes, 21
+  paper bets, 5.05 u.
 
 ## Open questions
 - **Limits:** LowVig/BetOnline prop limits are probably small. FanDuel and DraftKings limit

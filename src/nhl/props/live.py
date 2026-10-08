@@ -1,0 +1,306 @@
+"""Live player-prop projections and edges (M9 phase D).
+
+**Projections** (:func:`project_day`): for each of the day's games, its latest pregame snapshot
+(the score matrix and that run's projected lineup) plus each skater's rates from every game
+logged before today (:func:`nhl.props.rates.rates_for_day`), through
+:mod:`nhl.props.project`, then the backtest's logit calibration (:data:`nhl.props.project.CALIBRATION`). Stored per pregame run at ``pregame/props/{date}/{stamp}.parquet``
+with the inputs (slot, PP unit, P(dressed), source), so a moved edge can be explained later.
+
+**Edges** (:func:`compute`), for goals, assists and points over/unders and N+ ladders from every
+captured book (DraftKings via ESPN, FanDuel, LowVig, 4Casters):
+
+1. **Book probability** (P(over) at the book's line). A two-way market is devigged
+   multiplicatively. A one-sided ladder rung is divided by 1 + that book's margin on the same
+   stat, measured from its own two-way markets that day (:data:`DEFAULT_MARGIN` without
+   any).
+2. **Market** = the median book probability for that player, stat and line. A book more than
+   :data:`OUTLIER` from it is treated as a bad quote and skipped.
+3. **Blend** = logit average of model and market with weight :data:`MODEL_WEIGHT`. This is a
+   placeholder until phase F fits it on graded props.
+4. **Edge** = p × decimal − 1 per side; the best book per (game, player, stat, line, side).
+5. **Flag** when the edge clears :data:`MIN_EDGE` and the bet is one the backtest can stand
+   behind: price no longer than :data:`MAX_PRICE`, at least :data:`MIN_BOOKS` books in the
+   market, the player projected to dress for certain (no game-time decision) with high lineup
+   confidence.
+6. **Stake**: ¼ Kelly on the 100-unit bankroll, at most :data:`MAX_BET_UNITS` per bet,
+   :data:`MAX_PLAYER_UNITS` per player-game and :data:`MAX_DAY_UNITS` per day of props,
+   counting bets already in the props ledger. That's separate from the game-line caps.
+
+Every evaluated quote is snapshotted at ``pregame/props_edges/{date}/{stamp}.parquet``, and
+newly flagged bets go to the props paper ledger (:mod:`nhl.props.ledger`).
+"""
+
+from __future__ import annotations
+
+import fcntl
+import logging
+from contextlib import contextmanager
+from datetime import date, datetime, timezone
+from zoneinfo import ZoneInfo
+
+import polars as pl
+
+from nhl.betting.edges import _games, last_pregame_prices
+from nhl.odds.props import load_props
+from nhl.props import project, rates
+from nhl.sources.common import stamp
+from nhl.storage import keys
+from nhl.storage.s3 import Store
+
+logger = logging.getLogger(__name__)
+
+EASTERN = ZoneInfo("America/New_York")
+#: Book prop_type -> projection stat.
+STATS = {"goals": "goals", "assists": "ast", "points": "points"}
+#: Thresholds projected per stat (P(stat >= k)); a line above the top one isn't priced.
+THRESHOLDS = {"goals": (1, 2, 3), "ast": (1, 2, 3), "points": (1, 2, 3, 4)}
+DEFAULT_MARGIN = 0.07
+OUTLIER = 0.10
+MODEL_WEIGHT = 0.5
+MIN_EDGE = 0.05
+MAX_PRICE = 400.0
+MIN_BOOKS = 2
+BANKROLL_UNITS = 100.0
+KELLY_FRACTION = 0.25
+MAX_BET_UNITS = 0.5
+MAX_PLAYER_UNITS = 1.0
+MAX_DAY_UNITS = 5.0
+#: Reporting floor for the edges snapshot: every best quote at or above it is kept.
+SNAPSHOT_MIN_EDGE = -1.0
+LOCK_PATH = "/tmp/nhl_data_props_edges.lock"
+
+
+@contextmanager
+def _lock():
+    with open(LOCK_PATH, "w") as fh:
+        fcntl.flock(fh, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(fh, fcntl.LOCK_UN)
+
+
+def _decimal(price: pl.Expr) -> pl.Expr:
+    return pl.when(price < 0).then(1 + 100 / -price).otherwise(1 + price / 100)
+
+
+def _implied(price: pl.Expr) -> pl.Expr:
+    return 1 / _decimal(price)
+
+
+# ------------------------------------------------------------------------- projections --
+def _snapshot_inputs(store: Store, day: date) -> tuple[pl.DataFrame, pl.DataFrame] | None:
+    """Each game's last pregame prices and the projected lineup from the same run."""
+    prices = last_pregame_prices(store, day)
+    if prices is None or prices.is_empty():
+        return None
+    deps = []
+    for (st,), part in prices.partition_by("stamp", as_dict=True).items():
+        dep = store.get_parquet(keys.pregame_lineups(day, st))
+        if dep is not None:
+            deps.append(dep.filter(pl.col("game_id").is_in(part["game_id"].implode())).drop("as_of", "stamp", strict=False)
+                        .with_columns(pl.lit(st).alias("pregame_stamp")))
+    if not deps:
+        return None
+    return prices, pl.concat(deps, how="diagonal_relaxed")
+
+
+def project_day(store: Store, day: date, write: bool = True) -> pl.DataFrame:
+    """Goals / assists / points projections for every projected skater on ``day``'s games.
+
+    Cached per set of pregame runs: the key's stamp is the newest pregame stamp involved, so a
+    new pregame run (a lineup change, a new starter) makes a new projection.
+    """
+    got = _snapshot_inputs(store, day)
+    if got is None:
+        return pl.DataFrame()
+    prices, dep = got
+    st = str(prices["stamp"].max())
+    key = keys.props_projections(day, st)
+    if (cached := store.get_parquet(key)) is not None:
+        return cached
+    season = int(store.read_parquet_required(keys.GAMES).filter(pl.col("game_id") == prices["game_id"][0])["season"][0])
+    pit, mix = rates.rates_for_day(store, season, day, dep)
+    dists = project.team_goal_dists(prices.select("game_id", "home_team_id", "away_team_id", "score_matrix"))
+    proj = project.calibrate(project.project_players(project.shares(dep, pit, mix), dists, thresholds=THRESHOLDS),
+                             THRESHOLDS)
+    info = dep.select("game_id", "player_id", "slot", "pp_unit", "pk_unit", "source", "confidence", "pregame_stamp")
+    proj = proj.filter(pl.col("player_id").is_not_null()).join(info, on=["game_id", "player_id"], how="left").with_columns(
+        pl.lit(st).alias("stamp"))
+    if write:
+        store.put_parquet(key, proj)
+    return proj
+
+
+# ----------------------------------------------------------------------- market probs --
+def market_probs(quotes: pl.DataFrame) -> pl.DataFrame:
+    """P(over) per book quote, and the consensus per (game, player, stat, line).
+
+    Args:
+        quotes: Latest prop prices (``book, game_id, player_id, prop_type, line, side, price``),
+            over/under sides only.
+
+    Returns:
+        One row per (book, game, player, stat, line) with ``price_over``, ``price_under``
+        (either may be null), ``p_book`` (devigged P(over)), ``two_way``, ``p_market``,
+        ``books`` and ``outlier``.
+    """
+    if quotes.is_empty():
+        return quotes
+    key = ["book", "game_id", "player_id", "prop_type", "line"]
+    quotes = quotes.with_columns(pl.col("price").cast(pl.Float64), pl.col("line").cast(pl.Float64))
+    wide = quotes.pivot(on="side", index=key, values="price", aggregate_function="last")
+    for side in ("over", "under"):
+        if side not in wide.columns:
+            wide = wide.with_columns(pl.lit(None, dtype=pl.Float64).alias(side))
+    wide = wide.rename({"over": "price_over", "under": "price_under"}).with_columns(
+        (pl.col("price_over").is_not_null() & pl.col("price_under").is_not_null()).alias("two_way"))
+    io, iu = _implied(pl.col("price_over")), _implied(pl.col("price_under"))
+    margins = wide.filter(pl.col("two_way")).group_by("book", "prop_type").agg((io + iu - 1).median().alias("margin"))
+    wide = wide.join(margins, on=["book", "prop_type"], how="left").with_columns(
+        pl.when(pl.col("two_way")).then(io / (io + iu))
+        .when(pl.col("price_over").is_not_null()).then(io / (1 + pl.col("margin").fill_null(DEFAULT_MARGIN)))
+        .otherwise(1 - iu / (1 + pl.col("margin").fill_null(DEFAULT_MARGIN)))
+        .clip(0.001, 0.999).alias("p_book"))
+    group = ["game_id", "player_id", "prop_type", "line"]
+    return wide.with_columns(pl.col("p_book").median().over(group).alias("p_market"),
+                             pl.col("book").n_unique().over(group).alias("books")).with_columns(
+        ((pl.col("p_book") - pl.col("p_market")).abs() > OUTLIER).alias("outlier"))
+
+
+def latest_quotes(store: Store, season: int, game_ids: list[int], cutoff: datetime | dict[int, datetime]) -> pl.DataFrame:
+    """Each book's last over/under price per (game, player, stat, line, side) captured by ``cutoff``
+    (one moment, or one per game such as its start time)."""
+    props = load_props(store, season).filter(
+        pl.col("game_id").is_in(game_ids) & pl.col("prop_type").is_in(list(STATS)) & pl.col("side").is_in(["over", "under"])
+        & pl.col("player_id").is_not_null() & pl.col("line").is_not_null())
+    if isinstance(cutoff, dict):
+        limits = pl.DataFrame({"game_id": list(cutoff), "_cut": list(cutoff.values())},
+                              schema={"game_id": pl.Int64, "_cut": pl.Datetime("us", "UTC")})
+        props = props.join(limits, on="game_id").filter(pl.col("captured_at") <= pl.col("_cut")).drop("_cut")
+    else:
+        props = props.filter(pl.col("captured_at") <= cutoff)
+    return props.sort("captured_at").group_by("book", "game_id", "player_id", "prop_type", "line", "side").last()
+
+
+def _model_over(proj: pl.DataFrame) -> pl.DataFrame:
+    """Long ``game_id, player_id, prop_type, line, p_model`` (P(over line)) from projections."""
+    rows = []
+    for prop_type, stat in STATS.items():
+        for k in THRESHOLDS[stat]:
+            rows.append(proj.select("game_id", "player_id", pl.lit(prop_type).alias("prop_type"),
+                                    pl.lit(k - 0.5).alias("line"), pl.col(f"p_{stat}_{k}").alias("p_model")))
+    return pl.concat(rows)
+
+
+def _logit(x: pl.Expr) -> pl.Expr:
+    x = x.clip(1e-6, 1 - 1e-6)
+    return (x / (1 - x)).log()
+
+
+def price_quotes(probs: pl.DataFrame, proj: pl.DataFrame) -> pl.DataFrame:
+    """Model × market × blend for every quote side; the best book per (game, player, stat, line, side)."""
+    base = probs.filter(~pl.col("outlier")).join(_model_over(proj), on=["game_id", "player_id", "prop_type", "line"],
+                                                 how="inner")
+    z = MODEL_WEIGHT * _logit(pl.col("p_model")) + (1 - MODEL_WEIGHT) * _logit(pl.col("p_market"))
+    base = base.with_columns((1 / (1 + (-z).exp())).alias("p_blend"))
+    sides = []
+    for side, col in (("over", "price_over"), ("under", "price_under")):
+        flip = side == "under"
+        p = (1 - pl.col("p_blend")) if flip else pl.col("p_blend")
+        sides.append(base.filter(pl.col(col).is_not_null()).with_columns(
+            pl.lit(side).alias("side"), pl.col(col).alias("price"), _decimal(pl.col(col)).alias("decimal"), p.alias("p"),
+            ((1 - pl.col("p_model")) if flip else pl.col("p_model")).alias("p_model_side"),
+            ((1 - pl.col("p_market")) if flip else pl.col("p_market")).alias("p_market_side")))
+    out = pl.concat(sides).with_columns(
+        (pl.col("p") * pl.col("decimal") - 1).alias("edge"),
+        (KELLY_FRACTION * (pl.col("p") * pl.col("decimal") - 1) / (pl.col("decimal") - 1)).clip(0, None).alias("kelly"))
+    return out.sort("edge", descending=True).group_by("game_id", "player_id", "prop_type", "line", "side",
+                                                      maintain_order=True).first()
+
+
+def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:
+    from nhl.props import ledger
+
+    e = edges.with_columns(pl.when(pl.col("flagged")).then((pl.col("kelly") * BANKROLL_UNITS).clip(0, MAX_BET_UNITS))
+                           .otherwise(0.0).alias("stake_units"))
+    per_player = pl.col("stake_units").sum().over("game_id", "player_id")
+    e = e.with_columns(pl.when(per_player > MAX_PLAYER_UNITS).then(pl.col("stake_units") * MAX_PLAYER_UNITS / per_player)
+                       .otherwise(pl.col("stake_units")).alias("stake_units"))
+    already = ledger.day_stakes(store, day, exclude=e.filter(pl.col("flagged")))
+    room = max(MAX_DAY_UNITS - already, 0.0)
+    total = float(e["stake_units"].sum())
+    if total > room:
+        e = e.with_columns((pl.col("stake_units") * (room / total if total else 0.0)).alias("stake_units"))
+    return e.with_columns(pl.col("stake_units").round(2))
+
+
+def compute(store: Store, day: date | None = None, now: datetime | None = None, write: bool = True) -> pl.DataFrame:
+    """Best edge per (game, player, stat, line, side) for ``day``'s games not yet started.
+    ``write`` lets the day's projections be cached (nothing else is written here)."""
+    now = now or datetime.now(timezone.utc)
+    day = day or now.astimezone(EASTERN).date()
+    proj = project_day(store, day, write=write)
+    if proj.is_empty():
+        logger.info("props edges %s: no pregame snapshot", day)
+        return pl.DataFrame()
+    games = _games(store, proj["game_id"].unique().to_list()).filter(pl.col("start_utc") > now)
+    if games.is_empty():
+        return pl.DataFrame()
+    quotes = latest_quotes(store, int(games["season"][0]), games["game_id"].to_list(), now)
+    if quotes.is_empty():
+        logger.info("props edges %s: no prop prices", day)
+        return pl.DataFrame()
+    best = price_quotes(market_probs(quotes), proj)
+    names = quotes.group_by("player_id").agg(pl.col("player_name").first(), pl.col("team").drop_nulls().first())
+    info = proj.select("game_id", "player_id", "team_id", "position", "p_dressed", "confidence", "source", "slot", "pp_unit",
+                       "pregame_stamp")
+    best = best.join(info, on=["game_id", "player_id"], how="left").join(names, on="player_id", how="left").join(
+        games.select("game_id", "game_date", "start_utc", "home_abbr", "away_abbr"), on="game_id").with_columns(
+        pl.lit(now).alias("as_of"))
+    flagged = ((pl.col("edge") >= MIN_EDGE) & (pl.col("price") <= MAX_PRICE) & (pl.col("books") >= MIN_BOOKS)
+               & (pl.col("p_dressed").fill_null(1.0) >= 0.999) & (pl.col("confidence") == "high"))
+    return _stakes(best.with_columns(flagged.fill_null(False).alias("flagged")), store, day)
+
+
+def run(store: Store, day: date | None = None, write: bool = True) -> pl.DataFrame:
+    """Compute prop edges, snapshot them, and add new flagged bets to the props paper ledger."""
+    from nhl.props import ledger
+
+    with _lock():
+        now = datetime.now(timezone.utc)
+        day = day or now.astimezone(EASTERN).date()
+        e = compute(store, day, now, write=write)
+        if e.is_empty() or not write:
+            return e
+        st = stamp(now)
+        store.put_parquet(keys.props_edges(day, st), e.filter(pl.col("edge") >= SNAPSHOT_MIN_EDGE).with_columns(
+            pl.lit(st).alias("stamp")))
+        new = ledger.add_paper(store, e.filter(pl.col("flagged") & (pl.col("stake_units") > 0)))
+        logger.info("props edges %s: %d quotes, %d flagged (%.2f u), %d new paper bets", day, e.height,
+                    e.filter(pl.col("flagged")).height, float(e["stake_units"].sum()), new)
+        return e
+
+
+def render(e: pl.DataFrame, top: int = 15) -> str:
+    """Flagged props, then the best unflagged edges, for the terminal."""
+    if e.is_empty():
+        return "no prop edges (no pregame snapshot, no prop prices, or all games started)"
+
+    def line(r: dict) -> str:
+        start = r["start_utc"].astimezone(EASTERN).strftime("%H:%M")
+        what = f"{r['prop_type']} {r['side']} {r['line']}"
+        return (f"  {start} {r['away_abbr']}@{r['home_abbr']}  {str(r['player_name'])[:22]:22s} {what:18s} "
+                f"{int(r['price']):+5d} {r['book']:<10s} edge {100 * r['edge']:+5.1f}%  model {100 * r['p_model_side']:4.1f}% "
+                f"mkt {100 * r['p_market_side']:4.1f}% ({r['books']} bk)  {r['stake_units']:.2f}u")
+
+    flagged = e.filter(pl.col("flagged")).sort("edge", descending=True)
+    out = [f"FLAGGED PROPS ({flagged.height}, {flagged['stake_units'].sum():.2f} u):"]
+    out += [line(r) for r in flagged.iter_rows(named=True)] or ["  none"]
+    rest = e.filter(~pl.col("flagged")).sort("edge", descending=True).head(top)
+    out += [f"BEST UNFLAGGED (top {top}):"] + [line(r) for r in rest.iter_rows(named=True)]
+    return "\n".join(out)
+
+
+__all__ = ["MIN_EDGE", "MODEL_WEIGHT", "STATS", "compute", "latest_quotes", "market_probs", "price_quotes",
+           "project_day", "render", "run"]

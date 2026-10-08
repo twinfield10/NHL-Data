@@ -19,6 +19,7 @@ Empty-net goals for and against (``EN_opp``, ``EN_own``) are folded into even st
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 
 import polars as pl
 
@@ -164,5 +165,32 @@ def season_rates(store: Store, season: int, shrink: Shrink = Shrink(),
     return out.select(keep), mix
 
 
-__all__ = ["BUCKETS", "BUCKET_NAMES", "SEASON_WEIGHTS", "Shrink", "bucket_logs", "league_rates", "season_rates",
-           "strength_mix"]
+def rates_for_day(store: Store, season: int, day: date, players: pl.DataFrame, shrink: Shrink = Shrink(),
+                  logs: dict[int, pl.DataFrame] | None = None) -> tuple[pl.DataFrame, dict[str, dict[str, float]]]:
+    """Rates for upcoming games on ``day`` from every game logged before it.
+
+    Each target (``game_id, player_id, team_id, position``) is added as an empty game on
+    ``day`` and run through :func:`season_rates`, so live and backtest rates are the same math.
+    """
+    logs = dict(logs or {})
+    for s in (season, season - 10001, season - 20002):
+        if s not in logs:
+            logs[s] = bucket_logs(store, s)
+    cur = logs[season]
+    stat_cols = [f"{s}_{b}" for s in STATS for b in BUCKET_NAMES]
+    targets = players.filter(pl.col("player_id").is_not_null()).select(
+        pl.col("game_id").cast(pl.Int64), pl.lit(day).alias("game_date"), pl.lit(season).alias("season"),
+        pl.col("player_id").cast(pl.Int64), pl.col("team_id").cast(pl.Int64), group(pl.col("position")).alias("grp"),
+        *[pl.lit(0.0).alias(c) for c in stat_cols],
+    ).unique(["game_id", "player_id"])
+    if not cur.is_empty():
+        cur = cur.filter(pl.col("game_date") < day)
+        targets = targets.select(cur.columns).cast(cur.schema)
+    logs[season] = pl.concat([cur, targets], how="diagonal_relaxed") if not cur.is_empty() else targets
+    out, mix = season_rates(store, season, shrink, logs)
+    return out.join(targets.select("game_id", "player_id"), on=["game_id", "player_id"], how="inner").drop(
+        "goals", "ast", "points", "toi"), mix
+
+
+__all__ = ["BUCKETS", "BUCKET_NAMES", "SEASON_WEIGHTS", "Shrink", "bucket_logs", "league_rates", "rates_for_day",
+           "season_rates", "strength_mix"]
