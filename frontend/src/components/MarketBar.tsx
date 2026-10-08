@@ -89,11 +89,21 @@ export default function MarketBar({ title, sides, basis = "model", closed, neutr
     for (const s of sides.slice(0, -1)) ticks.push((acc += s.pMarket!));
   }
 
+  // The bar itself carries the signal: outlined green when a side is the play, red when a
+  // side's edge is large enough to be a bad quote.
+  const tone = closed ? null : sides.some((s) => s.warn) ? "warn" : sides.some((s) => s.play) ? "play" : null;
+  const draw = three ? sides[1] : null;
+
   return (
-    <div>
-      <div className={cn("grid items-end gap-2", three ? "grid-cols-3" : "grid-cols-2")}>
+    <div
+      className={cn(
+        "rounded-lg border px-2 pb-1.5 pt-1",
+        tone === "warn" ? "border-red-600 bg-red-500/10" : tone === "play" ? "border-emerald-600 bg-emerald-500/10" : "border-transparent"
+      )}
+    >
+      <div className="mb-0.5 text-center text-[11px] font-bold uppercase tracking-wider text-foreground">{title}</div>
+      <div className="grid grid-cols-2 items-end gap-2">
         <SideLabel s={first} align="left" closed={closed} />
-        {three && <SideLabel s={sides[1]} align="center" closed={closed} />}
         <SideLabel s={last} align="right" closed={closed} />
       </div>
       <div className="mt-1 grid grid-cols-[3.5rem_1fr_3.5rem] items-center gap-2">
@@ -117,13 +127,17 @@ export default function MarketBar({ title, sides, basis = "model", closed, neutr
         </div>
         <EdgeChip s={last} closed={closed || neutralEdges} align="right" />
       </div>
-      <div className="mt-0.5 flex justify-between text-[10px] text-muted-foreground tabular">
+      <div className="mt-0.5 grid grid-cols-[1fr_auto_1fr] gap-2 text-[10px] text-muted-foreground tabular">
         <span>{first.pMarket != null && basis === "model" ? `Mkt ${pct(first.pMarket, 1)}` : ""}</span>
-        <span className="font-semibold uppercase tracking-wider">
-          {title}
-          {three && sides[1].edge != null && <> · OT Edge {signedPct(sides[1].edge, 1)}</>}
+        <span className="text-center text-[11px] font-semibold text-foreground">
+          {draw && (
+            <>
+              OT{draw.price != null && ` ${american(draw.price)}`}
+              {draw.edge != null && <span className="font-normal text-muted-foreground"> ({signedPct(draw.edge, 1)} Edge)</span>}
+            </>
+          )}
         </span>
-        <span>{last.pMarket != null && basis === "model" ? `Mkt ${pct(last.pMarket, 1)}` : ""}</span>
+        <span className="text-right">{last.pMarket != null && basis === "model" ? `Mkt ${pct(last.pMarket, 1)}` : ""}</span>
       </div>
     </div>
   );

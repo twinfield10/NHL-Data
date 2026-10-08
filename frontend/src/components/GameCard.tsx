@@ -92,13 +92,12 @@ export default function GameCard({ g, edges, bets, teams, threeWay }: {
 
   const find = (market: Edge["market"], side: number, line?: number | null) =>
     edges.find((e) => e.market === market && e.side === side && (line === undefined || e.line === line));
-  // Closing prices can't be bet any more, so they never light the card up.
+  // Closing prices can't be bet any more, so they never light up a team or a bar.
   const closing = edges.some((e) => e.point === "close");
   const signal = closing ? [] : edges;
   const teamEdges = (side: number) => signal.filter((e) => e.market !== "total" && e.side === side);
   const awayTone = worst(teamEdges(2));
   const homeTone = worst(teamEdges(1));
-  const cardTone = worst(signal);
 
   // Main puck line and the total at the market's consensus line (else the first one captured).
   const plLine = edges.find((e) => e.market === "puckline")?.line;
@@ -126,8 +125,7 @@ export default function GameCard({ g, edges, bets, teams, threeWay }: {
     <Link
       href={`/games/${g.game_id}`}
       className={cn(
-        "block overflow-hidden rounded-lg border transition-colors hover:border-muted-foreground",
-        cardTone === "warn" ? "border-red-600 bg-red-500/10" : cardTone === "play" ? "border-emerald-600 bg-emerald-500/10" : "border-border bg-card"
+        "block overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-muted-foreground"
       )}
     >
       <GameBanner

@@ -26,7 +26,7 @@ function groupBy<T extends { game_id: number }>(rows: T[]): Record<number, T[]> 
 
 function Games() {
   const date = useSearchParams().get("date") ?? todayET();
-  const [sortBy, setSortBy] = useState<SortBy>("EDGE");
+  const [sortBy, setSortBy] = useState<SortBy>("TIME");
   const { data, isLoading, error } = useSlate(date);
 
   const edgesByGame: Record<number, Edge[]> = data ? groupBy(data.edges) : {};
