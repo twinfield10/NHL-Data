@@ -3,9 +3,12 @@
 import { useMemo, useState } from "react";
 import SortTable, { type Column } from "@/components/SortTable";
 import IdentityCell from "@/components/IdentityCell";
+import ArchetypeBadge from "@/components/ArchetypeBadge";
 import PlayerContext from "@/components/PlayerContext";
+import PlayerStyle from "@/components/PlayerStyle";
 import { Card, Empty, ErrorState, Loading, Pills, Signed } from "@/components/ui";
 import { usePlayerRatings } from "@/lib/api";
+import { ARCHETYPES } from "@/lib/archetypes";
 import { heat, heatScale } from "@/lib/heat";
 import { dateTimeET, longDate, minutes, signed, signedPct } from "@/lib/format";
 import type { Goalie, Skater } from "@/lib/types";
@@ -21,7 +24,24 @@ const POSITIONS = [
   { key: "D", label: "Defense" },
 ] as const;
 
+const DETAIL = [
+  { key: "context", label: "On-ice context" },
+  { key: "style", label: "Style" },
+] as const;
+
 type Scales = Record<string, number>;
+
+/** The expanded panel under a skater: on-ice context or style, remembered across rows. */
+function SkaterDetail({ playerId, tab, onTab }: {
+  playerId: number; tab: (typeof DETAIL)[number]["key"]; onTab: (k: (typeof DETAIL)[number]["key"]) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <Pills options={DETAIL} value={tab} onChange={onTab} />
+      {tab === "context" ? <PlayerContext playerId={playerId} /> : <PlayerStyle playerId={playerId} />}
+    </div>
+  );
+}
 
 const netPen = (p: Skater) => (p.pen_drawn60 == null || p.pen_taken60 == null ? null : p.pen_drawn60 - p.pen_taken60);
 /** Relative xGA (lower is better); the ratings store prevention, so flip it back. */
@@ -56,6 +76,11 @@ function skaterColumns(s: Scales): Column<Skater>[] {
   return [
     nameColumn<Skater>("Player"),
     { key: "pos", label: "Pos", render: (p) => p.position ?? "–", sort: (p) => p.position },
+    {
+      key: "type", label: "Type",
+      title: "Forward archetype from style alone (not quality): SW skill winger, BW balanced winger, PF power forward, OC offensive centre, 2C two-way centre. Defensemen have no archetype.",
+      render: (p) => <ArchetypeBadge name={p.archetype} conf={p.archetype_conf} />, sort: (p) => p.archetype,
+    },
     { key: "age", label: "Age", align: "right", render: (p) => (p.age == null ? "–" : Math.floor(p.age)), sort: (p) => p.age },
     {
       key: "xgd", label: "xGD/60", align: "right", className: "font-semibold",
@@ -139,6 +164,8 @@ export default function PlayersPage() {
   const [team, setTeam] = useState("");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<number | null>(null);
+  const [detail, setDetail] = useState<(typeof DETAIL)[number]["key"]>("context");
+  const [type, setType] = useState("");
 
   const teams = useMemo(
     () => [...new Set((data?.skaters ?? []).map((p) => p.team_abbr).filter((t): t is string => !!t))].sort(),
@@ -148,7 +175,7 @@ export default function PlayersPage() {
   const match = (p: { team_abbr: string | null; player_name: string | null }) =>
     !!p.team_abbr && (!team || p.team_abbr === team) && (!q || (p.player_name ?? "").toLowerCase().includes(q));
   const skaters = (data?.skaters ?? []).filter(
-    (p) => match(p) && (pos === "all" || (pos === "D" ? p.position === "D" : p.position !== "D"))
+    (p) => match(p) && (pos === "all" || (pos === "D" ? p.position === "D" : p.position !== "D")) && (!type || p.archetype === type)
   );
   const goalies = (data?.goalies ?? []).filter(match);
   // Scales from the whole league (every player on a team), so filtering doesn't change the colors.
@@ -185,6 +212,21 @@ export default function PlayersPage() {
                 </option>
               ))}
             </select>
+            {view === "skaters" && pos !== "D" && (
+              <select
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                className="rounded-md border border-border bg-card px-2 py-1 text-sm"
+                title="Forward archetype"
+              >
+                <option value="">All types</option>
+                {Object.keys(ARCHETYPES).map((t) => (
+                  <option key={t} value={t}>
+                    {t[0].toUpperCase() + t.slice(1)}
+                  </option>
+                ))}
+              </select>
+            )}
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -202,7 +244,7 @@ export default function PlayersPage() {
                   rowKey={(p) => p.player_id}
                   initialSort={{ key: "xgd", desc: true }}
                   onRowClick={(p) => setOpen(open === p.player_id ? null : p.player_id)}
-                  expanded={(p) => (open === p.player_id ? <PlayerContext playerId={p.player_id} /> : null)}
+                  expanded={(p) => (open === p.player_id ? <SkaterDetail playerId={p.player_id} tab={detail} onTab={setDetail} /> : null)}
                 />
               </Card>
             ) : (
@@ -221,7 +263,9 @@ export default function PlayersPage() {
             so early in the year they are mostly prior. 5v5 and special-teams values are on-ice xG per 60 relative to an
             average player (xGA: lower is better). Cell colors are scaled across the whole league, so they
             don&apos;t change when you filter. Hover a header for its definition. Click a skater for his on-ice breakdown
-            (own play vs teammates, competition and deployment), ice-time tiers and linemates.
+            (own play vs teammates, competition and deployment), ice-time tiers and linemates, or his style: seven
+            style axes, a forward archetype and the past players he plays most like. Style describes how a player
+            plays, not how well; quality is the rating columns.
           </p>
         </>
       )}

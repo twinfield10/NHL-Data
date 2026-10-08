@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from nhl.api.data import SiteData
 from nhl.api.deps import game_day, get_data
 from nhl.api.serialize import rows
+from nhl.api.routers.style import archetype_lookup
 from nhl.api.teaminfo import team_context
 from nhl.ratings import rankings
 from nhl.storage import keys
@@ -37,9 +38,13 @@ def _meta(r: dict) -> dict:
 def get_players(day: date = Depends(game_day), data: SiteData = Depends(get_data)) -> dict:
     """Every rated skater and goalie, best 5v5 net / save talent first."""
     r = _rankings(data, day)
+    styles = archetype_lookup(data, r["season"])
+    skaters = rows(r["players"].sort("ev_net", descending=True, nulls_last=True))
+    for p in skaters:
+        p.update(styles.get(p["player_id"], {"archetype": None, "archetype_conf": None, "style_group": None}))
     return {
         **_meta(r),
-        "skaters": rows(r["players"].sort("ev_net", descending=True, nulls_last=True)),
+        "skaters": skaters,
         "goalies": rows(r["goalies"].sort("save", descending=True, nulls_last=True)),
     }
 
@@ -124,11 +129,13 @@ def get_lines(
     skaters = {p["player_id"]: p for p in r["players"].select(
         "player_id", "player_name", "position", "ev_off", "ev_def", "ev_net").to_dicts()}
     names = data.player_names()
+    styles = archetype_lookup(data, season)
     order = {"L": 0, "C": 1, "R": 2, "D": 3}  # forwards then defensemen (PP/PK units mix both)
     out = []
     for row in rows(lines):
         players = [{**skaters.get(pid, {}), "player_id": pid,
-                    "player_name": (skaters.get(pid) or {}).get("player_name") or names.get(pid) or str(pid)}
+                    "player_name": (skaters.get(pid) or {}).get("player_name") or names.get(pid) or str(pid),
+                    "archetype": (styles.get(pid) or {}).get("archetype")}
                    for pid in row.pop("player_ids")]
         row["players"] = sorted(players, key=lambda p: order.get(p.get("position") or "", 9))
         out.append(row)

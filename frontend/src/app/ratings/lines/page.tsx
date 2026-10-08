@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import ArchetypeBadge from "@/components/ArchetypeBadge";
 import Breakdown, { type Parts } from "@/components/Breakdown";
 import IdentityCell from "@/components/IdentityCell";
 import SortTable, { type Column } from "@/components/SortTable";
@@ -95,6 +96,18 @@ function columns(s: Scales, kind: Kind): Column<LineRating>[] {
         </IdentityCell>
       ),
     },
+    ...(kind === "F"
+      ? [{
+          key: "mix", label: "Mix",
+          title: "Each forward's archetype, in line order (style only): SW skill winger, BW balanced winger, PF power forward, OC offensive centre, 2C two-way centre. Line chemistry tested: archetype mixes don't beat the sum of the players.",
+          sort: (l: LineRating) => l.players.map((p) => p.archetype ?? "").sort().join(","),
+          render: (l: LineRating) => (
+            <span className="inline-flex gap-1">
+              {l.players.filter((p) => p.position !== "D").map((p) => <ArchetypeBadge key={p.player_id ?? p.player_name} name={p.archetype} />)}
+            </span>
+          ),
+        } satisfies Column<LineRating>]
+      : []),
     {
       key: "slot", label: "Slot", title: "Slot in today's projected lineup (– if the unit isn't in it)",
       render: (l) => <span className="text-muted-foreground">{l.slot ? slotLabel(l.slot) : "–"}</span>, sort: (l) => l.slot,
@@ -188,8 +201,9 @@ function LineDetail({ line }: { line: LineRating }) {
         {line.players.map((p, i) => {
           const xga = p.ev_def == null ? null : -p.ev_def;
           return [
-            <div key={`n${i}`}>
+            <div key={`n${i}`} className="flex items-center gap-1.5">
               {p.player_name} <span className="text-xs text-muted-foreground">{p.position ?? ""}</span>
+              {p.archetype && <ArchetypeBadge name={p.archetype} />}
             </div>,
             <div key={`d${i}`} className="tabular text-right"><Signed value={p.ev_net}>{signed(p.ev_net)}</Signed></div>,
             <div key={`f${i}`} className="tabular text-right"><Signed value={p.ev_off}>{signed(p.ev_off)}</Signed></div>,

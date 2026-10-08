@@ -147,3 +147,31 @@ def test_team_matchups_route_rejects_other_seasons_and_handles_no_data(monkeypat
     assert client.get("/api/ratings/teams/1/matchups?season=20102011&date=2026-01-01").status_code == 400
     body = client.get("/api/ratings/teams/1/matchups?date=2026-01-01").json()
     assert body["cells"] == [] and body["index"] is None
+
+
+def _archetypes(season: int) -> pl.DataFrame:
+    base = {"season": season, "group": "F", "toi_5v5_min": 900.0, "archetype": "skill winger", "confidence": 0.8,
+            "p_skill_winger": 0.8, "p_two_way_centre": 0.2,
+            **{a: 0.5 for a in ("perimeter", "shooter", "release", "physical", "size", "defensive", "centre")},
+            **{f"{a}_pct": 70.0 for a in ("perimeter", "shooter", "release", "physical", "size", "defensive", "centre")},
+            "comps": [{"player_id": 2, "season": 20182019, "distance": 0.4}]}
+    return pl.DataFrame([{**base, "player_id": 1, "window": w} for w in ("season", "2yr")])
+
+
+def test_player_style_route_returns_axes_probs_comps_and_history(monkeypatch):
+    tables = {keys.archetypes(20252026): _archetypes(20252026), keys.archetypes(20242025): _archetypes(20242025)}
+    body = _client(tables, monkeypatch).get("/api/ratings/players/1/style?date=2026-01-01").json()
+    cur = body["views"][0]
+    assert cur["window"] == "2yr" and cur["archetype"] == "skill winger" and cur["reliable"]
+    assert [a["key"] for a in cur["axes"]][:2] == ["perimeter", "shooter"] and cur["axes"][0]["pct"] == 70.0
+    assert cur["probs"][0] == {"name": "skill winger", "p": 0.8} and cur["probs"][1]["name"] == "two-way centre"
+    assert cur["comps"] == [{"player_id": 2, "player_name": "Skater Two", "season": 20182019, "distance": 0.4}]
+    assert body["views"][1]["window"] == "season" and [h["season"] for h in body["history"]] == [20242025, 20252026]
+
+
+def test_archetype_lookup_falls_back_to_previous_season():
+    from nhl.api.routers.style import archetype_lookup
+
+    stub = _StubData({keys.archetypes(20242025): _archetypes(20242025)})
+    assert archetype_lookup(stub, 20252026)[1] == {"archetype": "skill winger", "archetype_conf": 0.8, "style_group": "F"}
+    assert archetype_lookup(_StubData({}), 20252026) == {}

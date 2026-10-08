@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type {
-  BetsResponse, EdgesResponse, GameResponse, LinesResponse, PlayerContextResponse, PlayersResponse, SlateResponse, TeamMatchupsResponse, TeamsResponse,
+  BetsResponse, EdgesResponse, GameResponse, LinesResponse, PlayerContextResponse, PlayersResponse, PlayerStyleResponse, SlateResponse, TeamMatchupsResponse, TeamsResponse,
 } from "./types";
 
 async function apiFetch<T>(path: string): Promise<T> {
@@ -48,6 +48,13 @@ export const usePlayerContext = (playerId: number | null) =>
   useQuery({
     queryKey: ["ratings", "player-context", playerId],
     queryFn: () => apiFetch<PlayerContextResponse>(`/api/ratings/players/${playerId}/context`),
+    enabled: playerId != null,
+  });
+
+export const usePlayerStyle = (playerId: number | null) =>
+  useQuery({
+    queryKey: ["ratings", "player-style", playerId],
+    queryFn: () => apiFetch<PlayerStyleResponse>(`/api/ratings/players/${playerId}/style`),
     enabled: playerId != null,
   });
 
