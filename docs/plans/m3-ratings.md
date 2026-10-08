@@ -191,6 +191,19 @@ January, so they are split at their median game date instead.
   held fixed they add +0.04 bp. Relief appearances do allow more (+0.077 ± 0.018, 14 of 16
   seasons), but that's in-game information the pregame simulator can't use; held fixed it
   adds +0.47 bp (10 of 13) to the ratings. Not adopted.
+- **Tested and rejected: Marcel-style per-lag weights (2026-10-08).** Each season's prior
+  rebuilt as one joint fit of the previous seasons' stints, season *y−L* weighted by w_L,
+  newcomer prior added once, then aged (verified to reproduce a single-season fit exactly).
+  Same re-chained test against the production chain:
+  - **EV: loses in every season, every shape.** Geometric 0.5-0.95 −2.1 to −0.9 bp;
+    Marcel 5/4/3 −1.0 to −1.4; truncated at 3/2/1 lags −1.5/−1.8/−2.7; flat −1.0 (all 0/13).
+    Longer memory is consistently better, so Marcel's 3-season cutoff hurts.
+  - **ST: +1.4 to +1.7 bp, 9 of 13, for any shape** (geometric 0.6/0.7, 3 lags, Marcel).
+    A faster chain decay instead costs −2.7 bp (0.8) and −8.6 bp (0.7), so the gain is the
+    joint fit across seasons (plausibly separating PP linemates who share units), not the
+    weights. Too small for a separate ST prior builder; revisit if ST accuracy becomes a focus.
+  - **Finishing: not tested.** One shooter and one goalie per shot leaves nothing for a
+    joint fit to untangle, and the weights didn't matter elsewhere.
 - **EV context terms (2024-25).** Home ice is +0.12 xG/60 (about 5%). The attacking team
   on a back-to-back is −0.08; an opponent on a back-to-back is +0.12. An offensive-zone
   faceoff adds +5.6 xG/60 in its first second, decaying over about 10 s. Trailing teams
