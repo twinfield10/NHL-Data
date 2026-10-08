@@ -91,15 +91,15 @@ export default function MatchupGrid({ teamId }: { teamId: number }) {
           {ix && (
             <div className="min-w-56 space-y-2 text-sm">
               <div title="How strongly own forward tiers line up with opponent tiers (mutual information), as a percentile of teams this season">
-                <div className="text-xs text-muted-foreground">Coach matching index</div>
+                <div className="text-xs text-muted-foreground">Coach Matching Index</div>
                 <div className="font-semibold">{Math.round(ix.pct * 100)}th <span className="text-xs font-normal text-muted-foreground">of {ix.teams} teams</span></div>
               </div>
               <div title="Top line's time against the opponent's top line, relative to no matching">
-                <div className="text-xs text-muted-foreground">F1 vs opponent F1</div>
+                <div className="text-xs text-muted-foreground">F1 vs. Opponent F1</div>
                 <div className="tabular">{ix.f1_vs_f1 == null ? "–" : `${ix.f1_vs_f1.toFixed(2)}×`}</div>
               </div>
               <div title="Top pair vs the opponent's top line. Home teams have the last change, so a higher home number means the coach uses it to get that matchup">
-                <div className="text-xs text-muted-foreground">D1 vs opponent F1, home / away</div>
+                <div className="text-xs text-muted-foreground">D1 vs. Opponent F1, Home / Away</div>
                 <div className="tabular">
                   {ix.d1_f1_home == null ? "–" : `${ix.d1_f1_home.toFixed(2)}×`} / {ix.d1_f1_away == null ? "–" : `${ix.d1_f1_away.toFixed(2)}×`}
                 </div>

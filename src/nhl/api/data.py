@@ -20,6 +20,7 @@ from datetime import date, datetime, timezone
 import polars as pl
 
 from nhl.betting import edges as edges_mod
+from nhl.odds.store import load_live_odds
 from nhl.pregame import lineups
 from nhl.ratings import rankings
 from nhl.sim import constants as sim_constants
@@ -154,6 +155,36 @@ class SiteData:
                 "home_starter", "away_starter"]
         frames = [df.filter(pl.col("game_id") == game_id).select(cols) for df in self._all_stamps("slate", day)]
         return pl.concat(frames) if frames else pl.DataFrame()
+
+    def day_prices(self, day: date) -> pl.DataFrame | None:
+        """Each game's prices (with its score matrix) from the last run that priced it on ``day``."""
+        frames = self._all_stamps("prices", day)
+        return _last_run_per_game(pl.concat(frames, how="diagonal_relaxed")) if frames else None
+
+    def game_prices(self, day: date, game_id: int) -> pl.DataFrame | None:
+        """One game's prices (with score matrix) in every pregame run on ``day``, oldest first."""
+        frames = [df.filter(pl.col("game_id") == game_id) for df in self._all_stamps("prices", day)]
+        frames = [f for f in frames if f.height]
+        return pl.concat(frames, how="diagonal_relaxed") if frames else None
+
+    # ------------------------------------------------------------------ odds and lineup sources
+    def live_odds(self, season: int) -> pl.DataFrame:
+        """Every live-polled odds transition for ``season`` (re-read every :data:`LIST_TTL_SECONDS`)."""
+        return self._timed_get(f"odds/{season}", LIST_TTL_SECONDS, lambda: load_live_odds(self.store, season))
+
+    def dfo_lines(self, season: int) -> pl.DataFrame | None:
+        """DailyFaceoff line-combination versions for ``season``."""
+        return self._timed_get(f"dfo-lines/{season}", LIST_TTL_SECONDS,
+                               lambda: self.store.get_parquet(keys.dailyfaceoff_lines(season)))
+
+    def dfo_goalies(self, season: int) -> pl.DataFrame | None:
+        """DailyFaceoff starting-goalie reports for ``season``."""
+        return self._timed_get(f"dfo-goalies/{season}", LIST_TTL_SECONDS,
+                               lambda: self.store.get_parquet(keys.dailyfaceoff_goalies(season)))
+
+    def tweets(self) -> pl.DataFrame | None:
+        """Source tweets behind DailyFaceoff reports (text, author, time)."""
+        return self._timed_get("tweets", LIST_TTL_SECONDS, lambda: self.store.get_parquet(keys.TWEETS))
 
     # ------------------------------------------------------------------ betting
     def edges(self, day: date) -> pl.DataFrame | None:

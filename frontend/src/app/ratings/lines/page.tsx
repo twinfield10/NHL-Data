@@ -15,10 +15,10 @@ type Kind = LineRating["kind"];
 
 /** Per kind: tab label, what one unit is called, the on-ice state it comes from, and its projected slots. */
 const KIND: Record<Kind, { label: string; unit: string; plural: string; state: string; slots: string[] }> = {
-  F: { label: "Forward lines", unit: "Line", plural: "lines", state: "5v5", slots: ["1", "2", "3", "4"] },
-  D: { label: "Defense pairs", unit: "Pair", plural: "pairs", state: "5v5", slots: ["1", "2", "3"] },
-  PP: { label: "Power play", unit: "PP unit", plural: "power-play units", state: "5v4", slots: ["1", "2"] },
-  PK: { label: "Penalty kill", unit: "PK unit", plural: "penalty-kill units", state: "4v5", slots: ["1", "2"] },
+  F: { label: "Forward Lines", unit: "Line", plural: "lines", state: "5v5", slots: ["1", "2", "3", "4"] },
+  D: { label: "Defense Pairs", unit: "Pair", plural: "pairs", state: "5v5", slots: ["1", "2", "3"] },
+  PP: { label: "Power Play", unit: "PP Unit", plural: "power-play units", state: "5v4", slots: ["1", "2"] },
+  PK: { label: "Penalty Kill", unit: "PK Unit", plural: "penalty-kill units", state: "4v5", slots: ["1", "2"] },
 };
 const KINDS = (Object.keys(KIND) as Kind[]).map((k) => ({ key: k, label: KIND[k].label }));
 
@@ -113,7 +113,7 @@ function columns(s: Scales, kind: Kind): Column<LineRating>[] {
       render: (l) => <span className="text-muted-foreground">{l.slot ? slotLabel(l.slot) : "–"}</span>, sort: (l) => l.slot,
     },
     {
-      key: "toi", label: "TOI together", align: "right",
+      key: "toi", label: "TOI Together", align: "right",
       title: `${state} time on ice together this season, and its share of the team's ${state} time`,
       render: (l) => (
         <span>
@@ -249,7 +249,7 @@ export default function LinesPage() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="text-xl font-semibold">Line ratings</h1>
+        <h1 className="text-xl font-semibold">Line Ratings</h1>
         {data && (
           <span className="text-xs text-muted-foreground">
             Snapshot {longDate(data.snapshot)} · lineups as of {dateTimeET(data.as_of)} ET
@@ -308,7 +308,7 @@ export default function LinesPage() {
           onChange={(e) => setTeam(e.target.value)}
           className="rounded-md border border-border bg-card px-2 py-1 text-sm"
         >
-          <option value="">All teams</option>
+          <option value="">All Teams</option>
           {teams.map((t) => (
             <option key={t} value={t}>
               {t}

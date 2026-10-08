@@ -9,7 +9,7 @@ import GameCard, { maxEdge, UnpricedGameCard } from "@/components/GameCard";
 import { ErrorState } from "@/components/ui";
 import { useSlate } from "@/lib/api";
 import { stampToIso, todayET } from "@/lib/format";
-import type { Bet, Edge, MarketLine } from "@/lib/types";
+import type { Bet, Edge, MarketLine, ThreeWay } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type SortBy = "EDGE" | "TIME";
@@ -32,6 +32,7 @@ function Games() {
   const edgesByGame: Record<number, Edge[]> = data ? groupBy(data.edges) : {};
   const betsByGame: Record<number, Bet[]> = data ? groupBy(data.bets) : {};
   const linesByGame: Record<number, MarketLine[]> = data ? groupBy(data.lines) : {};
+  const threeWay: Record<number, ThreeWay> = Object.fromEntries((data?.three_way ?? []).map((t) => [t.game_id, t]));
   const games = [...(data?.games ?? [])].sort((a, b) => {
     if (sortBy === "TIME") {
       const d = Date.parse(a.start_time) - Date.parse(b.start_time);
@@ -103,10 +104,11 @@ function Games() {
 
           <div className="grid grid-cols-1 gap-4 min-[1280px]:grid-cols-2">
             {games.map((g) => (
-              <GameCard key={g.game_id} g={g} edges={edgesByGame[g.game_id] ?? []} bets={betsByGame[g.game_id] ?? []} teams={data.teams} />
+              <GameCard key={g.game_id} g={g} edges={edgesByGame[g.game_id] ?? []} bets={betsByGame[g.game_id] ?? []} teams={data.teams}
+                threeWay={threeWay[g.game_id]} />
             ))}
             {data.unpriced.map((g) => (
-              <UnpricedGameCard key={g.game_id} g={g} teams={data.teams} lines={linesByGame[g.game_id] ?? []} />
+              <UnpricedGameCard key={g.game_id} g={g} teams={data.teams} lines={linesByGame[g.game_id] ?? []} threeWay={threeWay[g.game_id]} />
             ))}
           </div>
         </>
