@@ -40,7 +40,7 @@ function EdgeChip({ s, closed, align }: { s?: BarSide; closed?: boolean; align: 
     <span
       title={`${s.label}: ${signedPct(s.edge, 2)} edge${s.book ? ` at ${s.book}` : ""}`}
       className={cn(
-        "w-14 shrink-0 rounded px-1 py-0.5 text-center text-[11px] font-semibold tabular",
+        "w-14 shrink-0 rounded px-1 py-0.5 text-center text-xs font-semibold tabular",
         align === "left" ? "justify-self-start" : align === "right" ? "justify-self-end" : "justify-self-center",
         tone === "play" && "bg-emerald-600 text-white",
         tone === "warn" && "bg-red-600 text-white",
@@ -53,11 +53,13 @@ function EdgeChip({ s, closed, align }: { s?: BarSide; closed?: boolean; align: 
   );
 }
 
-function SideLabel({ s, align, closed }: { s: BarSide; align: "left" | "right" | "center"; closed?: boolean }) {
-  const flag = !closed && (s.warn ? "WARN" : s.play ? "PLAY" : null);
+const sideFlag = (s: BarSide, closed?: boolean) => (!closed && (s.warn ? "WARN" : s.play ? "PLAY" : null)) || null;
+
+function SideLabel({ s, align, closed, flagRow }: { s: BarSide; align: "left" | "right" | "center"; closed?: boolean; flagRow: boolean }) {
+  const flag = sideFlag(s, closed);
   return (
     <div className={cn("min-w-0", align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left")}>
-      <div className={cn("flex h-4 items-center gap-1", align === "right" ? "justify-end" : align === "center" ? "justify-center" : "justify-start")}>
+      <div className={cn(flagRow ? "flex h-4 items-center gap-1" : "hidden", align === "right" ? "justify-end" : align === "center" ? "justify-center" : "justify-start")}>
         {flag && (
           <span className={cn("rounded px-1.5 text-[10px] font-bold leading-4 tracking-wide text-white", flag === "WARN" ? "bg-red-600" : "bg-emerald-600")}>
             {flag}
@@ -65,7 +67,7 @@ function SideLabel({ s, align, closed }: { s: BarSide; align: "left" | "right" |
           </span>
         )}
       </div>
-      <div className="truncate text-xs">
+      <div className="truncate text-sm">
         <span className="font-semibold">{s.label}</span>
         {s.price != null && <span className="ml-1 tabular text-muted-foreground">{american(s.price)}</span>}
       </div>
@@ -93,6 +95,8 @@ export default function MarketBar({ title, sides, basis = "model", closed, neutr
   // side's edge is large enough to be a bad quote.
   const tone = closed ? null : sides.some((s) => s.warn) ? "warn" : sides.some((s) => s.play) ? "play" : null;
   const draw = three ? sides[1] : null;
+  // Reserve the PLAY / WARN badge row only on bars that show a badge.
+  const flagRow = sides.some((s) => sideFlag(s, closed) != null);
 
   return (
     <div
@@ -102,9 +106,9 @@ export default function MarketBar({ title, sides, basis = "model", closed, neutr
       )}
     >
       <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
-        <SideLabel s={first} align="left" closed={closed} />
-        <div className="text-center text-[11px] font-bold uppercase leading-4 tracking-wider text-foreground">{title}</div>
-        <SideLabel s={last} align="right" closed={closed} />
+        <SideLabel s={first} align="left" closed={closed} flagRow={flagRow} />
+        <div className="text-center text-xs font-bold uppercase leading-5 tracking-wider text-foreground">{title}</div>
+        <SideLabel s={last} align="right" closed={closed} flagRow={flagRow} />
       </div>
       <div className="mt-1 grid grid-cols-[3.5rem_1fr_3.5rem] items-center gap-2">
         <EdgeChip s={first} closed={closed || neutralEdges} align="left" />
@@ -114,7 +118,7 @@ export default function MarketBar({ title, sides, basis = "model", closed, neutr
             return (
               <div
                 key={s.key}
-                className="flex items-center justify-center overflow-hidden text-[11px] font-semibold tabular"
+                className="flex items-center justify-center overflow-hidden text-xs font-semibold tabular"
                 style={{ width: `${w}%`, backgroundColor: s.color, color: textOn(s.color) }}
               >
                 {w >= 12 && pct(s.p, 1)}
@@ -127,9 +131,9 @@ export default function MarketBar({ title, sides, basis = "model", closed, neutr
         </div>
         <EdgeChip s={last} closed={closed || neutralEdges} align="right" />
       </div>
-      <div className="mt-0.5 grid grid-cols-[1fr_auto_1fr] gap-2 text-[10px] text-muted-foreground tabular">
+      <div className="mt-0.5 grid grid-cols-[1fr_auto_1fr] gap-2 text-[11px] text-muted-foreground tabular">
         <span>{first.pMarket != null && basis === "model" ? `Mkt ${pct(first.pMarket, 1)}` : ""}</span>
-        <span className="text-center text-[11px] font-semibold text-foreground">
+        <span className="text-center text-xs font-semibold text-foreground">
           {draw && (
             <>
               OT{draw.price != null && ` ${american(draw.price)}`}

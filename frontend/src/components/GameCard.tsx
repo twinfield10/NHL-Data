@@ -144,7 +144,7 @@ export default function GameCard({ g, edges, bets, teams, threeWay }: {
         className="border-b border-border"
       />
 
-      <div className="space-y-4 px-4 pb-4 pt-3">
+      <div className="space-y-1.5 px-3 pb-3 pt-2">
         {closing && <div className="-mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Closing Prices</div>}
         <MarketBar title="Moneyline" sides={ml} closed={closing} />
         {tw && <MarketBar title="3-Way (Regulation)" sides={tw} closed={closing} neutralEdges />}
@@ -193,7 +193,7 @@ export function UnpricedGameCard({ g, teams, lines, threeWay }: {
         chips={totalLine != null ? [{ label: "Total", value: totalLine }] : undefined}
         className="border-b border-border"
       />
-      <div className="space-y-4 px-4 pb-4 pt-3">
+      <div className="space-y-1.5 px-3 pb-3 pt-2">
         {ml && <MarketBar title="Moneyline · Market" sides={ml} basis="market" />}
         {tw && <MarketBar title="3-Way (Regulation) · Market" sides={tw} basis="market" />}
         {pl && <MarketBar title="Puck Line · Market" sides={pl} basis="market" />}
