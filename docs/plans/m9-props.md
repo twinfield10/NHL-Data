@@ -286,16 +286,26 @@ goals ≥ 1 0.3922, assists ≥ 1 0.5179, points ≥ 1 0.5959. The gate is uncha
 | shots ≥ 4 | **0.3238** | 0.3259 | 0.3269 | 0.3353 |
 | blocks ≥ 1 | **0.6185** | 0.6205 | 0.6273 | 0.6364 |
 | blocks ≥ 2 | **0.4306** | 0.4329 | 0.4368 | 0.4477 |
-| saves ≥ 23 | **0.5702** | 0.5873 | 0.6095 | 0.6140 |
-| saves ≥ 25 | **0.6358** | 0.6564 | 0.6718 | 0.6784 |
-| saves ≥ 27 | **0.6616** | 0.6834 | 0.6992 | 0.7076 |
+| saves ≥ 23 | **0.5692** | 0.5873 | 0.6095 | 0.6140 |
+| saves ≥ 25 | **0.6349** | 0.6564 | 0.6718 | 0.6784 |
+| saves ≥ 27 | **0.6609** | 0.6834 | 0.6992 | 0.7076 |
 
 - **Gate:** the model beats every baseline in every season on all 13 targets.
 - **Shots and blocks** are calibrated by decile within ~0.05 at every level (top decile:
   shots 3.09 vs 3.14, blocks 1.97 vs 1.93).
-- **Saves** run ~0.3 high on average and ~1.0 in the top decile (31.0 vs 30.0). The likely
-  cause: a goalie facing many shots is also more likely to be pulled, and the model treats
-  the pull as independent. That's the open item for saves.
+- **Saves** ran ~0.3 high on average and ~1.0 in the top decile (31.0 vs 30.0). **Fixed
+  2026-10-09:** the pull was modelled as independent (94% finish, a pulled starter at half a
+  game). In fact heavy nights get pulled more: starters finish 95.4% in the lowest projected
+  decile and 91.1% in the highest. A pulled starter faces 56% of a full game's shots and allows
+  goals at 2.3x the per-shot rate. `volume.SAVES` is now fitted on 2016-19 (`fit_saves`):
+  - P(finish) is logistic in his expected goals against (93% at 2.5, 89% at 3.5);
+  - the pulled/finished shot share and goal-rate multipliers are measured;
+  - a level factor scales the opponent's shots to the starter's.
+
+  Out of sample (2019-26) mean expected saves went from 26.72 to 26.43 (actual 26.30), and the
+  top decile from 31.0 to 30.3 (30.0). Log loss improved at every threshold in both periods;
+  pooled saves ≥ 25: 0.6358 → 0.6349. The remaining ~0.1 is the team shot model's level,
+  ~1% high in recent seasons.
 - **The team model matters most for saves:** 0.017-0.022 of log loss, against 0.002-0.003
   for skaters.
 
