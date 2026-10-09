@@ -15,6 +15,7 @@ from nhl.api.lineorder import order_lineup, order_unit
 from nhl.api.routers.slate import with_venue
 from nhl.api.serialize import rows, with_selection
 from nhl.api.teaminfo import team_context
+from nhl.betting import blend
 from nhl.storage import keys
 
 logger = logging.getLogger(__name__)
@@ -67,12 +68,14 @@ def market_view(data: SiteData, game: dict) -> dict:
     history, state = mk.replay(quotes)
     now = mk.current(history)
     prices = data.game_prices(game["game_date"], game["game_id"])
-    model = mk.model_history(prices, {m: c["line"] for m, c in now.items()}) if prices is not None else []
+    blend_model = data.blend_model()
+    model = mk.model_history(prices, {m: c["line"] for m, c in now.items()}, blend_model) if prices is not None else []
     matrix = np.asarray(prices.sort("as_of")["score_matrix"][-1]) if prices is not None else None
     books = {m: sorted(({"book": b, **v} for b, v in bs.items()), key=lambda r: r["book"]) for m, bs in state.items()}
     return {
         "start": start, "history": history, "model": model, "books": books, "consensus": now,
-        "three_way": mk.three_way_card(matrix, now.get("moneyline_3way")),
+        "three_way": mk.three_way_card(matrix, now.get("moneyline_3way"), now.get("moneyline"), blend_model,
+                                       blend.segment_of(game["game_date"])),
     }
 
 

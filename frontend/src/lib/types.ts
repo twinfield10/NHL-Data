@@ -523,10 +523,12 @@ export interface PlayerStyleResponse {
 export type MarketKey = "moneyline" | "moneyline_3way" | "puckline" | "total";
 export type SideKey = "home" | "away" | "draw" | "over" | "under";
 
-/** Regulation three-way for a card: model vs market and the best price per side (never flagged). */
+/** Regulation three-way for a card: model, blend and market and the best price per side (never flagged).
+ *  The blend is the moneyline blend split by the calibrated overtime rate; the edge uses it. */
 export interface ThreeWaySide {
   side: "home" | "draw" | "away";
   p_model: number | null;
+  p_blend: number | null;
   p_market: number | null;
   price: number | null;
   book: string | null;

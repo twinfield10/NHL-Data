@@ -20,7 +20,7 @@ from datetime import datetime
 import numpy as np
 import polars as pl
 
-from nhl.betting import devig
+from nhl.betting import blend, devig
 from nhl.betting.evaluate import METHOD
 from nhl.betting.lines import canonical_book
 from nhl.sim import markets as sim_markets
@@ -158,13 +158,13 @@ def current(history: list[dict]) -> dict[str, dict]:
     return out
 
 
-def model_probs(matrix: np.ndarray, market: str, line: float | None) -> dict[str, float] | None:
+def model_probs(matrix: np.ndarray, market: str, line: float | None, blend_model: dict | None = None) -> dict[str, float] | None:
     """The model's probability of each side of ``market`` at ``line`` from one score matrix (a
-    push on a whole-number line is taken out, as books refund it)."""
-    m = np.asarray(matrix, dtype=np.float64)[None]
+    push on a whole-number line is taken out, as books refund it). The three-way uses the
+    overtime calibration stored with ``blend_model`` (the raw simulator split without one)."""
     if market == "moneyline_3way":
-        h, d, a = (float(x[0]) for x in sim_markets.three_way(m))
-        return {"home": h, "draw": d, "away": a}
+        return blend.three_way(blend_model, "other", matrix, None)["model"]
+    m = np.asarray(matrix, dtype=np.float64)[None]
     if market != "moneyline" and line is None:
         return None
     p, push = (float(x[0]) for x in sim_markets.line_probs(m, market, line))
@@ -173,7 +173,7 @@ def model_probs(matrix: np.ndarray, market: str, line: float | None) -> dict[str
     return {s1: p, s2: 1 - p}
 
 
-def model_history(prices: pl.DataFrame, lines: dict[str, float | None]) -> list[dict]:
+def model_history(prices: pl.DataFrame, lines: dict[str, float | None], blend_model: dict | None = None) -> list[dict]:
     """The model's side probabilities in every pregame run (``t, market, line, p``), each market at
     its current consensus ``lines`` (a market without one is skipped, except the moneylines)."""
     out = []
@@ -181,25 +181,34 @@ def model_history(prices: pl.DataFrame, lines: dict[str, float | None]) -> list[
         for market in SIDES:
             if market in ("puckline", "total") and lines.get(market) is None:
                 continue
-            p = model_probs(np.asarray(r["score_matrix"]), market, lines.get(market))
+            p = model_probs(np.asarray(r["score_matrix"]), market, lines.get(market), blend_model)
             if p is not None:
                 out.append({"t": r["as_of"], "market": market, "line": lines.get(market), "p": p})
     return out
 
 
-def three_way_card(matrix: np.ndarray | None, cons: dict | None) -> dict | None:
-    """The regulation three-way for a game card: model and market probabilities, best price and
-    the model's edge per side (no blend: the three-way has no calibrated blend, so it is never
-    flagged as a play)."""
+def three_way_card(matrix: np.ndarray | None, cons: dict | None, ml_cons: dict | None = None,
+                   blend_model: dict | None = None, segment: str = "other") -> dict | None:
+    """The regulation three-way for a game card: model, blend and market probabilities, best
+    price and edge per side.
+
+    The blend is the moneyline blend (against ``ml_cons``, the moneyline consensus) split by the
+    calibrated overtime rate, so the three-way agrees with the two-way; the edge uses it, or the
+    model where there is no moneyline market. It is still never flagged as a play: the split
+    has no closing-line record of its own.
+    """
     if matrix is None and cons is None:
         return None
-    model = model_probs(matrix, "moneyline_3way", None) if matrix is not None else None
+    tw = (blend.three_way(blend_model, segment, matrix, ml_cons["fair"]["home"] if ml_cons else None)
+          if matrix is not None else {"model": None, "blend": None})
     sides = []
     for s in SIDES["moneyline_3way"]:
         best = cons["best"][s] if cons else None
-        p = model[s] if model else None
+        p_model = tw["model"][s] if tw["model"] else None
+        p_blend = tw["blend"][s] if tw["blend"] else None
+        p = p_blend if p_blend is not None else p_model
         sides.append({
-            "side": s, "p_model": p, "p_market": cons["fair"][s] if cons else None,
+            "side": s, "p_model": p_model, "p_blend": p_blend, "p_market": cons["fair"][s] if cons else None,
             "price": best["price"] if best else None, "book": best["book"] if best else None,
             "edge": p * _decimal(best["price"]) - 1 if best and p is not None else None,
         })

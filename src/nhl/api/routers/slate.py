@@ -15,6 +15,7 @@ from nhl.api.data import SiteData
 from nhl.api.deps import game_day, get_data
 from nhl.api.serialize import rows, with_selection
 from nhl.api.teaminfo import team_context
+from nhl.betting import blend
 
 logger = logging.getLogger(__name__)
 
@@ -102,17 +103,19 @@ def _three_way(data: SiteData, games: pl.DataFrame, day: date) -> list[dict]:
         return []
     try:
         odds = data.live_odds(int(todays["season"][0]))
-        odds = odds.filter(pl.col("market") == "moneyline_3way") if odds.height else odds
+        odds = odds.filter(pl.col("market").is_in(["moneyline_3way", "moneyline"])) if odds.height else odds
     except Exception:  # a bad odds file must not take the page down
         logger.exception("three-way odds failed for %s", day)
         odds = pl.DataFrame()
     prices = data.day_prices(day)
     matrices = {} if prices is None else dict(zip(prices["game_id"].to_list(), prices["score_matrix"].to_list()))
+    blend_model, segment = data.blend_model(), blend.segment_of(day)
     out = []
     for g in todays.iter_rows(named=True):
-        history, _ = mk.replay(mk.game_quotes(odds, g["game_id"], mk.start_utc(g)))
+        now = mk.current(mk.replay(mk.game_quotes(odds, g["game_id"], mk.start_utc(g)))[0])
         m = matrices.get(g["game_id"])
-        card = mk.three_way_card(None if m is None else np.asarray(m), mk.current(history).get("moneyline_3way"))
+        card = mk.three_way_card(None if m is None else np.asarray(m), now.get("moneyline_3way"), now.get("moneyline"),
+                                 blend_model, segment)
         if card is not None:
             out.append({"game_id": g["game_id"], **card})
     return out

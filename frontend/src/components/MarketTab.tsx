@@ -73,7 +73,7 @@ export default function MarketTab({ data, colors }: { data: GameResponse; colors
       ...s,
       pModel: latestModel?.[s.key] ?? e?.p_model_side ?? tw?.p_model ?? null,
       pMarket: cons?.fair[s.key] ?? e?.p_market_side ?? null,
-      pBlend: e?.p ?? null,
+      pBlend: e?.p ?? tw?.p_blend ?? null,
       price: e?.price ?? tw?.price ?? best?.price ?? null,
       book: e?.book ?? tw?.book ?? best?.book ?? null,
       edge: e?.edge ?? tw?.edge ?? null,
@@ -126,7 +126,7 @@ export default function MarketTab({ data, colors }: { data: GameResponse; colors
                     {[
                       { label: "Model", cell: (r: (typeof rows)[number]) => r.pModel != null ? <>{pct(r.pModel)} <span className="text-muted-foreground">{fairAmerican(r.pModel)}</span></> : "–" },
                       { label: "Market (No Vig)", cell: (r: (typeof rows)[number]) => r.pMarket != null ? <>{pct(r.pMarket)} <span className="text-muted-foreground">{fairAmerican(r.pMarket)}</span></> : "–" },
-                      ...(market === "moneyline_3way" ? [] : [{ label: "Blend", cell: (r: (typeof rows)[number]) => pct(r.pBlend) }]),
+                      { label: "Blend", cell: (r: (typeof rows)[number]) => pct(r.pBlend) },
                       { label: "Model − Market", cell: (r: (typeof rows)[number]) => r.pModel != null && r.pMarket != null
                         ? <Signed value={r.pModel - r.pMarket}>{signedPct(r.pModel - r.pMarket)}</Signed> : "–" },
                       { label: "Best Price", cell: (r: (typeof rows)[number]) => r.price != null ? <>{american(r.price)} <span className="text-muted-foreground">{r.book}</span></> : "–" },
@@ -148,8 +148,8 @@ export default function MarketTab({ data, colors }: { data: GameResponse; colors
               </div>
               {market === "moneyline_3way" && (
                 <p className="mt-3 text-xs text-muted-foreground">
-                  Settles after 60 minutes: OT is any game that goes to overtime. The model&apos;s regulation split is shown without a
-                  blend, so it is never flagged as a play.
+                  Settles after 60 minutes: OT is any game that goes to overtime. The blend is the moneyline blend split by the
+                  model&apos;s calibrated overtime rate, and the edge uses it; the three-way is never flagged as a play.
                 </p>
               )}
             </>
