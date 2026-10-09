@@ -71,6 +71,69 @@ def unit_record(units: pl.DataFrame | None, kind: str, player_ids: list[int]) ->
     return out
 
 
+def unit_key(player_ids: list[int]) -> str:
+    """A unit's lookup key in :func:`unit_index`: its sorted player ids joined by ``-``."""
+    return "-".join(str(p) for p in sorted(player_ids))
+
+
+def unit_index(units: pl.DataFrame | None) -> dict[tuple[str, str], dict]:
+    """Every :func:`unit_record` of a season at once: ``(kind, unit_key) -> record``.
+
+    Filtering the units table on a sorted list column for each unit was ~0.1-1 s per lookup; one
+    group_by over a string key builds every record in a single pass.
+    """
+    if units is None or units.is_empty():
+        return {}
+    has_team = "team_toi_s" in units.columns
+    df = units.with_columns(
+        pl.col("player_ids").list.sort().cast(pl.List(pl.String)).list.join("-").alias("_key"),
+    ).group_by("kind", "_key").agg(
+        *[pl.col(c).sum() for c in ("toi_s", "games", "xgf", "xga", "gf", "ga")],
+        (pl.col("team_toi_s").sum() if has_team else pl.lit(None, dtype=pl.Float64)).alias("_team_toi"),
+    )
+    out = {}
+    for r in df.iter_rows(named=True):
+        kind, key, team_toi = r.pop("kind"), r.pop("_key"), r.pop("_team_toi")
+        r["toi_share"] = r["toi_s"] / team_toi if team_toi else None
+        out[(kind, key)] = r
+    return out
+
+
+def goalie_seasons(starts: pl.DataFrame | None) -> dict[int, dict]:
+    """Every :func:`goalie_season` of a season at once: ``player_id -> record``."""
+    if starts is None or starts.is_empty():
+        return {}
+    df = starts.filter(pl.col("starter").is_not_null()).group_by("starter").agg(
+        pl.len().alias("starts"), pl.col("shots_against").sum(), pl.col("goals_against").sum(),
+        pl.col("xga").sum(), pl.col("gsax").sum(),
+    )
+    out = {}
+    for r in df.iter_rows(named=True):
+        sa, ga = int(r["shots_against"]), int(r["goals_against"])
+        out[r["starter"]] = {"starts": r["starts"], "shots_against": sa, "goals_against": ga, "xga": float(r["xga"]),
+                             "gsax": float(r["gsax"]), "sv_pct": (sa - ga) / sa if sa else None}
+    return out
+
+
+def season_block(onice_summary: pl.DataFrame | None, units: pl.DataFrame | None, starts: pl.DataFrame | None,
+                 logs: pl.DataFrame | None) -> dict:
+    """Everything the lineups view needs from one season, keyed for O(1) lookups: ``onice``
+    (player -> on-ice 5v5), ``special`` (player -> {pp, pk}), ``units`` (:func:`unit_index`),
+    ``goalies`` (:func:`goalie_seasons`), ``team_special`` (:func:`team_special_teams`) and the
+    league color ``scales`` (:func:`season_scales`). Built once per season table, not per request."""
+    special = special_teams(units)
+    pids = [] if onice_summary is None else onice_summary["player_id"].unique().to_list()
+    sp_pids = [] if special is None else special["player_id"].unique().to_list()
+    return {
+        "onice": onice(onice_summary, pids),
+        "special": special_by_player(special, sp_pids),
+        "units": unit_index(units),
+        "goalies": goalie_seasons(starts),
+        "team_special": team_special_teams(logs),
+        "scales": season_scales(onice_summary, special, starts),
+    }
+
+
 def goalie_season(starts: pl.DataFrame | None, pid: int | None) -> dict | None:
     """A goalie's starts in a season: ``starts, shots_against, goals_against, xga, gsax, sv_pct``."""
     if starts is None or pid is None:
@@ -164,8 +227,8 @@ def special_by_player(table: pl.DataFrame | None, pids: list[int]) -> dict[int, 
 
 
 def spread(values: list[float | None], center: float = 0.0, q: float = 0.95) -> float:
-    """The ``q`` quantile of ``|value - center|``: the saturation point of a heat column (as
-    ``heatScale`` on the ratings pages), 1 when there is nothing to scale."""
+    """The ``q`` quantile of ``|value - center|``: the saturation point of a heat column (every
+    heat ``scale`` the site's tables use), 1 when there is nothing to scale."""
     d = sorted(abs(v - center) for v in values if v is not None and v == v)
     if not d:
         return 1.0

@@ -14,7 +14,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from nhl.api.data import SiteData
 from nhl.api.deps import game_day, get_data
-from nhl.api.serialize import rows
+from nhl.api.serialize import json_view, rows
+from nhl.site import views
 from nhl.storage import keys
 from nhl.usage import matchups
 
@@ -99,27 +100,41 @@ def team_matchups(
     season = season or current
     if season not in (current, previous):
         raise HTTPException(status_code=400, detail=f"season must be {current} or {previous}")
-    m = data.processed(keys.usage_matchups(season), season == current)
+    if (raw := data.view(views.matchups_key(season, team_id))) is not None:
+        return json_view(raw)
     base = {"team_id": team_id, "season": season, "seasons": [current, previous]}
-    if m is None or m.filter(pl.col("team_id") == team_id).is_empty():
-        return {**base, "cells": [], "coaches": [], "index": None}
+    return build_matchups(data, season, current, previous).get(team_id) or {**base, "cells": [], "coaches": [], "index": None}
+
+
+def build_matchups(data: SiteData, season: int, current: int, previous: int) -> dict[int, dict]:
+    """``team_id -> /api/ratings/teams/{team_id}/matchups`` payload for every team in ``season``
+    (the league matrices and matching index are computed once for all of them)."""
+    m = data.processed(keys.usage_matchups(season), season == current)
+    if m is None or m.is_empty():
+        return {}
     by = ["season", "team_id"]
     league = matchups.matching_matrix(m.group_by(*by, "own_tier", "opp_tier").agg(pl.col("seconds").sum()), by)
     venue = matchups.matching_matrix(m.group_by(*by, "venue", "own_tier", "opp_tier").agg(pl.col("seconds").sum()), [*by, "venue"])
     mi = matchups.intensity(league, by)
     mi = mi.with_columns((pl.col("mi_bits").rank("average") / pl.len()).alias("pct"))
-    me = mi.filter(pl.col("team_id") == team_id).row(0, named=True)
-    cells = pl.concat([
-        league.filter(pl.col("team_id") == team_id).with_columns(pl.lit("all").alias("venue")),
-        venue.filter(pl.col("team_id") == team_id),
-    ], how="diagonal_relaxed").select("venue", "own_tier", "opp_tier", "seconds", "share", "ratio")
-    d1 = {r["venue"]: r["ratio"] for r in rows(cells.filter((pl.col("own_tier") == "D1") & (pl.col("opp_tier") == "F1")))}
-    coaches = m.filter(pl.col("team_id") == team_id).group_by("coach_id").agg(pl.col("seconds").sum()).sort("seconds", descending=True)
     ct = data.processed(keys.coaches(season), season == current)
     coach_names = {} if ct is None else dict(zip(ct["coach_id"].to_list(), ct["head_coach"].to_list()))
-    return {
-        **base, "cells": rows(cells),
-        "coaches": [coach_names.get(c) or c for c in coaches["coach_id"].drop_nulls().to_list()],
-        "index": {"mi_bits": me["mi_bits"], "pct": me["pct"], "f1_vs_f1": me["f1_vs_f1"],
-                  "d1_f1_home": d1.get("home"), "d1_f1_away": d1.get("away"), "teams": mi.height},
-    }
+    out = {}
+    for team_id in m["team_id"].drop_nulls().unique().sort().to_list():
+        hit = mi.filter(pl.col("team_id") == team_id)
+        if hit.is_empty():
+            continue
+        me = hit.row(0, named=True)
+        cells = pl.concat([
+            league.filter(pl.col("team_id") == team_id).with_columns(pl.lit("all").alias("venue")),
+            venue.filter(pl.col("team_id") == team_id),
+        ], how="diagonal_relaxed").select("venue", "own_tier", "opp_tier", "seconds", "share", "ratio")
+        d1 = {r["venue"]: r["ratio"] for r in rows(cells.filter((pl.col("own_tier") == "D1") & (pl.col("opp_tier") == "F1")))}
+        coaches = m.filter(pl.col("team_id") == team_id).group_by("coach_id").agg(pl.col("seconds").sum()).sort("seconds", descending=True)
+        out[team_id] = {
+            "team_id": team_id, "season": season, "seasons": [current, previous], "cells": rows(cells),
+            "coaches": [coach_names.get(c) or c for c in coaches["coach_id"].drop_nulls().to_list()],
+            "index": {"mi_bits": me["mi_bits"], "pct": me["pct"], "f1_vs_f1": me["f1_vs_f1"],
+                      "d1_f1_home": d1.get("home"), "d1_f1_away": d1.get("away"), "teams": mi.height},
+        }
+    return out

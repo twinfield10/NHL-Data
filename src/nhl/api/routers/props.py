@@ -9,9 +9,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from nhl.api.data import SiteData
 from nhl.api.deps import game_day, get_data
-from nhl.api.serialize import EASTERN, rows
+from nhl.api.serialize import EASTERN, json_view, rows
 from nhl.props import ledger as props_ledger
 from nhl.props import live
+from nhl.site import views
 
 router = APIRouter(prefix="/api", tags=["props"])
 
@@ -23,6 +24,8 @@ SERIES = ["book", "game_id", "player_id", "prop_type", "line", "side"]
 
 
 BET_KEY = ["game_id", "player_id", "prop_type", "line", "side"]
+#: ``/api/props`` default floor on edge (the prebuilt view uses it).
+DEFAULT_MIN_EDGE = -0.02
 
 
 def _with_bets(edges: pl.DataFrame, data: SiteData) -> pl.DataFrame:
@@ -66,10 +69,17 @@ def _movement(quotes: pl.DataFrame) -> pl.DataFrame:
 
 
 @router.get("/props")
-def get_props(day: date = Depends(game_day), min_edge: float = Query(-0.02, description="lowest edge returned"),
+def get_props(day: date = Depends(game_day), min_edge: float = Query(DEFAULT_MIN_EDGE, description="lowest edge returned"),
               data: SiteData = Depends(get_data)) -> dict:
     """The day's best prop quote per (game, player, stat, line, side), flagged first, with each
     quote's opening price at the same book. Started games keep their last pregame view."""
+    if min_edge == DEFAULT_MIN_EDGE and (raw := data.view(views.props_key(day))) is not None:
+        return json_view(raw)
+    return build_props(data, day, min_edge)
+
+
+def build_props(data: SiteData, day: date, min_edge: float = DEFAULT_MIN_EDGE) -> dict:
+    """The ``/api/props`` payload for ``day`` (also prebuilt by :mod:`nhl.site.publish`)."""
     edges = data.props_edges(day)
     if edges is None or edges.is_empty():
         return {"date": day.isoformat(), "stamp": None, "props": []}
@@ -84,10 +94,17 @@ def get_props(day: date = Depends(game_day), min_edge: float = Query(-0.02, desc
 def get_game_props(game_id: int, data: SiteData = Depends(get_data)) -> dict:
     """One game's prop board: every projected player's probabilities, every book's latest
     quote (devigged, with the consensus), and the game's best edges."""
+    if (raw := data.view(views.game_key(game_id, "props"))) is not None:
+        return json_view(raw)
     game = data.game(game_id)
     if game is None:
         raise HTTPException(status_code=404, detail=f"unknown game {game_id}")
-    day = game["game_date"]
+    return build_game_props(data, game)
+
+
+def build_game_props(data: SiteData, game: dict) -> dict:
+    """The game page's props tab (also prebuilt by :mod:`nhl.site.publish`)."""
+    game_id, day = game["game_id"], game["game_date"]
     proj = data.props_projections(day)
     proj = proj.filter(pl.col("game_id") == game_id) if proj is not None else None
     if proj is None or proj.is_empty():
@@ -123,7 +140,7 @@ def get_game_props(game_id: int, data: SiteData = Depends(get_data)) -> dict:
         "stamp": proj["stamp"][0],
         "players": rows(players.select([c for c in keep if c in players.columns])),
         "quotes": rows(probs.select("player_id", "prop_type", "line", "book", "price_over", "price_under", "p_book",
-                                    "p_market", "books") if probs.height else None),
+                                    "p_market", "books").sort("player_id", "prop_type", "line", "book") if probs.height else None),
         "edges": rows(edges.sort("edge", descending=True) if edges is not None else None),
     }
 

@@ -9,7 +9,10 @@ Layout (``manifest.json`` is written last, so a reader never sees a half-written
 * ``site/ratings/{players,goalies,teams,goalie_weights,lineups,lines}.parquet``: the boards;
 * ``site/ratings/units_{season}.parquet``: every observed 5v5 unit (current and last season);
 * ``site/ratings/manifest.json``: ``day``, ``snapshot``, ``as_of``, ``season``, ``league``,
-  ``unit_seasons`` and ``built_at``.
+  ``unit_seasons`` and ``built_at``;
+* ``site/ratings/archetype_history.parquet``: every skater's archetype by season (nightly).
+
+Each build also publishes the ratings pages' gold views (:mod:`nhl.site.publish`).
 
 The snapshot's own ``ev/st/finishing/penalties`` tables aren't copied; readers load them from
 ``ratings/{snapshot}/``.
@@ -36,6 +39,8 @@ logger = logging.getLogger(__name__)
 PREFIX = "site/ratings/"
 MANIFEST = f"{PREFIX}manifest.json"
 BOARDS = ("players", "goalies", "teams", "goalie_weights", "lineups", "lines")
+#: Every skater's single-season archetype since 2010-11 (the style page's history), rebuilt nightly.
+ARCHETYPE_HISTORY = f"{PREFIX}archetype_history.parquet"
 
 
 def units_key(season: int) -> str:
@@ -111,6 +116,9 @@ def build(store: Store, day: date) -> dict | None:
     }
     store.put_bytes(MANIFEST, json.dumps(manifest).encode(), "application/json")
     logger.info("site tables %s built in %.1fs (snapshot %s)", day, time.monotonic() - start, snap)
+    from nhl.site import publish
+
+    logger.info("ratings views %s: %s", day, publish.publish_ratings(store, day))
     return manifest
 
 

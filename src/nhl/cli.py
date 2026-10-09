@@ -341,8 +341,13 @@ def cmd_edges(args: argparse.Namespace) -> None:
     from nhl.betting import edges
     from nhl.storage.s3 import Store
 
-    e = edges.run(Store(), date.fromisoformat(args.date) if args.date else None, write=not args.no_write)
+    store, day = Store(), date.fromisoformat(args.date) if args.date else None
+    e = edges.run(store, day, write=not args.no_write)
     print(edges.render(e))
+    if not args.no_write:
+        from nhl.site import publish
+
+        publish.publish_quietly(store, day, parts=["markets"])
 
 
 def cmd_props_edges(args: argparse.Namespace) -> None:
@@ -352,8 +357,13 @@ def cmd_props_edges(args: argparse.Namespace) -> None:
     from nhl.props import live
     from nhl.storage.s3 import Store
 
-    e = live.run(Store(), date.fromisoformat(args.date) if args.date else None, write=not args.no_write)
+    store, day = Store(), date.fromisoformat(args.date) if args.date else None
+    e = live.run(store, day, write=not args.no_write)
     print(live.render(e))
+    if not args.no_write:
+        from nhl.site import publish
+
+        publish.publish_quietly(store, day, parts=["props"])
 
 
 def cmd_record_bet(args: argparse.Namespace) -> None:
@@ -361,10 +371,14 @@ def cmd_record_bet(args: argparse.Namespace) -> None:
     from nhl.betting import ledger
     from nhl.storage.s3 import Store
 
+    from nhl.site import publish
+
     side = {"home": 1, "over": 1, "away": 2, "under": 2}[args.side]
-    bet_id = ledger.record_real(Store(), args.game_id, args.market, side, args.price, args.units, args.book,
+    store = Store()
+    bet_id = ledger.record_real(store, args.game_id, args.market, side, args.price, args.units, args.book,
                                 line=args.line, note=args.note)
     print(f"recorded {bet_id}")
+    publish.publish_quietly(store, parts=["markets"])  # the slate lists the day's bets
 
 
 def cmd_grade_bets(args: argparse.Namespace) -> None:
@@ -386,10 +400,28 @@ def cmd_site_tables(args: argparse.Namespace) -> None:
     from datetime import date
 
     from nhl.api.serialize import today_et
-    from nhl.site import tables
+    from nhl.site import publish, tables
     from nhl.storage.s3 import Store
 
-    print(tables.build(Store(), date.fromisoformat(args.date) if args.date else today_et()))
+    store, day = Store(), date.fromisoformat(args.date) if args.date else today_et()
+    print(tables.build(store, day))
+    print(f"season views: {publish.publish_seasons(store, day)}")
+
+
+def cmd_site_views(args: argparse.Namespace) -> None:
+    """Build the site's gold views (prebuilt API responses) for a day: slate, props board and every
+    game's market, lineups and props tabs (see :mod:`nhl.site.publish`)."""
+    from datetime import date
+
+    from nhl.api.serialize import today_et
+    from nhl.site import publish
+    from nhl.storage.s3 import Store
+
+    day = date.fromisoformat(args.date) if args.date else today_et()
+    written = publish.publish_day(Store(), day, args.parts.split(","), force=args.force)
+    print(f"views {day}: {len(written)} written in {sum(written.values()):.1f}s")
+    for key, secs in written.items():
+        print(f"  {secs:6.2f}s  {key}")
 
 
 def cmd_pregame(args: argparse.Namespace) -> None:
@@ -401,9 +433,14 @@ def cmd_pregame(args: argparse.Namespace) -> None:
 
     from nhl.pregame import slate
 
-    out = price.run(Store(), date.fromisoformat(args.date) if args.date else None, n_sims=args.sims, write=not args.no_write)
+    store, day = Store(), date.fromisoformat(args.date) if args.date else None
+    out = price.run(store, day, n_sims=args.sims, write=not args.no_write)
     if out is not None:
         print(slate.render(out.slate, out.freshness))
+    if out is not None and not args.no_write:
+        from nhl.site import publish
+
+        publish.publish_quietly(store, day)
 
 
 def cmd_evaluate_deployment(args: argparse.Namespace) -> None:
@@ -701,6 +738,12 @@ def cmd_poll(args: argparse.Namespace) -> None:
         except Exception:  # noqa: BLE001 - reported; polls and prices are already stored
             logging.exception("edges failed")
             failed = True
+    # Prebuilt site views: what changed, plus anything missing or gone stale (a game that just started).
+    from nhl.site import publish
+
+    parts = (["markets", "lineups", "props"] if repriced else
+             (["markets"] if odds_moved else []) + (["props"] if props_moved else []))
+    publish.publish_quietly(store, parts=parts)
     if failed:
         sys.exit(1)
 
@@ -930,6 +973,12 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("site-tables", help="precompute the site's ratings boards -> site/ratings/")
     p.add_argument("--date", default=None, help="YYYY-MM-DD (default today, Eastern)")
     p.set_defaults(func=cmd_site_tables)
+
+    p = sub.add_parser("site-views", help="prebuild the site's API responses for a day -> site/views/")
+    p.add_argument("--date", default=None, help="YYYY-MM-DD (default today, Eastern)")
+    p.add_argument("--parts", default="markets,lineups,props", help="view groups whose inputs changed")
+    p.add_argument("--force", action="store_true", help="rebuild every view, started games included")
+    p.set_defaults(func=cmd_site_views)
 
     p = sub.add_parser("serve", help="run the site API (frontend/ talks to it)")
     p.add_argument("--host", default="127.0.0.1")

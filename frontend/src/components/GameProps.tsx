@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import PropTable, { RiskBadge } from "@/components/PropTable";
 import { TeamTag } from "@/components/TeamLogo";
@@ -25,6 +25,35 @@ const MARKETS: { prop: PropType; line: number }[] = [
 const fix = (v: number | null | undefined, d = 2) => (v == null ? "–" : v.toFixed(d));
 
 const key = (pid: number, prop: string, line: number) => `${pid}|${prop}|${line}`;
+
+/** Quotes by (player, stat, line) and by player, and plays by (player, stat, line) and by player:
+ * built once per response so each row is a map lookup, not a scan of every quote. */
+interface Board {
+  quotes: Map<string, PropQuote[]>;
+  byPlayer: Map<number, PropQuote[]>;
+  plays: Map<string, PropEdge>;
+  playsByPlayer: Map<number, PropEdge[]>;
+}
+
+const push = <K, V>(m: Map<K, V[]>, k: K, v: V) => {
+  const list = m.get(k);
+  if (list) list.push(v);
+  else m.set(k, [v]);
+};
+
+function indexBoard(quotes: PropQuote[], edges: PropEdge[]): Board {
+  const b: Board = { quotes: new Map(), byPlayer: new Map(), plays: new Map(), playsByPlayer: new Map() };
+  for (const q of quotes) {
+    push(b.quotes, key(q.player_id, q.prop_type, q.line), q);
+    push(b.byPlayer, q.player_id, q);
+  }
+  for (const e of edges) {
+    if (!isPlay(e)) continue;
+    b.plays.set(key(e.player_id, e.prop_type, e.line), e);
+    push(b.playsByPlayer, e.player_id, e);
+  }
+  return b;
+}
 
 /** Model %, then the best over price across books and the consensus; green when a side is a play. */
 function MarketCell({ model, quotes, play }: { model: number | null; quotes: PropQuote[]; play?: PropEdge }) {
@@ -86,8 +115,9 @@ function QuoteGrid({ player, quotes }: { player: PropPlayer; quotes: PropQuote[]
   );
 }
 
-function TeamBoard({ team, players, quotes, plays }: { team: string; players: PropPlayer[]; quotes: Map<string, PropQuote[]>; plays: Map<string, PropEdge> }) {
+function TeamBoard({ team, players, board }: { team: string; players: PropPlayer[]; board: Board }) {
   const [open, setOpen] = useState<number | null>(null);
+  const { quotes, plays } = board;
   return (
     <Card className="overflow-x-auto">
       <div className="border-b border-border px-3 py-2"><TeamTag abbr={team} /></div>
@@ -105,8 +135,8 @@ function TeamBoard({ team, players, quotes, plays }: { team: string; players: Pr
           {players.map((p) => {
             const isOpen = open === p.player_id;
             const all = MARKETS.flatMap((m) => quotes.get(key(p.player_id, m.prop, m.line)) ?? []);
-            const playerQuotes = [...quotes.entries()].filter(([k]) => k.startsWith(`${p.player_id}|`)).flatMap(([, v]) => v);
-            const playerPlays = [...plays.values()].filter((e) => e.player_id === p.player_id);
+            const playerQuotes = board.byPlayer.get(p.player_id) ?? [];
+            const playerPlays = board.playsByPlayer.get(p.player_id) ?? [];
             return (
               <Fragment key={p.player_id}>
                 <tr onClick={() => setOpen(isOpen ? null : p.player_id)} className="cursor-pointer border-b border-border align-top last:border-0 hover:bg-muted/60">
@@ -162,8 +192,9 @@ function mainLine(quotes: PropQuote[]): number | null {
   return [...count.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0][0];
 }
 
-function GoalieBoard({ goalies, quotes, plays }: { goalies: PropPlayer[]; quotes: Map<string, PropQuote[]>; plays: Map<string, PropEdge> }) {
+function GoalieBoard({ goalies, board }: { goalies: PropPlayer[]; board: Board }) {
   const [open, setOpen] = useState<number | null>(null);
+  const { quotes, plays } = board;
   return (
     <Card className="overflow-x-auto">
       <table className="w-full text-sm tabular">
@@ -177,7 +208,7 @@ function GoalieBoard({ goalies, quotes, plays }: { goalies: PropPlayer[]; quotes
         </thead>
         <tbody>
           {goalies.map((g) => {
-            const all = [...quotes.entries()].filter(([k]) => k.startsWith(`${g.player_id}|saves|`)).flatMap(([, v]) => v);
+            const all = (board.byPlayer.get(g.player_id) ?? []).filter((q) => q.prop_type === "saves");
             const line = mainLine(all);
             const isOpen = open === g.player_id;
             return (
@@ -219,17 +250,11 @@ function GoalieBoard({ goalies, quotes, plays }: { goalies: PropPlayer[]; quotes
 /** A game's prop board: its plays and best edges, then each team's players with model vs market. */
 export default function GameProps({ gameId, away, home }: { gameId: string; away: string; home: string }) {
   const { data, isLoading, error } = useGameProps(gameId);
+  const board = useMemo(() => indexBoard(data?.quotes ?? [], data?.edges ?? []), [data]);
   if (isLoading) return <Loading />;
   if (error) return <ErrorState error={error} />;
   if (!data || !data.players.length) return <Empty>No prop projections for this game yet (they follow the morning pregame run).</Empty>;
 
-  const quotes = new Map<string, PropQuote[]>();
-  for (const q of data.quotes) {
-    const k = key(q.player_id, q.prop_type, q.line);
-    quotes.set(k, [...(quotes.get(k) ?? []), q]);
-  }
-  const plays = new Map<string, PropEdge>();
-  for (const e of data.edges) if (isPlay(e)) plays.set(key(e.player_id, e.prop_type, e.line), e);
   const best = [...data.edges]
     .filter((e) => isPlay(e) || (e.edge > 0 && e.price <= MAX_PRICE))
     .sort((a, b) => Number(isPlay(b)) - Number(isPlay(a)) || b.edge - a.edge)
@@ -247,7 +272,7 @@ export default function GameProps({ gameId, away, home }: { gameId: string; away
         </SectionTitle>
         <div className="grid grid-cols-1 gap-4">
           {[away, home].map((t) => (
-            <TeamBoard key={t} team={t} players={data.players.filter((p) => p.team === t && p.position !== "G")} quotes={quotes} plays={plays} />
+            <TeamBoard key={t} team={t} players={data.players.filter((p) => p.team === t && p.position !== "G")} board={board} />
           ))}
         </div>
       </div>
@@ -257,8 +282,7 @@ export default function GameProps({ gameId, away, home }: { gameId: string; away
         </SectionTitle>
         <GoalieBoard
           goalies={data.players.filter((p) => p.position === "G" && (p.p_dressed ?? 0) >= 0.3).sort((a, b) => (b.p_dressed ?? 0) - (a.p_dressed ?? 0))}
-          quotes={quotes}
-          plays={plays}
+          board={board}
         />
       </div>
     </div>

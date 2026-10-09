@@ -7,7 +7,7 @@ import SortTable, { type Column } from "@/components/SortTable";
 import IdentityCell from "@/components/IdentityCell";
 import { Card, ErrorState, Loading, Signed } from "@/components/ui";
 import { useTeamRatings } from "@/lib/api";
-import { heat, heatScale } from "@/lib/heat";
+import { heat } from "@/lib/heat";
 import { dateTimeET, longDate, pct, signed, signedPct } from "@/lib/format";
 import type { Record3, TeamLineupPlayer, TeamRating, TeamsResponse } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -21,21 +21,10 @@ interface TeamScales {
   gd: number; xgd: number; xgf: number; xga: number; fin: number; save: number; pp: number; pk: number;
 }
 
-/** Heat scales from all 32 teams; xGF/xGA are centred on the league average. */
+/** Heat scales from all 32 teams (from the API); xGF/xGA are centred on the league average. */
 function teamScales(data: TeamsResponse): TeamScales {
-  const t = data.teams;
-  const { xg60_5v5: ev, xg60_pp: pp } = data.league;
-  return {
-    league: data.league,
-    gd: heatScale(t.map((x) => x.gd60), 0, 1),
-    xgd: heatScale(t.map((x) => x.xgd60), 0, 1),
-    xgf: heatScale(t.map((x) => x.xgf60), ev, 1),
-    xga: heatScale(t.map((x) => x.xga60), ev, 1),
-    fin: heatScale(t.map((x) => x.finishing), 0, 1),
-    save: heatScale(t.map((x) => x.save), 0, 1),
-    pp: heatScale(t.map((x) => x.pp_xgf60), pp, 1),
-    pk: heatScale(t.map((x) => x.pk_xga60), pp, 1),
-  };
+  const { gd, xgd, xgf, xga, fin, save, pp, pk } = data.scales;
+  return { league: data.league, gd, xgd, xgf, xga, fin, save, pp, pk };
 }
 
 function columns(s: TeamScales, open: number | null): Column<TeamRating>[] {

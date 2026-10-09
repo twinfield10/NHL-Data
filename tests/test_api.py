@@ -112,6 +112,9 @@ class _StubData:
     def processed(self, key, current):
         return self.tables.get(key)
 
+    def view(self, key, day=None):
+        return None
+
 
 def _client(tables: dict, monkeypatch):
     from fastapi.testclient import TestClient
