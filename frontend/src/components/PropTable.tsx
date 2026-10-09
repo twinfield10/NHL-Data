@@ -66,6 +66,15 @@ export default function PropTable({ rows, showGame = true }: { rows: PropEdge[];
       render: (e) => <span>{american(e.price)} <span className="text-xs text-muted-foreground">{e.book}</span></span>,
     },
     { key: "open", label: "Open", title: "Opening price at the same book (arrow: how it moved for this side)", align: "right", sort: (e) => e.open_price, render: (e) => <Movement e={e} /> },
+    {
+      key: "clv", label: "CLV", title: "Placed bets: the price taken vs. the devigged consensus now", align: "right",
+      sort: (e) => e.bet_clv ?? null,
+      render: (e) => e.bet_clv == null ? <span className="text-muted-foreground">–</span> : (
+        <span className={cn("font-semibold", e.bet_clv > 0 ? "text-positive" : e.bet_clv < 0 ? "text-negative" : "text-muted-foreground")}>
+          {signedPct(e.bet_clv, 1)}
+        </span>
+      ),
+    },
     { key: "model", label: "Model", title: "Model probability for this side", align: "right", sort: (e) => e.p_model_side, render: (e) => pct(e.p_model_side) },
     { key: "market", label: "Market", title: "Devigged consensus across books", align: "right", sort: (e) => e.p_market_side, render: (e) => pct(e.p_market_side) },
     { key: "books", label: "Books", align: "right", sort: (e) => e.books, render: (e) => e.books },
@@ -88,11 +97,6 @@ export default function PropTable({ rows, showGame = true }: { rows: PropEdge[];
             <RiskBadge stake={playStake(e)} />
             {e.bet_price != null && e.bet_price !== e.price && (
               <span className="text-[11px] text-muted-foreground">@ {american(e.bet_price)}</span>
-            )}
-            {e.bet_clv != null && (
-              <span className={cn("text-[11px] font-semibold", e.bet_clv > 0 ? "text-positive" : e.bet_clv < 0 ? "text-negative" : "text-muted-foreground")}>
-                CLV {signedPct(e.bet_clv, 1)}
-              </span>
             )}
           </span>
         ) : null,

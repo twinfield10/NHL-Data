@@ -15,11 +15,6 @@ function Placed({ e }: { e: Edge }) {
       title={`placed ${american(e.bet_price)} at ${e.bet_book}, ${e.bet_stake?.toFixed(2)}u; CLV now ${signedPct(e.bet_clv, 2)}`}>
       <span className="font-medium">{american(e.bet_price)}</span>
       <span className="text-muted-foreground">{e.bet_book} · {timeET(e.placed_at)}</span>
-      {e.bet_clv != null && (
-        <span className={cn("font-semibold", e.bet_clv > 0 ? "text-positive" : e.bet_clv < 0 ? "text-negative" : "text-muted-foreground")}>
-          CLV {signedPct(e.bet_clv, 1)}
-        </span>
-      )}
     </span>
   );
 }
@@ -37,12 +32,13 @@ export default function EdgeTable({ edges, showGame = true }: { edges: Edge[]; s
             <th className="px-3 py-2 font-medium">Bet</th>
             <th className="px-3 py-2 text-right font-medium">Price</th>
             <th className="px-3 py-2 font-medium">Book</th>
+            {withBets && <th className="px-3 py-2 text-right font-medium" title="Placed bets: the price taken vs. the devigged consensus now">CLV</th>}
             <th className="px-3 py-2 text-right font-medium">Model</th>
             <th className="px-3 py-2 text-right font-medium">Market</th>
             <th className="px-3 py-2 text-right font-medium">Blend</th>
             <th className="px-3 py-2 text-right font-medium">Edge</th>
             <th className="px-3 py-2 text-right font-medium">Stake</th>
-            {withBets && <th className="px-3 py-2 font-medium" title="Paper bet already placed: price, book, time (ET), CLV now">Placed</th>}
+            {withBets && <th className="px-3 py-2 font-medium" title="Paper bet already placed: price, book, time (ET)">Placed</th>}
           </tr>
         </thead>
         <tbody className="tabular">
@@ -66,6 +62,11 @@ export default function EdgeTable({ edges, showGame = true }: { edges: Edge[]; s
               </td>
               <td className="px-3 py-2 text-right">{american(e.price)}</td>
               <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{e.book}</td>
+              {withBets && (
+                <td className="px-3 py-2 text-right font-semibold">
+                  {e.bet_clv == null ? <span className="font-normal text-muted-foreground">–</span> : <Signed value={e.bet_clv}>{signedPct(e.bet_clv, 1)}</Signed>}
+                </td>
+              )}
               <td className="px-3 py-2 text-right">{pct(e.p_model_side)}</td>
               <td className="px-3 py-2 text-right">{pct(e.p_market_side)}</td>
               <td className="px-3 py-2 text-right">{pct(e.p)}</td>
