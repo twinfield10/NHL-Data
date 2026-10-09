@@ -4,11 +4,16 @@ import type { NextConfig } from "next";
 const apiUrl = process.env.INTERNAL_API_URL || "http://127.0.0.1:8010";
 
 const nextConfig: NextConfig = {
-  // Old top-level tabs, now sub-tabs of Ratings and Model Results (2026-10-07).
+  // Old tabs: Ratings sub-tabs (2026-10-07); live edges and props moved under Bets, the ledgers
+  // under Results (2026-10-09). Not permanent, so routes can keep moving.
   async redirects() {
+    const moved: [string, string][] = [
+      ["/edges", "/bets/markets"], ["/results/edges", "/bets/markets"], ["/props", "/bets/props"],
+      ["/results/bets", "/results/markets"],
+    ];
     return [
       ...["teams", "lines", "players"].map((t) => ({ source: `/${t}`, destination: `/ratings/${t}`, permanent: true })),
-      ...["edges", "bets"].map((t) => ({ source: `/${t}`, destination: `/results/${t}`, permanent: true })),
+      ...moved.map(([source, destination]) => ({ source, destination, permanent: false })),
     ];
   },
   async rewrites() {

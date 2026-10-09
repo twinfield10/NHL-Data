@@ -25,7 +25,7 @@ from datetime import date, datetime, timezone
 
 import polars as pl
 
-from nhl.betting import devig, evaluate
+from nhl.betting import devig, evaluate, info
 from nhl.betting import lines as lines_mod
 from nhl.storage import keys
 from nhl.storage.s3 import Store
@@ -39,12 +39,16 @@ SCHEMA = {
     "pregame_stamp": pl.String, "note": pl.String,
     "close_line": pl.Float64, "p_close": pl.Float64, "clv": pl.Float64, "result": pl.String, "pnl_units": pl.Float64,
     "graded_at": pl.Datetime("us", "UTC"),
+    **info.SCHEMA,
 }
 
 
 def load(store: Store) -> pl.DataFrame:
     led = store.get_parquet(keys.BETS_LEDGER)
-    return pl.DataFrame(schema=SCHEMA) if led is None else led.cast(SCHEMA)
+    if led is None:
+        return pl.DataFrame(schema=SCHEMA)
+    missing = [pl.lit(None, dtype=t).alias(c) for c, t in SCHEMA.items() if c not in led.columns]
+    return led.with_columns(missing).cast(SCHEMA).select(list(SCHEMA))
 
 
 def _bet_id(*parts) -> str:
@@ -71,7 +75,7 @@ def add_paper(store: Store, edges: pl.DataFrame) -> int:
     ).join(led.filter(pl.col("kind") == "paper").select("game_id", "market", "side"), on=["game_id", "market", "side"], how="anti")
     if new.is_empty():
         return 0
-    new = new.with_columns(
+    new = info.attach(store, new, info.game_prefix).with_columns(
         pl.lit("paper").alias("kind"), pl.lit(None, dtype=pl.String).alias("note"),
         pl.concat_str([pl.lit("paper"), "game_id", "market", "side"], separator="|").map_elements(
             lambda s: hashlib.sha1(s.encode()).hexdigest()[:16], return_dtype=pl.String).alias("bet_id"),

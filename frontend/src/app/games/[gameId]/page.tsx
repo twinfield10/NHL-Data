@@ -49,9 +49,11 @@ function Game({ gameId }: { gameId: string }) {
         <GameBanner
           large
           away={{ abbr: game.away_abbr, info: data.teams[game.away_abbr],
-            goalie: p ? { name: p.away_starter, p: p.away_starter_p, status: p.away_starter_dfo } : undefined }}
+            goalie: p ? { name: p.away_starter, p: p.away_starter_p, status: p.away_starter_dfo } : undefined,
+            lineup: p ? { dfoShare: p.away_dfo_share, issues: p.away_lineup_issues, gtd: p.away_game_time_decisions } : undefined }}
           home={{ abbr: game.home_abbr, info: data.teams[game.home_abbr],
-            goalie: p ? { name: p.home_starter, p: p.home_starter_p, status: p.home_starter_dfo } : undefined }}
+            goalie: p ? { name: p.home_starter, p: p.home_starter_p, status: p.home_starter_dfo } : undefined,
+            lineup: p ? { dfoShare: p.home_dfo_share, issues: p.home_lineup_issues, gtd: p.home_game_time_decisions } : undefined }}
           status={gameStatus(game, p?.start_time ?? data.markets.start)}
           venue={game.venue_name}
           location={game.venue_location}

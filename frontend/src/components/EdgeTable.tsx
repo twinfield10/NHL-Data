@@ -7,8 +7,27 @@ import { Signed } from "./ui";
 
 const MARKET = { moneyline: "ML", puckline: "PL", total: "Total" } as const;
 
-/** Best book per side; flagged rows are highlighted and carry a stake. */
+/** The paper bet on this side: price taken (when it differs from now), time placed, CLV now. */
+function Placed({ e }: { e: Edge }) {
+  if (e.bet_price == null) return null;
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs"
+      title={`placed ${american(e.bet_price)} at ${e.bet_book}, ${e.bet_stake?.toFixed(2)}u; CLV now ${signedPct(e.bet_clv, 2)}`}>
+      <span className="font-medium">{american(e.bet_price)}</span>
+      <span className="text-muted-foreground">{e.bet_book} · {timeET(e.placed_at)}</span>
+      {e.bet_clv != null && (
+        <span className={cn("font-semibold", e.bet_clv > 0 ? "text-positive" : e.bet_clv < 0 ? "text-negative" : "text-muted-foreground")}>
+          CLV {signedPct(e.bet_clv, 1)}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** Best book per side; flagged rows are highlighted and carry a stake. With ledger data, a Placed
+ *  column shows the paper bet already taken on each side. */
 export default function EdgeTable({ edges, showGame = true }: { edges: Edge[]; showGame?: boolean }) {
+  const withBets = edges.some((e) => e.bet_price !== undefined);
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -23,6 +42,7 @@ export default function EdgeTable({ edges, showGame = true }: { edges: Edge[]; s
             <th className="px-3 py-2 text-right font-medium">Blend</th>
             <th className="px-3 py-2 text-right font-medium">Edge</th>
             <th className="px-3 py-2 text-right font-medium">Stake</th>
+            {withBets && <th className="px-3 py-2 font-medium" title="Paper bet already placed: price, book, time (ET), CLV now">Placed</th>}
           </tr>
         </thead>
         <tbody className="tabular">
@@ -53,6 +73,7 @@ export default function EdgeTable({ edges, showGame = true }: { edges: Edge[]; s
                 <Signed value={e.edge}>{signedPct(e.edge)}</Signed>
               </td>
               <td className="px-3 py-2 text-right">{e.stake_units > 0 ? `${e.stake_units.toFixed(2)}u` : ""}</td>
+              {withBets && <td className="px-3 py-2"><Placed e={e} /></td>}
             </tr>
           ))}
         </tbody>

@@ -24,6 +24,9 @@ export interface SlateGame {
   away_lineup_issues: string | null;
   home_game_time_decisions: number | null;
   away_game_time_decisions: number | null;
+  /** Share of each lineup taken from DailyFaceoff (the rest is filled from usage / last game). */
+  home_dfo_share: number | null;
+  away_dfo_share: number | null;
   mkt_p_home_win: number | null;
   mkt_total_line: number | null;
   mkt_p_over: number | null;
@@ -136,6 +139,12 @@ export interface Edge {
   stamp: string;
   /** "close" = every book's last price before puck drop (game started); "live" = latest. */
   point?: "close" | "live";
+  /** The paper bet already placed on this side, if any, and its CLV against this row's consensus. */
+  bet_price?: number | null;
+  bet_book?: string | null;
+  bet_stake?: number | null;
+  placed_at?: string | null;
+  bet_clv?: number | null;
 }
 
 export interface EdgesResponse {
@@ -194,7 +203,7 @@ export interface GameResponse {
   markets: MarketView;
 }
 
-export interface Bet {
+export interface Bet extends BetInfo, LiveBet {
   bet_id: string;
   kind: "paper" | "real";
   side: number;
@@ -211,11 +220,69 @@ export interface Bet {
   stake_units: number;
   p_blend: number;
   edge: number;
+  /** Devigged closing consensus for the side (null when the close moved off the bet's line). */
+  p_close: number | null;
   clv: number | null;
-  result: string | null;
+  result: "win" | "loss" | "push" | null;
   pnl_units: number | null;
   graded_at: string | null;
   note: string | null;
+}
+
+/** What the model knew when a paper bet was placed (see nhl.betting.info); null on real bets and
+ *  on bets from before the ledger recorded it. */
+export interface BetInfo {
+  home_goalie: "Confirmed" | "Likely" | "Model" | null;
+  away_goalie: "Confirmed" | "Likely" | "Model" | null;
+  home_goalie_p: number | null;
+  away_goalie_p: number | null;
+  /** Share of each skater lineup from DailyFaceoff. */
+  home_dfo_share: number | null;
+  away_dfo_share: number | null;
+  /** Lineup issues plus game-time decisions, both teams. */
+  lineup_flags: number | null;
+  stale_inputs: string | null;
+  /** A = starters confirmed, lineups projected, nothing flagged; C = a starter or lineup from the model alone, or stale. */
+  info_grade: "A" | "B" | "C" | null;
+  /** open = the day's first edges run; post = the last 30 minutes before puck drop. */
+  window: BetWindow | null;
+}
+export type BetWindow = "open" | "pre" | "post";
+
+/** A ledger bet beside the market now (nhl.props.ledger.live_view). */
+export interface LiveBet {
+  start_utc: string | null;
+  lead_minutes: number | null;
+  now_price: number | null;
+  now_book: string | null;
+  now_edge: number | null;
+  now_flagged: boolean | null;
+  p_now: number | null;
+  clv_now: number | null;
+  status: BetStatus;
+}
+
+/** graded; closed = started, awaiting grading; value = still a play now; faded = quoted, no longer
+ * a play; gone = no quote at the bet's line now. */
+export type BetStatus = "graded" | "closed" | "value" | "faded" | "gone";
+
+/** Graded bets by placement window and information grade. */
+export interface BetInfoBreakdown extends Omit<BetTotals, "bets"> {
+  window: BetWindow | null;
+  info_grade: BetInfo["info_grade"];
+  bets: number;
+}
+
+export interface OpenTotals {
+  bets: number;
+  staked: number;
+  mean_clv: number | null;
+  /** Share of open bets with live CLV above zero. */
+  beating: number | null;
+  value: number;
+  faded: number;
+  gone: number;
+  closed: number;
 }
 
 export interface BetTotals {
@@ -235,7 +302,9 @@ export interface BetBreakdown extends BetTotals {
 export interface BetsResponse {
   bets: Bet[];
   totals: BetTotals;
+  open: OpenTotals;
   breakdown: BetBreakdown[];
+  info: BetInfoBreakdown[];
 }
 
 // /api/ratings (see nhl.ratings.rankings). EV/PP/PK terms are xG per 60 relative to average,
@@ -800,7 +869,7 @@ export interface GamePropsResponse {
   edges: PropEdge[];
 }
 
-export interface PropBet {
+export interface PropBet extends BetInfo, LiveBet {
   bet_id: string;
   kind: string;
   placed_at: string;
@@ -829,26 +898,11 @@ export interface PropBet {
   graded_at: string | null;
   home_abbr: string | null;
   away_abbr: string | null;
-  /** Puck drop, and how long before it the bet was placed. */
-  start_utc: string | null;
-  lead_minutes: number | null;
   lead_bucket: PropLeadBucket | null;
-  /** The market now (the latest edges run; a started game's last pregame view). */
-  now_price: number | null;
-  now_book: string | null;
-  now_edge: number | null;
-  now_flagged: boolean | null;
-  /** Devigged consensus for the side now. */
-  p_now: number | null;
   now_stamp: string | null;
-  /** Live CLV before grading: p_now × decimal(price) − 1. */
-  clv_now: number | null;
-  status: PropBetStatus;
 }
 
-/** graded; closed = started, awaiting grading; value = still a play now; faded = quoted, no longer
- * a play; gone = no quote at the bet's line now. */
-export type PropBetStatus = "graded" | "closed" | "value" | "faded" | "gone";
+export type PropBetStatus = BetStatus;
 export type PropLeadBucket = "<1h" | "1-3h" | "3-6h" | "6-12h" | "12h+";
 
 export interface PropBetTiming {
@@ -861,17 +915,7 @@ export interface PropBetTiming {
   beat_close: number | null;
 }
 
-export interface PropOpenTotals {
-  bets: number;
-  staked: number;
-  mean_clv: number | null;
-  /** Share of open bets with live CLV above zero. */
-  beating: number | null;
-  value: number;
-  faded: number;
-  gone: number;
-  closed: number;
-}
+export type PropOpenTotals = OpenTotals;
 
 export interface PropBetBreakdown {
   prop_type: PropType;
@@ -890,4 +934,5 @@ export interface PropBetsResponse {
   open: PropOpenTotals;
   breakdown: PropBetBreakdown[];
   timing: PropBetTiming[];
+  info: BetInfoBreakdown[];
 }

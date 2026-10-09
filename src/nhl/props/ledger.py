@@ -34,6 +34,7 @@ from datetime import date, datetime, timezone
 
 import polars as pl
 
+from nhl.betting import info
 from nhl.storage import keys
 from nhl.storage.s3 import Store
 
@@ -47,13 +48,17 @@ SCHEMA = {
     "pregame_stamp": pl.String,
     "close_price": pl.Float64, "p_close": pl.Float64, "clv": pl.Float64, "stat": pl.Float64, "result": pl.String,
     "pnl_units": pl.Float64, "graded_at": pl.Datetime("us", "UTC"),
+    **info.SCHEMA,
 }
 BET_KEY = ["game_id", "player_id", "prop_type", "line", "side"]
 
 
 def load(store: Store) -> pl.DataFrame:
     led = store.get_parquet(keys.PROPS_LEDGER)
-    return pl.DataFrame(schema=SCHEMA) if led is None else led.cast(SCHEMA)
+    if led is None:
+        return pl.DataFrame(schema=SCHEMA)
+    missing = [pl.lit(None, dtype=t).alias(c) for c, t in SCHEMA.items() if c not in led.columns]
+    return led.with_columns(missing).cast(SCHEMA).select(list(SCHEMA))
 
 
 def day_stakes(store: Store, day: date, exclude: pl.DataFrame | None = None) -> float:
@@ -77,7 +82,7 @@ def add_paper(store: Store, edges: pl.DataFrame) -> int:
     ).join(led.filter(pl.col("kind") == "paper").select(BET_KEY), on=BET_KEY, how="anti")
     if new.is_empty():
         return 0
-    new = new.with_columns(
+    new = info.attach(store, new, info.props_prefix).with_columns(
         pl.lit("paper").alias("kind"),
         pl.concat_str([pl.lit("paper"), *[pl.col(c).cast(pl.String) for c in BET_KEY]], separator="|").map_elements(
             lambda s: hashlib.sha1(s.encode()).hexdigest()[:16], return_dtype=pl.String).alias("bet_id"))
@@ -164,8 +169,10 @@ def _lead_bucket(minutes: pl.Expr) -> pl.Expr:
     return expr.otherwise(pl.lit(LEAD_OPEN))
 
 
-def live_view(bets: pl.DataFrame, edges: pl.DataFrame | None, starts: pl.DataFrame, now: datetime) -> pl.DataFrame:
-    """Each ledger bet beside the market now.
+def live_view(bets: pl.DataFrame, edges: pl.DataFrame | None, starts: pl.DataFrame, now: datetime,
+              key: list[str] = BET_KEY) -> pl.DataFrame:
+    """Each ledger bet beside the market now (props by default; the game ledger passes its own
+    ``key``, ``game_id, market, side, line``).
 
     Args:
         bets: Ledger rows.
@@ -184,8 +191,8 @@ def live_view(bets: pl.DataFrame, edges: pl.DataFrame | None, starts: pl.DataFra
     """
     out = bets.join(starts.select("game_id", pl.col("start_utc").cast(pl.Datetime("us", "UTC"))), on="game_id", how="left")
     if edges is not None and edges.height:
-        cur = edges.select(*BET_KEY, *_NOW).rename(_NOW).cast({"player_id": pl.Int64, "line": pl.Float64})
-        out = out.join(cur.unique(BET_KEY, keep="last"), on=BET_KEY, how="left")
+        cur = edges.select(*key, *_NOW).rename(_NOW).cast({c: bets.schema[c] for c in key})
+        out = out.join(cur.unique(key, keep="last"), on=key, how="left", nulls_equal=True)
     else:
         out = out.with_columns(*[pl.lit(None, dtype=t).alias(c) for c, t in (
             ("now_price", pl.Float64), ("now_book", pl.String), ("now_edge", pl.Float64), ("now_flagged", pl.Boolean),

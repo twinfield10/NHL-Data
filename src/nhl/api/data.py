@@ -391,7 +391,7 @@ class SiteData:
 
     def ledger(self) -> pl.DataFrame | None:
         """The paper/real bet ledger (re-read every :data:`MUTABLE_TTL_SECONDS`)."""
-        return self._timed_get("ledger", MUTABLE_TTL_SECONDS, lambda: self.store.get_parquet(keys.BETS_LEDGER))
+        return self._timed_get("ledger", MUTABLE_TTL_SECONDS, lambda: _ledger(self.store, "game"))
 
     # ------------------------------------------------------------------ props
     def props_edges(self, day: date) -> pl.DataFrame | None:
@@ -413,7 +413,16 @@ class SiteData:
 
     def props_ledger(self) -> pl.DataFrame | None:
         """The player-prop paper ledger (re-read every :data:`MUTABLE_TTL_SECONDS`)."""
-        return self._timed_get("props_ledger", MUTABLE_TTL_SECONDS, lambda: self.store.get_parquet(keys.PROPS_LEDGER))
+        return self._timed_get("props_ledger", MUTABLE_TTL_SECONDS, lambda: _ledger(self.store, "props"))
+
+
+def _ledger(store, which: str) -> pl.DataFrame | None:
+    """A ledger at its current schema (older files lack the info-at-placement columns)."""
+    from nhl.betting import ledger
+    from nhl.props import ledger as props_ledger
+
+    mod, key = (ledger, keys.BETS_LEDGER) if which == "game" else (props_ledger, keys.PROPS_LEDGER)
+    return mod.load(store) if store.get_parquet(key) is not None else None
 
 
 def _last_run_per_game(df: pl.DataFrame) -> pl.DataFrame:

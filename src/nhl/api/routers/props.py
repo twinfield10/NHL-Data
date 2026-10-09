@@ -9,7 +9,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from nhl.api.data import SiteData
 from nhl.api.deps import game_day, get_data
-from nhl.api.serialize import EASTERN, json_view, rows
+from nhl.api.serialize import EASTERN, json_view, rows, starts_utc
+from nhl.betting import info
 from nhl.props import ledger as props_ledger
 from nhl.props import live
 from nhl.site import views
@@ -164,13 +165,6 @@ def _open_totals(bets: pl.DataFrame) -> dict:
             **{s: counts.get(s, 0) for s in ("value", "faded", "gone", "closed")}}
 
 
-def _starts(games: pl.DataFrame) -> pl.DataFrame:
-    """``game_id, start_utc`` from the catalog's Eastern start times."""
-    return games.filter(pl.col("start_time_et").is_not_null()).select(
-        "game_id", pl.col("start_time_et").str.to_datetime().dt.replace_time_zone(str(EASTERN))
-        .dt.convert_time_zone("UTC").alias("start_utc"))
-
-
 @router.get("/props/bets")
 def get_props_bets(data: SiteData = Depends(get_data)) -> dict:
     """Every props ledger bet (newest first) beside the market now (best price, live CLV, still
@@ -179,12 +173,12 @@ def get_props_bets(data: SiteData = Depends(get_data)) -> dict:
     ledger = data.props_ledger()
     if ledger is None or ledger.is_empty():
         return {"bets": [], "totals": _totals(pl.DataFrame()), "open": _open_totals(pl.DataFrame({"status": []})),
-                "breakdown": [], "timing": []}
+                "breakdown": [], "timing": [], "info": []}
     games = data.games()
     open_days = ledger.filter(pl.col("graded_at").is_null())["game_date"].unique().to_list()
     frames = [e for d in open_days if (e := data.props_edges(d)) is not None and e.height]
     edges = pl.concat(frames, how="diagonal_relaxed") if frames else None
-    ledger = props_ledger.live_view(ledger, edges, _starts(games), datetime.now(timezone.utc))
+    ledger = props_ledger.live_view(ledger, edges, starts_utc(games), datetime.now(timezone.utc))
     teams = games.select("game_id", "home_abbr", "away_abbr")
     ledger = ledger.join(teams, on="game_id", how="left").sort("placed_at", descending=True)
     graded = ledger.filter(pl.col("graded_at").is_not_null() & (pl.col("result") != "void"))
@@ -193,4 +187,4 @@ def get_props_bets(data: SiteData = Depends(get_data)) -> dict:
         pl.col("clv").mean().alias("mean_clv"), (pl.col("clv") > 0).mean().alias("beat_close"),
     ).with_columns((pl.col("pnl") / pl.col("staked")).alias("roi")).sort("prop_type", "side")
     return {"bets": rows(ledger), "totals": _totals(graded), "open": _open_totals(ledger), "breakdown": rows(breakdown),
-            "timing": rows(props_ledger.timing(ledger))}
+            "timing": rows(props_ledger.timing(ledger)), "info": rows(info.breakdown(ledger))}

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 export type SubNavItem = { href: string; label: string };
 
-/** Sub-tab bar for a top-level section (Ratings, Model Results). */
+/** Sub-tab bar for a top-level section (Ratings, Bets, Results). */
 export default function SubNav({ items }: { items: readonly SubNavItem[] }) {
   const pathname = usePathname();
   return (

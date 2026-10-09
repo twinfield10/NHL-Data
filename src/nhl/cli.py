@@ -395,6 +395,15 @@ def cmd_grade_bets(args: argparse.Namespace) -> None:
     print(props_ledger.summary(store))
 
 
+def cmd_backfill_bet_info(args: argparse.Namespace) -> None:
+    """Fill what the model knew at placement (goalies, lineups, stale inputs, timing) on paper
+    bets placed before the ledgers recorded it."""
+    from nhl.betting import info
+    from nhl.storage.s3 import Store
+
+    print(info.backfill(Store()))
+
+
 def cmd_site_tables(args: argparse.Namespace) -> None:
     """Build the site's precomputed ratings boards (also run after every pregame run)."""
     from datetime import date
@@ -905,6 +914,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("grade-bets", help="M6: grade finished bets and print the ledger summary")
     p.set_defaults(func=cmd_grade_bets)
+
+    p = sub.add_parser("backfill-bet-info", help="Fill the info-at-placement snapshot on older paper bets")
+    p.set_defaults(func=cmd_backfill_bet_info)
 
     p = sub.add_parser("pregame", help="M5: project lineups/starters and price today's games (snapshots)")
     p.add_argument("--date", help="game date (default: today, Eastern)")
