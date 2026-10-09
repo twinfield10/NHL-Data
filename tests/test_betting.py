@@ -169,6 +169,32 @@ def test_stakes_respect_bet_game_and_day_caps():
     assert abs(capped["stake_units"].sum() - 2.0) < 0.02
 
 
+def test_stakes_keep_placed_bets_and_count_them_against_the_caps():
+    from nhl.betting import edges as E
+    from nhl.betting import ledger
+    from nhl.storage import keys
+
+    e = _edges([
+        {"game_id": 1, "market": "moneyline", "side": 1, "kelly": 0.05, "flagged": True},  # placed at 1.2 u
+        {"game_id": 1, "market": "total", "side": 1, "kelly": 0.05, "flagged": True},      # new: game room 3 - 2.5
+        {"game_id": 2, "market": "moneyline", "side": 2, "kelly": 0.05, "flagged": True},  # new
+    ])
+    day = e["game_date"][0]
+
+    def bet(game_id, market, side, stake):
+        return {c: None for c in ledger.SCHEMA} | {"bet_id": f"{game_id}{market}", "kind": "paper", "game_id": game_id,
+                                                   "game_date": day, "market": market, "side": side, "stake_units": stake}
+
+    prior = pl.DataFrame([bet(1, "moneyline", 1, 1.2), bet(1, "puckline", 2, 1.3), bet(7, "total", 1, 6.5)],
+                         schema=ledger.SCHEMA)
+    out = E._stakes(e, _Mem({keys.BETS_LEDGER: prior}), day)
+    st = dict(zip(zip(out["game_id"], out["market"]), out["stake_units"]))
+    assert st[(1, "moneyline")] == 1.2  # as placed, not resized
+    # Game 1 has 2.5 u of its 3 u placed, so its new total gets 0.5 u; game 2's gets 2 u. The day has
+    # 9 u placed, leaving 1 u for those 2.5 u, scaled together.
+    assert st[(1, "total")] == 0.2 and st[(2, "moneyline")] == 0.8
+
+
 def test_ledger_paper_once_then_grade_clv_and_result():
     from datetime import date, datetime, timezone
 

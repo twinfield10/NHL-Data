@@ -197,20 +197,30 @@ def closing(store: Store, day: date, now: datetime | None = None) -> pl.DataFram
 
 
 def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:
-    """Units per flagged bet after the per-bet, per-game and per-day caps (day cap counts
-    flagged bets already in the ledger for ``day``)."""
-    e = edges.with_columns(
-        pl.when(pl.col("flagged")).then((pl.col("kelly") * BANKROLL_UNITS).clip(0, MAX_BET_UNITS)).otherwise(0.0).alias("stake_units")
-    )
-    game_total = pl.col("stake_units").sum().over("game_id")
-    e = e.with_columns(pl.when(game_total > MAX_GAME_UNITS).then(pl.col("stake_units") * MAX_GAME_UNITS / game_total)
-                       .otherwise(pl.col("stake_units")).alias("stake_units"))
-    already = ledger.day_stakes(store, day, exclude=e.filter(pl.col("flagged")).select("game_id", "market", "side"))
-    room = max(MAX_DAY_UNITS - already, 0.0)
-    total = float(e["stake_units"].sum())
+    """Units per flagged bet after the per-bet, per-game and per-day caps.
+
+    A (game, market, side) already in the paper ledger keeps its placed stake and uses up its
+    game's and the day's room; only new bets are sized, within what's left. (Resizing placed
+    bets and counting only new ones let a day's ledger pass the cap as later runs added bets.)
+    """
+    key = ["game_id", "market", "side"]
+    placed = ledger.load(store).filter((pl.col("kind") == "paper") & (pl.col("game_date") == day))
+    led = placed.select(*key, pl.col("stake_units").alias("_placed")).unique(key).cast({"side": pl.Int64})
+    e = edges.with_columns(pl.col("side").cast(pl.Int64)).join(led, on=key, how="left").with_columns(
+        pl.when(pl.col("flagged") & pl.col("_placed").is_null())
+        .then((pl.col("kelly") * BANKROLL_UNITS).clip(0, MAX_BET_UNITS)).otherwise(0.0).alias("_new"))
+    game_used = placed.group_by("game_id").agg(pl.col("stake_units").sum().alias("_used"))
+    e = e.join(game_used, on="game_id", how="left").with_columns(
+        (MAX_GAME_UNITS - pl.col("_used").fill_null(0.0)).clip(0, None).alias("_room"))
+    new_game = pl.col("_new").sum().over("game_id")
+    e = e.with_columns(pl.when(new_game > pl.col("_room")).then(pl.col("_new") * pl.col("_room") / new_game)
+                       .otherwise(pl.col("_new")).alias("_new"))
+    room = max(MAX_DAY_UNITS - float(placed["stake_units"].sum()), 0.0)
+    total = float(e["_new"].sum())
     if total > room:
-        e = e.with_columns((pl.col("stake_units") * (room / total if total else 0.0)).alias("stake_units"))
-    return e.with_columns(pl.col("stake_units").round(2))
+        e = e.with_columns((pl.col("_new") * (room / total if total else 0.0)).alias("_new"))
+    return e.with_columns(pl.coalesce("_placed", pl.col("_new").round(2)).alias("stake_units")).drop(
+        "_placed", "_new", "_used", "_room")
 
 
 def run(store: Store, day: date | None = None, write: bool = True) -> pl.DataFrame:
