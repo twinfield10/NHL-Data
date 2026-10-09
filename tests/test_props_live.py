@@ -152,3 +152,30 @@ def test_grade(monkeypatch: pytest.MonkeyPatch) -> None:
     assert res[("Tim Stützle", 2.5)]["result"] == "loss"
     assert res[("Scratched", 0.5)]["result"] == "void" and res[("Scratched", 0.5)]["pnl_units"] == 0.0
     assert ledger.grade(store) == 0  # type: ignore[arg-type]
+
+
+def test_stakes_count_placed_bets_against_the_caps() -> None:
+    store = FakeStore()
+    placed = [edge_row(player_id=p, line=0.5, stake_units=0.5) for p in range(1, 10)]  # 4.5 u on 9 players
+    placed.append(edge_row(player_id=20, line=1.5, stake_units=0.5, prop_type="goals"))  # player 20 has 0.5 u in
+    ledger.add_paper(store, pl.DataFrame(placed))  # type: ignore[arg-type]
+
+    def row(player_id: int, prop: str = "points", line: float = 0.5) -> dict[str, Any]:
+        return {"game_id": 2026020061, "player_id": player_id, "prop_type": prop, "line": line, "side": "over",
+                "flagged": True, "kelly": 0.01}  # 1 u at full size, capped at 0.5 u per bet
+
+    e = pl.DataFrame([row(1), row(20), row(20, "assists"), row(30)])
+    out = {(r["player_id"], r["prop_type"]): r["stake_units"]
+           for r in live._stakes(e, store, date(2026, 10, 8)).iter_rows(named=True)}  # type: ignore[arg-type]
+    assert out[(1, "points")] == 0.5  # already placed: keeps its stake, adds nothing
+    # 5 u day cap with 5.0 u placed: nothing left for new bets.
+    assert out[(20, "points")] == out[(20, "assists")] == out[(30, "points")] == 0.0
+
+
+def test_stakes_player_cap_counts_placed() -> None:
+    store = FakeStore()
+    ledger.add_paper(store, pl.DataFrame([edge_row(player_id=20, prop_type="goals", stake_units=0.8)]))  # type: ignore[arg-type]
+    e = pl.DataFrame([{"game_id": 2026020061, "player_id": 20, "prop_type": "points", "line": 0.5, "side": "over",
+                       "flagged": True, "kelly": 0.01}])
+    out = live._stakes(e, store, date(2026, 10, 8))  # type: ignore[arg-type]
+    assert out["stake_units"][0] == pytest.approx(0.2)  # 1 u per player-game, 0.8 already in

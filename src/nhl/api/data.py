@@ -353,6 +353,28 @@ class SiteData:
         """The paper/real bet ledger (re-read every :data:`MUTABLE_TTL_SECONDS`)."""
         return self._timed_get("ledger", MUTABLE_TTL_SECONDS, lambda: self.store.get_parquet(keys.BETS_LEDGER))
 
+    # ------------------------------------------------------------------ props
+    def props_edges(self, day: date) -> pl.DataFrame | None:
+        """Each game's prop edges from the last snapshot that covered it on ``day``."""
+        frames = self._all_stamps("props_edges", day)
+        return _last_run_per_game(pl.concat(frames, how="diagonal_relaxed")) if frames else None
+
+    def props_projections(self, day: date) -> pl.DataFrame | None:
+        """The newest player projections for ``day`` (each game from its last pregame run)."""
+        stamps = self.stamps(f"pregame/props/{day.isoformat()}/")
+        return self._parquet(keys.props_projections(day, stamps[-1])) if stamps else None
+
+    def props_quotes(self, season: int) -> pl.DataFrame:
+        """Every captured prop price this season, all books (re-read every :data:`LIST_TTL_SECONDS`)."""
+        from nhl.odds.props import load_props
+
+        return self._timed_get(f"props_quotes/{season}", LIST_TTL_SECONDS, lambda: load_props(self.store, season),
+                               stale_ok=True)
+
+    def props_ledger(self) -> pl.DataFrame | None:
+        """The player-prop paper ledger (re-read every :data:`MUTABLE_TTL_SECONDS`)."""
+        return self._timed_get("props_ledger", MUTABLE_TTL_SECONDS, lambda: self.store.get_parquet(keys.PROPS_LEDGER))
+
 
 def _last_run_per_game(df: pl.DataFrame) -> pl.DataFrame:
     """Keep each game's rows from the newest ``stamp`` that includes it."""

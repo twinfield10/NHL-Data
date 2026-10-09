@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type {
-  BetsResponse, EdgesResponse, GameLineupsResponse, GameResponse, LinesResponse, PlayerContextResponse, PlayersResponse, PlayerStyleResponse, SlateResponse, TeamMatchupsResponse, TeamsResponse,
+  BetsResponse, EdgesResponse, GamePropsResponse, PropBetsResponse, PropsResponse, GameLineupsResponse, GameResponse, LinesResponse, PlayerContextResponse, PlayersResponse, PlayerStyleResponse, SlateResponse, TeamMatchupsResponse, TeamsResponse,
 } from "./types";
 
 async function apiFetch<T>(path: string): Promise<T> {
@@ -79,3 +79,16 @@ export const useTeamMatchups = (teamId: number | null, season?: number | null) =
     queryFn: () => apiFetch<TeamMatchupsResponse>(`/api/ratings/teams/${teamId}/matchups${season ? `?season=${season}` : ""}`),
     enabled: teamId != null,
   });
+
+export const useProps = (date?: string | null) =>
+  useQuery({ queryKey: ["props", date], queryFn: () => apiFetch<PropsResponse>(`/api/props${dateParam(date)}`) });
+
+export const useGameProps = (gameId: string, enabled = true) =>
+  useQuery({
+    queryKey: ["game-props", gameId],
+    queryFn: () => apiFetch<GamePropsResponse>(`/api/games/${gameId}/props`),
+    enabled,
+  });
+
+export const usePropBets = () =>
+  useQuery({ queryKey: ["prop-bets"], queryFn: () => apiFetch<PropBetsResponse>("/api/props/bets") });

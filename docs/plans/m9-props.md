@@ -10,7 +10,9 @@ on goals ≥ 2 in 9 of 10 (see [Phase B results](#phase-b-results-2026-10-08),
 [report](../reports/props-backtest.md)). **Phase D built 2026-10-08:** live projections,
 edges and a props paper ledger (`src/nhl/props/live.py`, `ledger.py`; `nhl props-edges`; run on
 every odds / props poll that moves and every reprice; graded nightly by `nhl grade-bets`).
-See [Phase D](#phase-d-live-edges-and-the-paper-ledger-2026-10-08).
+See [Phase D](#phase-d-live-edges-and-the-paper-ledger-2026-10-08). **Phase E built 2026-10-08:**
+the site's Props tab, a Props sub-tab on every game page, and Model Results → Props
+(`src/nhl/api/routers/props.py`; `frontend/src/app/props`, `components/GameProps.tsx`).
 **Depends on:** M2 game logs (`processed/game_logs/player/{season}`), M3 ratings and
 finishing terms, M4 simulator, M5 projected lineups and goalies, usage tiers and on-ice
 projection ([usage-context.md](usage-context.md)), the prop table (`nhl.odds.props`).
@@ -259,6 +261,31 @@ phases need that history for F.
 - **Known:** the props table stores price changes, not withdrawals, so a quote a book has
   pulled still looks live until it changes. First night (2026-10-08): 3,104 quotes, 21
   paper bets, 5.05 u.
+
+## Phase E: site (2026-10-08)
+
+- **API:**
+  - `/api/props?date=`: each game's last edges snapshot. Includes every quote with an edge of
+    at least −2%, every flagged one, and every bet already placed, even if its edge has
+    since faded. Each row carries its opening price at the same book (line movement) and the
+    ledger bet as placed.
+  - `/api/games/{id}/props`: projections per player, every book's latest quote (devigged,
+    with the consensus; closing quotes once the game starts) and the game's edges.
+  - `/api/props/bets`: the props ledger, with totals and a breakdown by stat and side.
+- **Props tab:**
+  - Plays, positive edges at +400 or shorter, or all edges.
+  - Filters for stat, book and player/team.
+  - Each row: model vs market, edge, best price with its opening price, and the RISK badge
+    with the stake as placed.
+- **Game page, Props sub-tab:**
+  - Best edges for the game.
+  - Each team's board: expected G/A/Pts and 1+ G, 1+ A, 1+ and 2+ Pts. Each cell shows the
+    model %, the best price and the consensus, highlighted when it's a play.
+  - Click a player for every book's prices.
+- **Model Results → Props:** the graded ledger (result, close, CLV, units).
+- **Stake caps fix:** a bet already in the props ledger now keeps its placed stake and uses up
+  the per-player and per-day caps; only new bets are sized in what's left. Before this, the
+  first night's later runs could take the day past 5 u (2026-10-08 ended at 5.87 u).
 
 ## Open questions
 - **Limits:** LowVig/BetOnline prop limits are probably small. FanDuel and DraftKings limit

@@ -220,19 +220,27 @@ def price_quotes(probs: pl.DataFrame, proj: pl.DataFrame) -> pl.DataFrame:
 
 
 def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:
+    """Units per flagged quote. A bet already in the ledger keeps its placed stake and uses up
+    room; only new bets are sized, within what's left of the per-player and per-day caps."""
     from nhl.props import ledger
 
-    e = edges.with_columns(pl.when(pl.col("flagged")).then((pl.col("kelly") * BANKROLL_UNITS).clip(0, MAX_BET_UNITS))
-                           .otherwise(0.0).alias("stake_units"))
-    per_player = pl.col("stake_units").sum().over("game_id", "player_id")
-    e = e.with_columns(pl.when(per_player > MAX_PLAYER_UNITS).then(pl.col("stake_units") * MAX_PLAYER_UNITS / per_player)
-                       .otherwise(pl.col("stake_units")).alias("stake_units"))
-    already = ledger.day_stakes(store, day, exclude=e.filter(pl.col("flagged")))
-    room = max(MAX_DAY_UNITS - already, 0.0)
-    total = float(e["stake_units"].sum())
+    key = ledger.BET_KEY
+    placed = ledger.load(store).filter((pl.col("kind") == "paper") & (pl.col("game_date") == day))
+    e = edges.join(placed.select(*key, pl.col("stake_units").alias("_placed")), on=key, how="left").with_columns(
+        pl.when(pl.col("flagged") & pl.col("_placed").is_null())
+        .then((pl.col("kelly") * BANKROLL_UNITS).clip(0, MAX_BET_UNITS)).otherwise(0.0).alias("_new"))
+    player_used = placed.group_by("game_id", "player_id").agg(pl.col("stake_units").sum().alias("_used"))
+    e = e.join(player_used, on=["game_id", "player_id"], how="left").with_columns(
+        (MAX_PLAYER_UNITS - pl.col("_used").fill_null(0.0)).clip(0, None).alias("_room"))
+    new_total = pl.col("_new").sum().over("game_id", "player_id")
+    e = e.with_columns(pl.when(new_total > pl.col("_room")).then(pl.col("_new") * pl.col("_room") / new_total)
+                       .otherwise(pl.col("_new")).alias("_new"))
+    room = max(MAX_DAY_UNITS - float(placed["stake_units"].sum()), 0.0)
+    total = float(e["_new"].sum())
     if total > room:
-        e = e.with_columns((pl.col("stake_units") * (room / total if total else 0.0)).alias("stake_units"))
-    return e.with_columns(pl.col("stake_units").round(2))
+        e = e.with_columns((pl.col("_new") * (room / total if total else 0.0)).alias("_new"))
+    return e.with_columns(pl.coalesce("_placed", pl.col("_new").round(2)).alias("stake_units")).drop(
+        "_placed", "_new", "_used", "_room")
 
 
 def compute(store: Store, day: date | None = None, now: datetime | None = None, write: bool = True) -> pl.DataFrame:

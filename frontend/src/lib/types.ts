@@ -653,3 +653,140 @@ export interface GameLineupsResponse {
   home: TeamLineup;
   away: TeamLineup;
 }
+
+// /api/props, /api/games/{id}/props, /api/props/bets (see nhl.props.live and nhl.props.ledger).
+// prop_type is goals | assists | points; side over | under; lines are N - 0.5 ("1+" = over 0.5).
+
+export type PropType = "goals" | "assists" | "points";
+
+export interface PropEdge {
+  game_id: number;
+  start_utc: string;
+  away_abbr: string;
+  home_abbr: string;
+  player_id: number;
+  player_name: string | null;
+  team: string | null;
+  position: string | null;
+  slot: string | null;
+  pp_unit: number | null;
+  prop_type: PropType;
+  line: number;
+  side: "over" | "under";
+  /** Best book for this side, and its American price. */
+  book: string;
+  price: number;
+  /** Books quoting this player, stat and line. */
+  books: number;
+  p_model_side: number;
+  p_market_side: number;
+  /** Model-market blend for the side (what the edge uses). */
+  p: number;
+  edge: number;
+  flagged: boolean;
+  stake_units: number;
+  stamp: string;
+  open_price: number | null;
+  opened_at: string | null;
+  moves: number | null;
+  /** The paper bet already in the props ledger for this side (price, book and stake as first placed). */
+  bet_price: number | null;
+  bet_book: string | null;
+  bet_stake: number | null;
+  placed_at: string | null;
+}
+
+export interface PropsResponse {
+  date: string;
+  stamp: string | null;
+  /** Longest price the model will flag (longer rungs are left out of the edge views). */
+  max_price?: number;
+  props: PropEdge[];
+}
+
+/** One projected skater: P(stat >= k) as p_{goals|ast|points}_{k}, and expected counts. */
+export interface PropPlayer {
+  player_id: number;
+  player_name: string;
+  team: string | null;
+  position: string | null;
+  slot: string | null;
+  pp_unit: number | null;
+  p_dressed: number | null;
+  confidence: string | null;
+  source: string | null;
+  exp_goals: number;
+  exp_ast: number;
+  exp_points: number;
+  [prob: `p_${string}_${number}`]: number;
+}
+
+export interface PropQuote {
+  player_id: number;
+  prop_type: PropType;
+  line: number;
+  book: string;
+  price_over: number | null;
+  price_under: number | null;
+  /** This book's devigged P(over). */
+  p_book: number;
+  /** Consensus P(over) across books. */
+  p_market: number;
+  books: number;
+}
+
+export interface GamePropsResponse {
+  game_id: number;
+  stamp: string | null;
+  players: PropPlayer[];
+  quotes: PropQuote[];
+  edges: PropEdge[];
+}
+
+export interface PropBet {
+  bet_id: string;
+  kind: string;
+  placed_at: string;
+  game_id: number;
+  game_date: string;
+  player_id: number;
+  player_name: string | null;
+  team: string | null;
+  prop_type: PropType;
+  line: number;
+  side: "over" | "under";
+  book: string;
+  price: number;
+  stake_units: number;
+  p_model: number;
+  p_market: number;
+  p_blend: number;
+  edge: number;
+  books: number;
+  close_price: number | null;
+  p_close: number | null;
+  clv: number | null;
+  stat: number | null;
+  result: "win" | "loss" | "void" | null;
+  pnl_units: number | null;
+  graded_at: string | null;
+  home_abbr: string | null;
+  away_abbr: string | null;
+}
+
+export interface PropBetBreakdown {
+  prop_type: PropType;
+  side: string;
+  bets: number;
+  staked: number;
+  pnl: number;
+  roi: number | null;
+  mean_clv: number | null;
+  beat_close: number | null;
+}
+
+export interface PropBetsResponse {
+  bets: PropBet[];
+  totals: BetTotals;
+  breakdown: PropBetBreakdown[];
+}
