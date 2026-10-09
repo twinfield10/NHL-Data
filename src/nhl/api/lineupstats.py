@@ -57,14 +57,18 @@ def unit_groups(lineup: list[dict]) -> list[dict]:
 
 def unit_record(units: pl.DataFrame | None, kind: str, player_ids: list[int]) -> dict | None:
     """Time and results a group of players has had on the ice together in a season (summed over
-    teams): ``toi_s, games, xgf, xga, gf, ga``; None if never together."""
+    teams): ``toi_s, games, xgf, xga, gf, ga`` and ``toi_share`` (of those teams' time in that
+    state, when known); None if never together."""
     if units is None or units.is_empty():
         return None
     key = sorted(player_ids)
     hit = units.filter((pl.col("kind") == kind) & (pl.col("player_ids").list.sort() == key))
     if hit.is_empty():
         return None
-    return {c: hit[c].sum() for c in ("toi_s", "games", "xgf", "xga", "gf", "ga")}
+    out = {c: hit[c].sum() for c in ("toi_s", "games", "xgf", "xga", "gf", "ga")}
+    team_toi = hit["team_toi_s"].sum() if "team_toi_s" in hit.columns else None
+    out["toi_share"] = out["toi_s"] / team_toi if team_toi else None
+    return out
 
 
 def goalie_season(starts: pl.DataFrame | None, pid: int | None) -> dict | None:

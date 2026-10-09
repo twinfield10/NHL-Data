@@ -619,6 +619,8 @@ export interface UnitRecord {
   xga: number;
   gf: number;
   ga: number;
+  /** Share of the team's time in that state (5v5, 5v4 or 4v5). */
+  toi_share: number | null;
 }
 
 export interface LineupUnit {
