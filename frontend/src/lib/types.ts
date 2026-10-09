@@ -747,6 +747,8 @@ export interface PropEdge {
   bet_book: string | null;
   bet_stake: number | null;
   placed_at: string | null;
+  /** That bet's CLV against this row's consensus: p_market_side × decimal(bet_price) − 1. */
+  bet_clv: number | null;
 }
 
 export interface PropsResponse {
@@ -830,6 +832,48 @@ export interface PropBet {
   graded_at: string | null;
   home_abbr: string | null;
   away_abbr: string | null;
+  /** Puck drop, and how long before it the bet was placed. */
+  start_utc: string | null;
+  lead_minutes: number | null;
+  lead_bucket: PropLeadBucket | null;
+  /** The market now (the latest edges run; a started game's last pregame view). */
+  now_price: number | null;
+  now_book: string | null;
+  now_edge: number | null;
+  now_flagged: boolean | null;
+  /** Devigged consensus for the side now. */
+  p_now: number | null;
+  now_stamp: string | null;
+  /** Live CLV before grading: p_now × decimal(price) − 1. */
+  clv_now: number | null;
+  status: PropBetStatus;
+}
+
+/** graded; closed = started, awaiting grading; value = still a play now; faded = quoted, no longer
+ * a play; gone = no quote at the bet's line now. */
+export type PropBetStatus = "graded" | "closed" | "value" | "faded" | "gone";
+export type PropLeadBucket = "<1h" | "1-3h" | "3-6h" | "6-12h" | "12h+";
+
+export interface PropBetTiming {
+  lead_bucket: PropLeadBucket;
+  bets: number;
+  staked: number;
+  pnl: number;
+  roi: number | null;
+  mean_clv: number | null;
+  beat_close: number | null;
+}
+
+export interface PropOpenTotals {
+  bets: number;
+  staked: number;
+  mean_clv: number | null;
+  /** Share of open bets with live CLV above zero. */
+  beating: number | null;
+  value: number;
+  faded: number;
+  gone: number;
+  closed: number;
 }
 
 export interface PropBetBreakdown {
@@ -846,5 +890,7 @@ export interface PropBetBreakdown {
 export interface PropBetsResponse {
   bets: PropBet[];
   totals: BetTotals;
+  open: PropOpenTotals;
   breakdown: PropBetBreakdown[];
+  timing: PropBetTiming[];
 }

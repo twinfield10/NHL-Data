@@ -85,6 +85,7 @@ def test_props_lists_plays_placed_bets_and_movement(client):
     assert got[1]["flagged"] and got[1]["open_price"] == 110.0 and got[1]["moves"] == 1
     assert got[3]["bet_stake"] == 0.25 and got[3]["bet_price"] == 150.0 and got[3]["bet_book"] == "FanDuel"
     assert got[1]["bet_stake"] is None
+    assert got[3]["bet_clv"] == pytest.approx(0.45 * 2.5 - 1)  # +150 taken, 45% consensus now
     assert body["props"][0]["player_id"] == 1  # flagged first
     assert body["max_price"] == 400.0
 
@@ -107,4 +108,10 @@ def test_game_props_unknown_game(client):
 def test_props_bets(client):
     body = client.get("/api/props/bets").json()
     assert len(body["bets"]) == 1 and body["bets"][0]["home_abbr"] == "VGK"
-    assert body["totals"]["bets"] == 0 and body["breakdown"] == []  # nothing graded yet
+    assert body["totals"]["bets"] == 0 and body["breakdown"] == [] and body["timing"] == []  # nothing graded yet
+    (b,) = body["bets"]
+    assert b["now_price"] == 120.0 and b["now_book"] == "DraftKings"
+    assert b["clv_now"] == pytest.approx(0.45 * 2.5 - 1)
+    assert b["lead_minutes"] == pytest.approx(14 * 60)  # placed 12:00 UTC, puck drop 02:00 UTC
+    assert b["status"] in ("faded", "closed")  # unflagged now; "closed" once the game's start has passed
+    assert body["open"]["bets"] == 1 and body["open"]["mean_clv"] == pytest.approx(0.125)

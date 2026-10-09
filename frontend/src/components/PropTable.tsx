@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import SortTable, { type Column } from "@/components/SortTable";
 import { TeamTag } from "@/components/TeamLogo";
-import { american, pct, signedPct, timeET } from "@/lib/format";
+import { american, dateTimeET, pct, signedPct, timeET } from "@/lib/format";
 import { isPlay, playStake, propBet, SLOT_LABEL } from "@/lib/props";
 import type { PropEdge } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -81,10 +81,18 @@ export default function PropTable({ rows, showGame = true }: { rows: PropEdge[];
       key: "risk", label: "", sort: (e) => (isPlay(e) ? playStake(e) : null),
       render: (e) =>
         isPlay(e) ? (
-          <span className="inline-flex items-center gap-1.5" title={e.bet_price != null ? `placed ${american(e.bet_price)} at ${e.bet_book}` : "not placed yet"}>
+          <span className="inline-flex items-center gap-1.5"
+            title={e.bet_price != null
+              ? `placed ${american(e.bet_price)} at ${e.bet_book}, ${dateTimeET(e.placed_at)} ET; CLV now ${signedPct(e.bet_clv, 2)}${e.flagged ? " (still +EV)" : " (no longer a play)"}`
+              : "not placed yet"}>
             <RiskBadge stake={playStake(e)} />
             {e.bet_price != null && e.bet_price !== e.price && (
               <span className="text-[11px] text-muted-foreground">@ {american(e.bet_price)}</span>
+            )}
+            {e.bet_clv != null && (
+              <span className={cn("text-[11px] font-semibold", e.bet_clv > 0 ? "text-positive" : e.bet_clv < 0 ? "text-negative" : "text-muted-foreground")}>
+                CLV {signedPct(e.bet_clv, 1)}
+              </span>
             )}
           </span>
         ) : null,

@@ -212,3 +212,38 @@ def test_grade_shots_and_saves(monkeypatch: pytest.MonkeyPatch) -> None:
     assert ledger.grade(store) == 3  # type: ignore[arg-type]
     res = {r["prop_type"]: (r["stat"], r["result"]) for r in ledger.load(store).iter_rows(named=True)}  # type: ignore[arg-type]
     assert res == {"shots": (4.0, "win"), "blocks": (2.0, "loss"), "saves": (28.0, "win")}
+
+
+# ------------------------------------------------------------------------ live view --
+def test_live_view_status_clv_and_timing() -> None:
+    utc = timezone.utc
+    start = datetime(2026, 10, 9, 0, 0, tzinfo=utc)
+    base = {"kind": "paper", "game_id": 1, "game_date": date(2026, 10, 8), "prop_type": "assists", "line": 0.5,
+            "side": "over", "book": "FanDuel", "price": 172.0, "stake_units": 0.3, "clv": None, "result": None,
+            "pnl_units": None, "graded_at": None}
+    bets = pl.DataFrame([
+        base | {"bet_id": "a", "player_id": 1, "placed_at": datetime(2026, 10, 8, 14, 0, tzinfo=utc)},  # still flagged
+        base | {"bet_id": "b", "player_id": 2, "placed_at": datetime(2026, 10, 8, 22, 0, tzinfo=utc)},  # faded
+        base | {"bet_id": "c", "player_id": 3, "placed_at": datetime(2026, 10, 8, 23, 30, tzinfo=utc)},  # line pulled
+        base | {"bet_id": "d", "player_id": 4, "placed_at": datetime(2026, 10, 7, 20, 0, tzinfo=utc), "clv": 0.1,
+                "result": "win", "pnl_units": 0.5, "graded_at": datetime(2026, 10, 9, 5, 0, tzinfo=utc)},
+    ], schema_overrides={"clv": pl.Float64, "result": pl.String, "pnl_units": pl.Float64,
+                         "graded_at": pl.Datetime("us", "UTC")})
+    edges = pl.DataFrame([
+        {"game_id": 1, "player_id": p, "prop_type": "assists", "line": 0.5, "side": "over", "book": "DraftKings",
+         "price": 132.0, "edge": e, "flagged": f, "p_market_side": 0.42, "stamp": "S"}
+        for p, e, f in ((1, 0.06, True), (2, 0.01, False))])
+    starts = pl.DataFrame({"game_id": [1], "start_utc": [start]})
+    v = {r["bet_id"]: r for r in ledger.live_view(bets, edges, starts, datetime(2026, 10, 8, 23, 45, tzinfo=utc))
+         .iter_rows(named=True)}
+    assert v["a"]["status"] == "value" and v["a"]["now_price"] == 132.0
+    assert v["a"]["clv_now"] == pytest.approx(0.42 * 2.72 - 1)  # +172 taken vs a 42% market now
+    assert v["a"]["lead_minutes"] == pytest.approx(600) and v["a"]["lead_bucket"] == "6-12h"
+    assert v["b"]["status"] == "faded" and v["b"]["lead_bucket"] == "1-3h"
+    assert v["c"]["status"] == "gone" and v["c"]["clv_now"] is None and v["c"]["lead_bucket"] == "<1h"
+    assert v["d"]["status"] == "graded" and v["d"]["clv_now"] is None and v["d"]["lead_bucket"] == "12h+"
+    after = ledger.live_view(bets, edges, starts, datetime(2026, 10, 9, 1, 0, tzinfo=utc))
+    assert set(after.filter(pl.col("bet_id") != "d")["status"]) == {"closed"}
+    t = ledger.timing(after)
+    assert t.to_dicts() == [{"lead_bucket": "12h+", "bets": 1, "staked": 0.3, "pnl": 0.5, "mean_clv": 0.1,
+                             "beat_close": 1.0, "roi": pytest.approx(0.5 / 0.3)}]
