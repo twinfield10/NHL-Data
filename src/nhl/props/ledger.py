@@ -17,7 +17,13 @@
   - ``pnl_units``, ``graded_at``.
 
 A paper bet is recorded the first time a (game, player, stat, line, side) is flagged and never
-re-added, so the ledger keeps the price available when the model first liked it.
+re-added, so the ledger keeps the price available when the model first liked it. ``placed_at`` is
+the edges run that first flagged it, so ``start - placed_at`` is how far ahead of puck drop it was
+taken (:func:`live_view` adds ``lead_minutes``; :func:`timing` grades CLV by that lead).
+
+Before grading, :func:`live_view` compares each bet with the latest edges snapshot: the best price
+now, live CLV (the same formula as the close, with today's consensus), and whether the bet is still
+there with value.
 """
 
 from __future__ import annotations
@@ -143,6 +149,76 @@ def grade(store: Store) -> int:
     return g.height
 
 
+#: Upper bounds (hours before puck drop) of the timing buckets; the last is open-ended.
+LEAD_BUCKETS = ((1, "<1h"), (3, "1-3h"), (6, "3-6h"), (12, "6-12h"))
+LEAD_OPEN = "12h+"
+#: Live view columns taken from the edges snapshot, renamed ``now_*``.
+_NOW = {"price": "now_price", "book": "now_book", "edge": "now_edge", "flagged": "now_flagged", "p_market_side": "p_now",
+        "stamp": "now_stamp"}
+
+
+def _lead_bucket(minutes: pl.Expr) -> pl.Expr:
+    expr = pl.when(minutes.is_null()).then(None)
+    for hours, label in LEAD_BUCKETS:
+        expr = expr.when(minutes < hours * 60).then(pl.lit(label))
+    return expr.otherwise(pl.lit(LEAD_OPEN))
+
+
+def live_view(bets: pl.DataFrame, edges: pl.DataFrame | None, starts: pl.DataFrame, now: datetime) -> pl.DataFrame:
+    """Each ledger bet beside the market now.
+
+    Args:
+        bets: Ledger rows.
+        edges: The latest props edges snapshot per game (best book per side, with ``price``,
+            ``book``, ``edge``, ``flagged``, ``p_market_side``, ``stamp``); a started game's is its
+            last pregame view.
+        starts: ``game_id, start_utc``.
+        now: The moment to judge "started" against.
+
+    Returns:
+        ``bets`` plus ``start_utc``, ``lead_minutes`` (puck drop − ``placed_at``), ``lead_bucket``,
+        ``now_price``, ``now_book``, ``now_edge``, ``now_flagged``, ``p_now`` (devigged consensus for
+        the side), ``now_stamp``, ``clv_now`` (p_now × decimal(bet price) − 1, ungraded bets only)
+        and ``status``: ``graded``; ``closed`` (started, awaiting grading); ``gone`` (no quote at
+        the bet's line now); ``value`` (still flagged at the best price now); ``faded``.
+    """
+    out = bets.join(starts.select("game_id", pl.col("start_utc").cast(pl.Datetime("us", "UTC"))), on="game_id", how="left")
+    if edges is not None and edges.height:
+        cur = edges.select(*BET_KEY, *_NOW).rename(_NOW).cast({"player_id": pl.Int64, "line": pl.Float64})
+        out = out.join(cur.unique(BET_KEY, keep="last"), on=BET_KEY, how="left")
+    else:
+        out = out.with_columns(*[pl.lit(None, dtype=t).alias(c) for c, t in (
+            ("now_price", pl.Float64), ("now_book", pl.String), ("now_edge", pl.Float64), ("now_flagged", pl.Boolean),
+            ("p_now", pl.Float64), ("now_stamp", pl.String))])
+    dec = pl.when(pl.col("price") < 0).then(1 + 100 / -pl.col("price")).otherwise(1 + pl.col("price") / 100)
+    graded = pl.col("graded_at").is_not_null()
+    lead = (pl.col("start_utc") - pl.col("placed_at")).dt.total_seconds() / 60
+    return out.with_columns(
+        lead.alias("lead_minutes"), _lead_bucket(lead).alias("lead_bucket"),
+        pl.when(~graded).then(pl.col("p_now") * dec - 1).alias("clv_now"),
+        pl.when(graded).then(pl.lit("graded"))
+        .when(pl.col("start_utc") <= now).then(pl.lit("closed"))
+        .when(pl.col("now_price").is_null()).then(pl.lit("gone"))
+        .when(pl.col("now_flagged").fill_null(False)).then(pl.lit("value"))
+        .otherwise(pl.lit("faded")).alias("status"),
+    )
+
+
+def timing(bets: pl.DataFrame) -> pl.DataFrame:
+    """Graded, non-void bets by how long before puck drop they were placed (``lead_bucket``
+    from :func:`live_view`): count, mean CLV, share beating the close, units, ROI."""
+    order = [label for _, label in LEAD_BUCKETS] + [LEAD_OPEN]
+    g = bets.filter(pl.col("graded_at").is_not_null() & (pl.col("result") != "void") & pl.col("lead_bucket").is_not_null())
+    if g.is_empty():
+        return pl.DataFrame(schema={"lead_bucket": pl.String, "bets": pl.UInt32, "staked": pl.Float64, "pnl": pl.Float64,
+                                    "mean_clv": pl.Float64, "beat_close": pl.Float64, "roi": pl.Float64})
+    return g.group_by("lead_bucket").agg(
+        pl.len().alias("bets"), pl.col("stake_units").sum().alias("staked"), pl.col("pnl_units").sum().alias("pnl"),
+        pl.col("clv").mean().alias("mean_clv"), (pl.col("clv") > 0).mean().alias("beat_close"),
+    ).with_columns((pl.col("pnl") / pl.col("staked")).alias("roi")).sort(
+        pl.col("lead_bucket").replace_strict(order, list(range(len(order)))))
+
+
 def summary(store: Store, by: tuple[str, ...] = ("prop_type", "side")) -> pl.DataFrame:
     """Graded prop bets by ``by``: count, mean CLV, share beating the close, units won, ROI."""
     led = load(store).filter(pl.col("graded_at").is_not_null() & (pl.col("result") != "void"))
@@ -155,4 +231,4 @@ def summary(store: Store, by: tuple[str, ...] = ("prop_type", "side")) -> pl.Dat
     ).sort(*by)
 
 
-__all__ = ["SCHEMA", "add_paper", "day_stakes", "grade", "load", "outcomes", "summary"]
+__all__ = ["LEAD_BUCKETS", "SCHEMA", "add_paper", "day_stakes", "grade", "live_view", "load", "outcomes", "summary", "timing"]

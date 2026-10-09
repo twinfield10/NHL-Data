@@ -41,17 +41,22 @@ const heatOn = (v: number | null | undefined, s: HeatScale | number | undefined,
 const xgfPct = (r: { xgf: number; xga: number }) => (r.xgf + r.xga > 0 ? r.xgf / (r.xgf + r.xga) : null);
 const dash = "–";
 
-/** Time and results a unit has had together in the season, for its header row. */
-function Together({ r }: { r: UnitRecord | null }) {
-  if (!r) return <span className="text-muted-foreground">Not together this season</span>;
+/** A unit's season together, for its header row: TOI | share of its group's TOI | xGF% (games, xG
+ *  and goals on hover). Every 5v5 second has one forward trio and one D pair on, so a line's share
+ *  is of all forward-line time and a pair's of all pair time (PP / PK: of the team's 5v4 / 4v5). */
+function Together({ r, kind }: { r: UnitRecord | null; kind?: LineupUnit["kind"] }) {
+  if (!r) return <span className="text-muted-foreground">| not together this season</span>;
   const share = xgfPct(r);
   return (
-    <span className="tabular text-muted-foreground">
-      {minutes(r.toi_s)} TOI · {r.games} GP · xG {r.xgf.toFixed(1)}–{r.xga.toFixed(1)}
+    <span className="tabular" title={`${r.games} GP · xG ${r.xgf.toFixed(1)}–${r.xga.toFixed(1)} · Goals ${r.gf}–${r.ga}`}>
+      <span className="text-muted-foreground"> | </span>{minutes(r.toi_s)} TOI
+      {r.toi_share != null && <><span className="text-muted-foreground"> | </span>{pct(r.toi_share, 0)} of {kind ?? "team"} TOI</>}
       {share != null && (
-        <span className={cn("ml-1 font-semibold", share >= 0.5 ? "text-positive" : "text-negative")}>({pct(share, 0)} xGF)</span>
+        <>
+          <span className="text-muted-foreground"> | </span>
+          <span className={cn("font-semibold", share >= 0.5 ? "text-positive" : "text-negative")}>{pct(share, 0)} xGF</span>
+        </>
       )}
-      {" "}· Goals {r.gf}–{r.ga}
     </span>
   );
 }
@@ -95,6 +100,8 @@ interface Group {
   key: string;
   label: string;
   record?: UnitRecord | null;
+  /** Unit kind, for what its TOI share is a share of. */
+  kind?: LineupUnit["kind"];
   /** ``null`` is an empty spot, shown as a replacement player. */
   players: (LineupPlayerStats | null)[];
   /** Position each player fills in this unit (defaults to his own). */
@@ -174,8 +181,8 @@ function GroupRows({ g, cols, width, edge }: { g: Group; cols: Col[]; width: num
     <>
       <tr className="h-7 border-b border-border bg-muted/50 text-xs">
         <td colSpan={width} className="whitespace-nowrap px-3">
-          <span className="mr-2 font-semibold">{g.label}</span>
-          {g.record !== undefined && <Together r={g.record} />}
+          <span className="font-semibold">{g.label}</span>
+          {g.record !== undefined && <Together r={g.record} kind={g.kind} />}
         </td>
       </tr>
       {g.players.map((p, j) => (
@@ -353,7 +360,7 @@ function TeamCard({ abbr, t, season, sc }: { abbr: string; t: TeamLineup; season
     } else {
       present.forEach((m, i) => { [players[i], roles[i]] = [m.p, m.role]; });
     }
-    return { key: slot, label: UNIT_LABEL[slot] ?? slot.toUpperCase(), record: u ? u.record[season] : null, players, roles };
+    return { key: slot, label: UNIT_LABEL[slot] ?? slot.toUpperCase(), record: u ? u.record[season] : null, kind, players, roles };
   };
   const units = (kind: LineupUnit["kind"]) => LAYOUT[kind].slots.map((slot) => unitGroup(kind, slot));
   const extras = t.players.filter((p) => !p.slot || !FIVE_ON_FIVE.includes(p.slot));
