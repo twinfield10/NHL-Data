@@ -122,7 +122,6 @@ export default function GameCard({ g, edges, bets, teams, threeWay, expanded = f
     fromEdge({ key: "under", label: `Under ${totalLine}`, color: UNDER_COLOR }, find("total", 2, totalLine), bets, closing),
   ) : null;
   const tw = threeWay && threeWay.sides.some((s) => s.p_model != null) ? threeWaySides(threeWay, away, home, colors, "model") : null;
-  const issues = [g.away_lineup_issues, g.home_lineup_issues].filter(Boolean).join("; ");
 
   return (
     <Link
@@ -133,9 +132,11 @@ export default function GameCard({ g, edges, bets, teams, threeWay, expanded = f
     >
       <GameBanner
         away={{ abbr: g.away_team_abbr, info: teams[g.away_team_abbr], price: find("moneyline", 2)?.price,
-          tone: awayTone, goalie: { name: g.away_starter, p: g.away_starter_p, status: g.away_starter_dfo } }}
+          tone: awayTone, goalie: { name: g.away_starter, p: g.away_starter_p, status: g.away_starter_dfo },
+          lineup: { dfoShare: g.away_dfo_share, issues: g.away_lineup_issues, gtd: g.away_game_time_decisions } }}
         home={{ abbr: g.home_team_abbr, info: teams[g.home_team_abbr], price: find("moneyline", 1)?.price,
-          tone: homeTone, goalie: { name: g.home_starter, p: g.home_starter_p, status: g.home_starter_dfo } }}
+          tone: homeTone, goalie: { name: g.home_starter, p: g.home_starter_p, status: g.home_starter_dfo },
+          lineup: { dfoShare: g.home_dfo_share, issues: g.home_lineup_issues, gtd: g.home_game_time_decisions } }}
         status={gameStatus(g, g.start_time)}
         venue={g.venue_name}
         location={g.venue_location}
@@ -154,9 +155,8 @@ export default function GameCard({ g, edges, bets, teams, threeWay, expanded = f
         {expanded && pl && <MarketBar title="Puck Line" sides={pl} closed={closing} />}
         {expanded && tw && <MarketBar title="3-Way (Regulation)" sides={tw} closed={closing} neutralEdges />}
         {edges.length === 0 && <div className="text-xs italic text-muted-foreground">No lines captured</div>}
-        {(issues || g.stale_inputs) && (
+        {g.stale_inputs && (
           <div className="flex justify-end gap-2 border-t border-border pt-2 text-[11px]">
-            {issues && <span title={issues} className="text-amber-600 dark:text-amber-400">Lineup Flag</span>}
             {g.stale_inputs && <span title={g.stale_inputs} className="text-red-600 dark:text-red-400">Stale Inputs</span>}
           </div>
         )}

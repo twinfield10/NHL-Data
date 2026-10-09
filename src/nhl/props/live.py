@@ -15,14 +15,15 @@ over/unders and N+ ladders from every captured book (DraftKings via ESPN, FanDue
    stat, measured from its own two-way markets that day (:data:`DEFAULT_MARGIN` without
    any). A two-way pair whose implied probabilities sum below 1 is a broken quote (sides from
    different moments or markets) and is skipped.
-2. **Market** = the median book probability for that player, stat and line. A book more than
-   :data:`OUTLIER` from it is treated as a bad quote and skipped.
+2. **Market** = the median book probability for that player, stat and line, over the books
+   quoting both sides when at least :data:`MIN_TWO_WAY_BOOKS` do (else over every book). A book
+   more than :data:`OUTLIER` from it is treated as a bad quote and skipped.
 3. **Blend** = logit average of model and market with weight :data:`MODEL_WEIGHT`. This is a
    placeholder until phase F fits it on graded props.
 4. **Edge** = p × decimal − 1 per side; the best book per (game, player, stat, line, side).
 5. **Flag** when the edge clears :data:`MIN_EDGE` and the bet is one the backtest can stand
    behind: price no longer than :data:`MAX_PRICE`, at least :data:`MIN_BOOKS` books in the
-   market, the skater projected to dress for certain (no game-time decision) with high lineup
+   market and :data:`MIN_TWO_WAY_BOOKS` of them quoting both sides, the skater projected to dress for certain (no game-time decision) with high lineup
    confidence, or the goalie at least :data:`MIN_P_START` likely to start.
 6. **Stake**: ¼ Kelly on the 100-unit bankroll, at most :data:`MAX_BET_UNITS` per bet,
    :data:`MAX_PLAYER_UNITS` per player-game and :data:`MAX_DAY_UNITS` per day of props,
@@ -69,6 +70,8 @@ MODEL_WEIGHT = 0.5
 MIN_EDGE = 0.05
 MAX_PRICE = 400.0
 MIN_BOOKS = 2
+#: Books quoting both sides needed to flag a play; with this many, the consensus uses only them.
+MIN_TWO_WAY_BOOKS = 2
 BANKROLL_UNITS = 100.0
 KELLY_FRACTION = 0.25
 MAX_BET_UNITS = 0.5
@@ -206,14 +209,19 @@ def market_probs(quotes: pl.DataFrame) -> pl.DataFrame:
     Returns:
         One row per (book, game, player, stat, line) with ``price_over``, ``price_under``
         (either may be null), ``p_book`` (devigged P(over)), ``two_way``, ``p_market``,
-        ``books`` and ``outlier``.
+        ``books``, ``two_way_books`` and ``outlier``.
+
+    ``p_market`` is the median ``p_book`` of the books quoting both sides when at least
+    :data:`MIN_TWO_WAY_BOOKS` do, else of every book. A one-sided quote is devigged with an assumed
+    margin, so it can pull the consensus toward itself (an over-only +100 beside two-way +170 /
+    −235 reads as a big overlay at +170); two-way pairs carry their own margin.
     """
     key = ["book", "game_id", "player_id", "prop_type", "line"]
     if quotes.is_empty():
         return pl.DataFrame(schema={"book": pl.String, "game_id": pl.Int64, "player_id": pl.Int64, "prop_type": pl.String,
                                     "line": pl.Float64, "price_over": pl.Float64, "price_under": pl.Float64,
                                     "two_way": pl.Boolean, "margin": pl.Float64, "p_book": pl.Float64, "p_market": pl.Float64,
-                                    "books": pl.Int64, "outlier": pl.Boolean})
+                                    "books": pl.Int64, "two_way_books": pl.Int64, "outlier": pl.Boolean})
     quotes = quotes.with_columns(pl.col("price").cast(pl.Float64), pl.col("line").cast(pl.Float64))
     wide = quotes.pivot(on="side", index=key, values="price", aggregate_function="last")
     for side in ("over", "under"):
@@ -234,10 +242,15 @@ def market_probs(quotes: pl.DataFrame) -> pl.DataFrame:
     wide = wide.with_columns(broken.fill_null(False).alias("_broken"))
     group = ["game_id", "player_id", "prop_type", "line"]
     good = wide.filter(~pl.col("_broken"))
-    cons = good.group_by(group).agg(pl.col("p_book").median().alias("p_market"), pl.col("book").n_unique().alias("books"))
+    cons = good.group_by(group).agg(
+        pl.col("p_book").median().alias("_p_all"), pl.col("p_book").filter(pl.col("two_way")).median().alias("_p_two"),
+        pl.col("book").n_unique().alias("books"), pl.col("book").filter(pl.col("two_way")).n_unique().alias("two_way_books"),
+    ).with_columns(
+        pl.when(pl.col("two_way_books") >= MIN_TWO_WAY_BOOKS).then("_p_two").otherwise("_p_all").alias("p_market"),
+    ).drop("_p_all", "_p_two")
     return wide.join(cons, on=group, how="left").with_columns(
         (pl.col("_broken") | ((pl.col("p_book") - pl.col("p_market")).abs() > OUTLIER)).fill_null(True).alias("outlier"),
-        pl.col("books").fill_null(0)).drop("_broken")
+        pl.col("books").fill_null(0).cast(pl.Int64), pl.col("two_way_books").fill_null(0).cast(pl.Int64)).drop("_broken")
 
 
 def latest_quotes(store: Store, season: int, game_ids: list[int], cutoff: datetime | dict[int, datetime]) -> pl.DataFrame:
@@ -342,6 +355,7 @@ def compute(store: Store, day: date | None = None, now: datetime | None = None, 
         games.select("game_id", "game_date", "start_utc", "home_abbr", "away_abbr"), on="game_id").with_columns(
         pl.lit(now).alias("as_of"))
     flagged = ((pl.col("edge") >= MIN_EDGE) & (pl.col("price") <= MAX_PRICE) & (pl.col("books") >= MIN_BOOKS)
+               & (pl.col("two_way_books") >= MIN_TWO_WAY_BOOKS)
                & pl.when(pl.col("position") == "G").then(pl.col("p_dressed") >= MIN_P_START)
                  .otherwise(pl.col("p_dressed").fill_null(1.0) >= 0.999)
                & (pl.col("confidence") == "high"))

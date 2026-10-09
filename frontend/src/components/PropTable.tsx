@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import SortTable, { type Column } from "@/components/SortTable";
+import { ClvCell, PlacedBet } from "@/components/BetLedger";
 import { TeamTag } from "@/components/TeamLogo";
-import { american, dateTimeET, pct, signedPct, timeET } from "@/lib/format";
+import { Signed } from "@/components/ui";
+import { american, pct, signedPct, timeET } from "@/lib/format";
 import { isPlay, playStake, propBet, SLOT_LABEL } from "@/lib/props";
 import type { PropEdge } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -66,36 +68,36 @@ export default function PropTable({ rows, showGame = true }: { rows: PropEdge[];
       render: (e) => <span>{american(e.price)} <span className="text-xs text-muted-foreground">{e.book}</span></span>,
     },
     { key: "open", label: "Open", title: "Opening price at the same book (arrow: how it moved for this side)", align: "right", sort: (e) => e.open_price, render: (e) => <Movement e={e} /> },
+    {
+      key: "clv", label: "Fair CLV", title: "Placed bets: the price taken vs. the devigged consensus now", align: "right",
+      sort: (e) => e.bet_clv ?? null, render: (e) => <ClvCell v={e.bet_clv} />,
+    },
+    {
+      key: "price_clv", label: "Price CLV", title: "Placed bets: the price taken vs. the same book's price now", align: "right",
+      sort: (e) => e.bet_price_clv ?? null,
+      render: (e) => <ClvCell v={e.bet_price_clv} title={e.bet_book_now != null ? `${e.bet_book} now ${american(e.bet_book_now)}` : undefined} />,
+    },
     { key: "model", label: "Model", title: "Model probability for this side", align: "right", sort: (e) => e.p_model_side, render: (e) => pct(e.p_model_side) },
     { key: "market", label: "Market", title: "Devigged consensus across books", align: "right", sort: (e) => e.p_market_side, render: (e) => pct(e.p_market_side) },
-    { key: "books", label: "Books", align: "right", sort: (e) => e.books, render: (e) => e.books },
     {
-      key: "edge", label: "Edge", title: "Blend × decimal price − 1 at the best book", align: "right", sort: (e) => e.edge,
+      key: "books", label: "Books", title: "Books quoting the line (quoting both sides); plays need 2 two-way books", align: "right",
+      sort: (e) => e.books,
       render: (e) => (
-        <span className={cn("font-semibold", e.flagged ? "text-positive" : e.edge > 0 ? "text-foreground" : "text-muted-foreground")}>
-          {signedPct(e.edge)}
-        </span>
+        <span>{e.books}{e.two_way_books != null && <span className="ml-1 text-xs text-muted-foreground">({e.two_way_books})</span>}</span>
       ),
     },
     {
-      key: "risk", label: "", sort: (e) => (isPlay(e) ? playStake(e) : null),
-      render: (e) =>
-        isPlay(e) ? (
-          <span className="inline-flex items-center gap-1.5"
-            title={e.bet_price != null
-              ? `placed ${american(e.bet_price)} at ${e.bet_book}, ${dateTimeET(e.placed_at)} ET; CLV now ${signedPct(e.bet_clv, 2)}${e.flagged ? " (still +EV)" : " (no longer a play)"}`
-              : "not placed yet"}>
-            <RiskBadge stake={playStake(e)} />
-            {e.bet_price != null && e.bet_price !== e.price && (
-              <span className="text-[11px] text-muted-foreground">@ {american(e.bet_price)}</span>
-            )}
-            {e.bet_clv != null && (
-              <span className={cn("text-[11px] font-semibold", e.bet_clv > 0 ? "text-positive" : e.bet_clv < 0 ? "text-negative" : "text-muted-foreground")}>
-                CLV {signedPct(e.bet_clv, 1)}
-              </span>
-            )}
-          </span>
-        ) : null,
+      key: "edge", label: "Edge", title: "Blend × decimal price − 1 at the best book", align: "right", sort: (e) => e.edge,
+      render: (e) => <span className="font-medium"><Signed value={e.edge}>{signedPct(e.edge)}</Signed></span>,
+    },
+    {
+      key: "stake", label: "Stake", title: "Units at risk: as placed, else the current stake", align: "right",
+      sort: (e) => (isPlay(e) ? playStake(e) : null),
+      render: (e) => (isPlay(e) ? `${playStake(e).toFixed(2)}u` : ""),
+    },
+    {
+      key: "placed", label: "Placed", title: "Paper bet already placed: price, book, time (ET)", sort: (e) => e.placed_at ?? null,
+      render: (e) => <PlacedBet price={e.bet_price} book={e.bet_book} stake={e.bet_stake} at={e.placed_at} />,
     },
   ];
   return (

@@ -20,6 +20,15 @@ export interface BannerSide {
   price?: number | null;
   tone?: Tone;
   goalie?: { name: string | null; p: number | null; status: string | null };
+  lineup?: LineupState;
+}
+
+/** How settled a team's skater lineup is: DailyFaceoff coverage, flags and game-time decisions. */
+export interface LineupState {
+  /** Share of the lineup taken from DailyFaceoff (the rest is filled from usage / last game). */
+  dfoShare: number | null;
+  issues: string | null;
+  gtd: number | null;
 }
 
 export interface Chip {
@@ -40,11 +49,21 @@ function GoalieDot({ status, p }: { status: string | null; p: number | null }) {
   return <span className={cn("inline-block h-1.5 w-1.5 shrink-0 rounded-full", cls)} title={label + odds} />;
 }
 
+/** Green: a projected lineup with nothing flagged. Yellow: flagged or game-time decisions.
+ *  Red: no projected lineup yet (built from usage and the last game). */
+function lineupStatus(l: LineupState): { cls: string; label: string; detail: string } {
+  const projected = (l.dfoShare ?? 0) >= 0.5;
+  const notes = [l.issues, l.gtd ? `${l.gtd} game-time decision${l.gtd > 1 ? "s" : ""}` : null].filter(Boolean).join(" · ");
+  if (!projected) return { cls: "bg-red-400", label: "Model Lines", detail: "No projected lineup yet (usage / last game)" + (notes ? ` · ${notes}` : "") };
+  if (notes) return { cls: "bg-yellow-400", label: "Lineup Flag", detail: notes };
+  return { cls: "bg-emerald-400", label: "Projected Lines", detail: "Projected lineup, nothing flagged" };
+}
+
 function Logo({ abbr, side, large }: { abbr: string; side: "left" | "right"; large: boolean }) {
   const cls = cn(
-    "pointer-events-none absolute top-1/2 -translate-y-1/2 select-none opacity-30",
-    large ? "h-40 w-40" : "h-24 w-24 sm:h-28 sm:w-28",
-    side === "left" ? (large ? "-left-8" : "-left-6") : large ? "-right-8" : "-right-6"
+    "pointer-events-none absolute top-1/2 -translate-y-1/2 select-none opacity-45",
+    large ? "h-56 w-56" : "h-32 w-32 sm:h-40 sm:w-40",
+    side === "left" ? (large ? "-left-14" : "-left-10 sm:-left-12") : large ? "-right-14" : "-right-10 sm:-right-12"
   );
   return <img src={logoUrl(abbr, "dark")} alt="" className={cls} />;
 }
@@ -96,6 +115,15 @@ function TeamBlock({ s, align, large }: { s: BannerSide; align: "left" | "right"
           <span className="truncate">{s.goalie.name ?? "TBD"}</span>
         </div>
       )}
+      {s.lineup && (() => {
+        const l = lineupStatus(s.lineup);
+        return (
+          <div className={cn("flex items-center gap-1.5 text-[11px] text-white", right && "flex-row-reverse")} title={l.detail}>
+            <span className={cn("inline-block h-1.5 w-1.5 shrink-0 rounded-full", l.cls)} />
+            <span className="truncate">{l.label}</span>
+          </div>
+        );
+      })()}
     </div>
   );
 }

@@ -44,6 +44,13 @@ def with_selection(df: pl.DataFrame, home: str = "home_abbr", away: str = "away_
     return df.with_columns(pl.Series("selection", labels, dtype=pl.String))
 
 
+def starts_utc(games: pl.DataFrame) -> pl.DataFrame:
+    """``game_id, start_utc`` from the catalog's Eastern start times."""
+    return games.filter(pl.col("start_time_et").is_not_null()).select(
+        "game_id", pl.col("start_time_et").str.to_datetime().dt.replace_time_zone(str(EASTERN))
+        .dt.convert_time_zone("UTC").alias("start_utc"))
+
+
 def json_view(raw: bytes) -> Response:
     """A prebuilt view (:mod:`nhl.site.views`) sent as stored, with no re-encoding."""
     return Response(content=raw, media_type="application/json")

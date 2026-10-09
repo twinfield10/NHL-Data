@@ -62,7 +62,7 @@ function Props() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Props</h1>
+        <h1 className="text-xl font-semibold">Props</h1>
         <DateNav date={date} />
       </div>
 
@@ -98,7 +98,7 @@ function Props() {
               className="w-44 rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground"
             />
             <span className="ml-auto text-xs text-muted-foreground">
-              Edge uses a 50/50 blend of model and market; plays need ≥ 5% edge, ≥ 2 books and a confirmed lineup spot
+              Edge uses a 50/50 blend of model and market; market = median of books quoting both sides; plays need ≥ 5% edge, ≥ 2 books quoting both sides and a confirmed lineup spot
               (goalies: ≥ 90% to start).
             </span>
           </div>
