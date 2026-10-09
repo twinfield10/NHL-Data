@@ -9,7 +9,7 @@ import PlayerStyle from "@/components/PlayerStyle";
 import { Card, Empty, ErrorState, Loading, Pills, Signed } from "@/components/ui";
 import { usePlayerRatings } from "@/lib/api";
 import { ARCHETYPES } from "@/lib/archetypes";
-import { heat, heatScale } from "@/lib/heat";
+import { heat } from "@/lib/heat";
 import { dateTimeET, longDate, minutes, signed, signedPct } from "@/lib/format";
 import type { Goalie, Skater } from "@/lib/types";
 
@@ -46,22 +46,6 @@ function SkaterDetail({ playerId, tab, onTab }: {
 const netPen = (p: Skater) => (p.pen_drawn60 == null || p.pen_taken60 == null ? null : p.pen_drawn60 - p.pen_taken60);
 /** Relative xGA (lower is better); the ratings store prevention, so flip it back. */
 const xga = (v: number | null) => (v == null ? null : -v);
-
-/** League-wide scales for the heat columns, from every rated player (not the filtered rows). */
-function skaterScales(all: Skater[]): Scales {
-  return {
-    xgd: heatScale(all.map((p) => p.ev_net)),
-    xgf: heatScale(all.map((p) => p.ev_off)),
-    xga: heatScale(all.map((p) => p.ev_def)),
-    pp: heatScale(all.map((p) => p.pp_off)),
-    pk: heatScale(all.map((p) => p.pk_def)),
-    fin: heatScale(all.map((p) => p.finishing)),
-  };
-}
-
-function goalieScales(all: Goalie[]): Scales {
-  return { save: heatScale(all.map((g) => g.save)), gsax: heatScale(all.map((g) => g.gsax)) };
-}
 
 const nameColumn = <T extends { player_id: number; player_name: string | null; team_abbr: string | null }>(label: string): Column<T> => ({
   key: "name", label, className: "h-px p-0", sort: (p) => p.player_name,
@@ -178,9 +162,9 @@ export default function PlayersPage() {
     (p) => match(p) && (pos === "all" || (pos === "D" ? p.position === "D" : p.position !== "D")) && (!type || p.archetype === type)
   );
   const goalies = (data?.goalies ?? []).filter(match);
-  // Scales from the whole league (every player on a team), so filtering doesn't change the colors.
-  const skaterCols = useMemo(() => skaterColumns(skaterScales((data?.skaters ?? []).filter((p) => p.team_abbr))), [data]);
-  const goalieCols = useMemo(() => goalieColumns(goalieScales((data?.goalies ?? []).filter((g) => g.team_abbr))), [data]);
+  // League-wide scales from the API (every player on a team), so filtering doesn't change the colors.
+  const skaterCols = useMemo(() => skaterColumns(data?.scales.skaters ?? {}), [data]);
+  const goalieCols = useMemo(() => goalieColumns(data?.scales.goalies ?? {}), [data]);
 
   return (
     <div className="space-y-5">

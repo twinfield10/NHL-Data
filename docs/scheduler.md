@@ -26,7 +26,7 @@ local, and this machine runs on **America/New_York**, so every time below is ET.
 
 | Time (ET) | What runs | Why then |
 |---|---|---|
-| **04:19** | `nightly.sh`: `nhl update` (catalog → ingest last night's games → events, xG, freeze → game state → **rating snapshot dated today**), then a transactions + injuries poll, then **`nhl site-tables`** (the site's ratings boards from the new snapshot, so off days stay current), then **`nhl grade-bets`** (CLV against our captured closes, results, units) | The last West Coast games end ~01:30 and the NHL posts shift data soon after; done before the 05:35 cluster. The snapshot dated today uses only games before today, so it's point-in-time for tonight. |
+| **04:19** | `nightly.sh`: `nhl update` (catalog → ingest last night's games → events, xG, freeze → game state → **rating snapshot dated today**), then a transactions + injuries poll, then **`nhl site-tables`** (the site's ratings boards from the new snapshot, so off days stay current, plus team matchup views and the archetype history), then **`nhl grade-bets`** (CLV against our captured closes, results, units), then **`nhl site-views --force`** for yesterday and today (final scores, graded bets) | The last West Coast games end ~01:30 and the NHL posts shift data soon after; done before the 05:35 cluster. The snapshot dated today uses only games before today, so it's point-in-time for tonight. |
 | 00:00-24:00 | Odds and FanDuel props every 15 min (:03 :18 :33 :48) while a game is within 24 h; DraftKings props come with the ESPN odds | Captures **opening lines** whenever books post them (often the evening before) and the drift through the day. |
 | **08:07** | First lineup poll (DailyFaceoff goalies, ESPN injuries, transactions, referee crews), then every 15 min (:07 :22 :37 :52) until 23:52 | News starts with morning reports. On an off day (no game within 16 h) it skips. |
 | **08:11** | DailyFaceoff line combinations, hourly at :11 until 23:11 | Lines change after practices and morning skates; 32 pages take ~65 s, so hourly is polite. |
@@ -44,6 +44,14 @@ stakes (¼ Kelly, 2 u per bet, 3 u per game, 10 u per day; bankroll 100 u) and w
 `pregame/edges/{date}/{stamp}`. A newly flagged bet (moneyline, puck line or total) goes into the paper ledger `bets/ledger.parquet` at the price available then.
 Real bets go in with `nhl record-bet`. See `src/nhl/betting/edges.py`.
 
+**Site views** (every poll that passes its window, plus `nhl pregame`, `edges`, `props-edges` and
+`record-bet`): the site's heavier API responses are prebuilt as JSON under `site/views/` and
+served as stored bytes. Each step rebuilds what it changed (`markets` after odds or a reprice,
+`props` after prop quotes, `lineups` after a reprice) plus any view that is missing or went
+stale at a puck drop; a started game's tabs are frozen once rebuilt at its close. The API
+builds live only when a view is missing or invalid. A full day is ~5-10 s; a poll with nothing to
+do costs one index read. See `src/nhl/site/views.py` and `src/nhl/site/publish.py`.
+
 **Prop edges** run alongside: after a reprice, an odds poll that stores a change (ESPN's
 DraftKings props come with it), or a props poll that stores one, `nhl props-edges` prices
 goals / assists / points props, writes `pregame/props_edges/{date}/{stamp}` and puts new flags
@@ -59,7 +67,7 @@ first and then prices with everything captured so far.
 
 | Job | Cron | Script / command | Window | Lock | Log | Typical run |
 |---|---|---|---|---|---|---|
-| Nightly rebuild | `19 4 * * *` | `nightly.sh` → `nhl update`, `nhl poll --what transactions,injuries`, `nhl site-tables`, `nhl grade-bets` | always | `nightly` | `logs/nightly.log` | 40 s - minutes ¹ |
+| Nightly rebuild | `19 4 * * *` | `nightly.sh` → `nhl update`, `nhl poll --what transactions,injuries`, `nhl site-tables`, `nhl grade-bets`, `nhl site-views --force` (yesterday, today) | always | `nightly` | `logs/nightly.log` | 40 s - minutes ¹ |
 | Morning slate | `14 9 * * *` | `pregame.sh` → `nhl pregame` (+ site tables), `nhl edges` | always (no-op without games) | `pregame` + run lock | `logs/pregame.log` | ~20-35 s |
 | Lineups, game day | `7,22,37,52 8-23 * * *` | `poll.sh goalies,injuries,transactions,officials --window 960 --reprice` | game within 16 h | per source list | `logs/poll_lineups.log` | ~30-60 s (+15 s if repriced) |
 | Lineups, pregame | `2,12,17,27,32,42,47,57 * * * *` | same, `--window 90` | game within 90 min | same lock as above | `logs/poll_lineups.log` | same |

@@ -14,10 +14,10 @@ from nhl.api.deps import get_data
 from nhl.api.lineorder import natural_role, order_lineup, order_unit, unit_roles
 from nhl.api.routers.style import archetype_lookup
 from nhl.api.routers.slate import with_venue
-from nhl.api.serialize import rows, with_selection
+from nhl.api.serialize import json_view, rows, with_selection
 from nhl.api.teaminfo import team_context
 from nhl.betting import blend
-from nhl.storage import keys
+from nhl.site import views
 
 logger = logging.getLogger(__name__)
 
@@ -80,19 +80,19 @@ def market_view(data: SiteData, game: dict) -> dict:
     }
 
 
-@router.get("/{game_id}")
-def get_game(game_id: int, data: SiteData = Depends(get_data)) -> dict:
-    """Slate row, lineups, goalie probabilities, edges and the day's price history for one game."""
+def _game_or_404(data: SiteData, game_id: int) -> dict:
     game = data.game(game_id)
     if game is None:
         raise HTTPException(status_code=404, detail=f"unknown game {game_id}")
-    day = game["game_date"]
-    names = data.player_names()
+    return game
 
+
+def build_game(data: SiteData, game: dict) -> dict:
+    """The game page's header and market tab: catalog row with venue, both teams' context, the
+    game's pregame slate row, its edges and the market view (see :func:`market_view`)."""
+    game_id, day = game["game_id"], game["game_date"]
     slate = data.day_slate(day)
     row = slate.filter(pl.col("game_id") == game_id) if slate is not None else None
-    stamp = row["stamp"][0] if row is not None and row.height else None  # the game's last pregame run
-    lineups, goalies = data.lineups(day, game_id, stamp), data.goalies(day, game_id, stamp)
     edges = data.card_edges(day)
     if edges is not None:
         edges = edges.filter(pl.col("game_id") == game_id)
@@ -104,36 +104,26 @@ def get_game(game_id: int, data: SiteData = Depends(get_data)) -> dict:
         "game": {**game, "venue_name": venue["venue_name"], "venue_location": venue["venue_location"]},
         "teams": teams,
         "pregame": (rows(row) or [None])[0],
-        "lineups": {"home": _lineup(lineups, game["home_team_id"], names, data.player_hands()),
-                    "away": _lineup(lineups, game["away_team_id"], names, data.player_hands())},
-        "goalies": {"home": _goalies(goalies, game["home_team_id"], names),
-                    "away": _goalies(goalies, game["away_team_id"], names)},
         "edges": rows(edges),
-        "history": rows(data.price_history(day, game_id)),
         "markets": market_view(data, game),
     }
 
 
-def _season_tables(data: SiteData, season: int, current: bool) -> dict:
-    """On-ice summaries, observed units, goalie starts and team game logs for one season."""
-    return {
-        "onice": data.processed(keys.onice_context_summary(season), current),
-        "units": data.units(season, current),
-        "starts": data.processed(keys.goalie_starts(season), current),
-        "logs": data.processed(keys.team_game_logs(season), current),
-    }
+@router.get("/{game_id}")
+def get_game(game_id: int, data: SiteData = Depends(get_data)) -> dict:
+    """Slate row, team context, edges and the market view for one game."""
+    if (raw := data.view(views.game_key(game_id, "game"))) is not None:
+        return json_view(raw)
+    return build_game(data, _game_or_404(data, game_id))
 
 
-@router.get("/{game_id}/lineups")
-def get_game_lineups(game_id: int, data: SiteData = Depends(get_data)) -> dict:
+def build_lineups(data: SiteData, game: dict) -> dict:
     """Projected lineups and starters with the stats behind them: skater ratings and on-ice 5v5
     results, each projected unit's record together, goalie workload and save talent (this season
     and last), and the DailyFaceoff reports and source tweets they come from."""
-    game = data.game(game_id)
-    if game is None:
-        raise HTTPException(status_code=404, detail=f"unknown game {game_id}")
-    day, season = game["game_date"], int(game["season"])
+    game_id, day, season = game["game_id"], game["game_date"], int(game["season"])
     names = data.player_names()
+    hands = data.player_hands()
     slate = data.day_slate(day)
     row = slate.filter(pl.col("game_id") == game_id) if slate is not None else None
     stamp = row["stamp"][0] if row is not None and row.height else None
@@ -148,40 +138,35 @@ def get_game_lineups(game_id: int, data: SiteData = Depends(get_data)) -> dict:
         p["player_id"]: p for p in r["players"].select("player_id", "ev_off", "ev_def", "ev_net", "ev_toi_s", "pp_off", "pk_def", "finishing").to_dicts()}
     goalie_ratings = {} if r is None else {
         g["player_id"]: g for g in r["goalies"].select("player_id", "save", "save_sd", "save_prior").to_dicts()}
-    seasons = {"cur": _season_tables(data, season, True), "prev": _season_tables(data, season - 10001, False)}
-    for t in seasons.values():
-        t["special"] = lineupstats.special_teams(t["units"])
-        t["team_special"] = lineupstats.team_special_teams(t["logs"])
+    seasons = {"cur": data.lineup_season(season, True), "prev": data.lineup_season(season - 10001, False)}
     styles = archetype_lookup(data, season)
     start = mk.start_utc(game)
     dfo_lines, dfo_goalies, tweets = data.dfo_lines(season), data.dfo_goalies(season), data.tweets()
+    no_special = {"pp": None, "pk": None}
 
     out = {}
     for side in ("home", "away"):
         team_id, abbr = game[f"{side}_team_id"], game[f"{side}_abbr"]
-        players = _lineup(lineups, team_id, names, data.player_hands())
-        pids = [p["player_id"] for p in players if p["player_id"] is not None]
-        onice = {k: lineupstats.onice(t["onice"], pids) for k, t in seasons.items()}
-        special = {k: lineupstats.special_by_player(t["special"], pids) for k, t in seasons.items()}
+        players = _lineup(lineups, team_id, names, hands)
         for p in players:
-            p["rating"] = skaters.get(p["player_id"])
-            p["onice"] = {k: onice[k].get(p["player_id"]) for k in seasons}
-            p["special"] = {k: special[k].get(p["player_id"]) for k in seasons}
-            p["archetype"] = (styles.get(p["player_id"]) or {}).get("archetype")
-        by_id = {p["player_id"]: p for p in players}
-        hands = data.player_hands()
-        for p in players:
+            pid = p["player_id"]
+            p["rating"] = skaters.get(pid)
+            p["onice"] = {k: t["onice"].get(pid) for k, t in seasons.items()}
+            p["special"] = {k: t["special"].get(pid, no_special) for k, t in seasons.items()}
+            p["archetype"] = (styles.get(pid) or {}).get("archetype")
             p["role"] = natural_role(p, hands)
+        by_id = {p["player_id"]: p for p in players}
         units = []
         for u in lineupstats.unit_groups(players):
             members = [by_id[i] for i in u["player_ids"]]
+            key = (u["kind"], lineupstats.unit_key(u["player_ids"]))
             units.append({**u, "player_ids": [p["player_id"] for p in order_unit(members, hands)],
                           "roles": unit_roles(members, hands, five_on_five=u["kind"] in ("F", "D")),
-                          "record": {k: lineupstats.unit_record(t["units"], u["kind"], u["player_ids"]) for k, t in seasons.items()}})
+                          "record": {k: t["units"].get(key) for k, t in seasons.items()}})
         gs = _goalies(goalies, team_id, names)
         for g in gs:
             g["rating"] = goalie_ratings.get(g["player_id"])
-            g["season"] = {k: lineupstats.goalie_season(t["starts"], g["player_id"]) for k, t in seasons.items()}
+            g["season"] = {k: t["goalies"].get(g["player_id"]) for k, t in seasons.items()}
         out[side] = {
             "players": players, "units": units, "goalies": gs,
             "special_teams": {k: t["team_special"].get(team_id) for k, t in seasons.items()},
@@ -190,6 +175,14 @@ def get_game_lineups(game_id: int, data: SiteData = Depends(get_data)) -> dict:
         }
     scales = {
         "rating": lineupstats.rating_scales(None if r is None else r["players"], None if r is None else r["goalies"]),
-        **{k: lineupstats.season_scales(t["onice"], t["special"], t["starts"]) for k, t in seasons.items()},
+        **{k: t["scales"] for k, t in seasons.items()},
     }
     return {"season": season, "scales": scales, **out}
+
+
+@router.get("/{game_id}/lineups")
+def get_game_lineups(game_id: int, data: SiteData = Depends(get_data)) -> dict:
+    """The lineups tab (see :func:`build_lineups`)."""
+    if (raw := data.view(views.game_key(game_id, "lineups"))) is not None:
+        return json_view(raw)
+    return build_lineups(data, _game_or_404(data, game_id))

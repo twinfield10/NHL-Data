@@ -6,6 +6,7 @@ from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 import polars as pl
+from fastapi import Response
 
 EASTERN = ZoneInfo("America/New_York")
 
@@ -41,3 +42,8 @@ def with_selection(df: pl.DataFrame, home: str = "home_abbr", away: str = "away_
     labels = [selection(m, s, ln, h, a) for m, s, ln, h, a in
               zip(df["market"], df["side"], df["line"], df[home], df[away])]
     return df.with_columns(pl.Series("selection", labels, dtype=pl.String))
+
+
+def json_view(raw: bytes) -> Response:
+    """A prebuilt view (:mod:`nhl.site.views`) sent as stored, with no re-encoding."""
+    return Response(content=raw, media_type="application/json")

@@ -18,6 +18,8 @@ from nhl import config
 from nhl.api.data import SiteData
 from nhl.api.deps import game_day, get_data
 from nhl.archetypes.model import AXES, AXIS_LABELS, FIT_MIN_MINUTES
+from nhl.api.serialize import rows
+from nhl.site import tables as site_tables
 from nhl.storage import keys
 
 router = APIRouter(prefix="/api/ratings", tags=["style"])
@@ -52,6 +54,25 @@ def archetype_lookup(data: SiteData, season: int) -> dict[int, dict]:
     return {}
 
 
+def archetype_history(data: SiteData, current: int) -> pl.DataFrame:
+    """Every skater's single-season archetype since :data:`FIRST_SEASON`: ``player_id, season,
+    archetype, confidence, toi_5v5_min`` (prebuilt nightly as :data:`nhl.site.tables.ARCHETYPE_HISTORY`)."""
+    frames = []
+    for season in range(FIRST_SEASON, current + 1, 10001):
+        a = data.processed(keys.archetypes(season), season == current)
+        if a is None:
+            continue
+        a = a.filter(pl.col("window") == "season")
+        frames.append(a.select(
+            "player_id", pl.lit(season, dtype=pl.Int64).alias("season"),
+            *[(pl.col(c) if c in a.columns else pl.lit(None)).alias(c) for c in ("archetype", "confidence")],
+            "toi_5v5_min").unique("player_id", keep="first", maintain_order=True))
+    if not frames:
+        return pl.DataFrame(schema={"player_id": pl.Int64, "season": pl.Int64, "archetype": pl.String,
+                                    "confidence": pl.Float64, "toi_5v5_min": pl.Float64})
+    return pl.concat(frames, how="diagonal_relaxed")
+
+
 def _view(row: dict, names: dict[int, str], label: str) -> dict:
     g = row["group"]
     probs = sorted(
@@ -83,15 +104,10 @@ def player_style(player_id: int, day: date = Depends(game_day), data: SiteData =
         hit = a.filter((pl.col("player_id") == player_id) & (pl.col("window") == window))
         if hit.height:
             views.append(_view(hit.row(0, named=True), names, label))
-    history = []
-    for season in range(FIRST_SEASON, current + 1, 10001):
-        a = data.processed(keys.archetypes(season), season == current)
-        if a is None:
-            continue
-        hit = a.filter((pl.col("player_id") == player_id) & (pl.col("window") == "season"))
-        if hit.height:
-            r = hit.row(0, named=True)
-            history.append({"season": season, "archetype": r.get("archetype"), "confidence": r.get("confidence"),
-                            "toi_5v5_min": r["toi_5v5_min"]})
+    hist = data.processed(site_tables.ARCHETYPE_HISTORY, True)
+    if hist is None:  # before the first nightly build: read every season's table
+        hist = archetype_history(data, current)
+    history = rows(hist.filter((pl.col("player_id") == player_id) & (pl.col("season") <= current)).sort("season"),
+                   drop=("player_id",))
     return {"player_id": player_id, "player_name": names.get(player_id), "season": current,
             "views": views, "history": history}

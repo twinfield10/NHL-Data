@@ -8,8 +8,8 @@ import SortTable, { type Column } from "@/components/SortTable";
 import { Card, Empty, ErrorState, Loading, Pills, Signed } from "@/components/ui";
 import { useLineRatings } from "@/lib/api";
 import { dateTimeET, longDate, minutes, pct, seasonLabel, signed } from "@/lib/format";
-import { heat, heatScale } from "@/lib/heat";
-import type { LineRating } from "@/lib/types";
+import { heat } from "@/lib/heat";
+import type { LineRating, LinesResponse } from "@/lib/types";
 
 type Kind = LineRating["kind"];
 
@@ -77,12 +77,11 @@ function shortNames(l: LineRating): string {
 
 type Scales = { xgd: number; xgf: number; xga: number };
 
-/** Scales from every unit of one kind league-wide, so filtering doesn't change the colors. */
-const scalesFor = (lines: LineRating[]): Scales => ({
-  xgd: heatScale(lines.map((l) => l.xgd60)),
-  xgf: heatScale(lines.map((l) => l.xgf60)),
-  xga: heatScale(lines.map((l) => l.xga60)),
-});
+/** Scales from every unit of one kind league-wide (from the API), so filtering doesn't change the colors. */
+const scalesFor = (data: LinesResponse | undefined, kind: Kind): Scales => {
+  const s = data?.scales[kind];
+  return { xgd: s?.xgd ?? 1, xgf: s?.xgf ?? 1, xga: s?.xga ?? 1 };
+};
 
 function columns(s: Scales, kind: Kind): Column<LineRating>[] {
   const { unit, state } = KIND[kind];
@@ -232,7 +231,7 @@ export default function LinesPage() {
   const [open, setOpen] = useState<string | null>(null);
 
   const all = useMemo(() => data?.lines ?? [], [data]);
-  const cols = useMemo(() => columns(scalesFor(all.filter((l) => l.kind === kind)), kind), [all, kind]);
+  const cols = useMemo(() => columns(scalesFor(data, kind), kind), [data, kind]);
   const teams = useMemo(() => [...new Set(all.map((l) => l.team_abbr))].sort(), [all]);
   const q = query.trim().toLowerCase();
   const shown = all.filter(

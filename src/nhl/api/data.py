@@ -11,6 +11,9 @@ exception is rankings, which compose team ratings from a fresh lineup projection
 Expensive entries (rankings, units, processed season tables) are served stale while a
 background thread refreshes them, and :meth:`SiteData.warm` fills them at startup, so no
 request waits on a recompute.
+
+The heavier endpoints first ask :meth:`SiteData.view` for the pipeline's prebuilt response
+(:mod:`nhl.site.views`) and only compute live when there is none.
 """
 
 from __future__ import annotations
@@ -20,14 +23,16 @@ import logging
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date
+from datetime import date, datetime, timezone
 
 import polars as pl
 
+from nhl.api import lineupstats
 from nhl.betting import edges as edges_mod
 from nhl.odds.store import load_live_odds
 from nhl.sim.inputs import snapshot_dates
 from nhl.site import tables as site_tables
+from nhl.site import views
 from nhl.storage import keys
 from nhl.storage.s3 import Store
 
@@ -39,6 +44,7 @@ GAMES_TTL_SECONDS = 300.0
 CLOSING_TTL_SECONDS = 120.0
 RANKINGS_TTL_SECONDS = 900.0
 DAY_SECONDS = 86_400.0
+VIEW_TTL_SECONDS = 15.0
 READ_WORKERS = 16
 
 
@@ -115,10 +121,26 @@ class SiteData:
             r = self.rankings(day)
             if r is not None:
                 for season in (r["season"], r["season"] - 10001):
-                    self.units(season, season == r["season"])
+                    self.lineup_season(season, season == r["season"])
             logger.info("caches warmed in %.1fs", time.monotonic() - start)
         except Exception:
             logger.exception("cache warm-up failed")
+
+    # ------------------------------------------------------------------ gold views
+    def view(self, key: str, day: date | None = None) -> bytes | None:
+        """A prebuilt response (:mod:`nhl.site.views`) if the pipeline wrote one that is still
+        valid (for ``day``), else None. Re-checked every :data:`VIEW_TTL_SECONDS`."""
+        def load() -> tuple[bytes, dict] | None:
+            try:
+                raw = self.store.get_bytes(key)
+            except Exception:  # a view is an optimisation; the live path still answers
+                logger.exception("reading view %s failed", key)
+                return None
+            return None if raw is None else (raw, views.meta(raw))
+        hit = self._timed_get(f"view/{key}", VIEW_TTL_SECONDS, load)
+        if hit is None or not views.is_valid(hit[1], datetime.now(timezone.utc), day):
+            return None
+        return hit[0]
 
     # ------------------------------------------------------------------ lookups
     def player_names(self) -> dict[int, str]:
@@ -221,7 +243,8 @@ class SiteData:
     # ------------------------------------------------------------------ odds and lineup sources
     def live_odds(self, season: int) -> pl.DataFrame:
         """Every live-polled odds transition for ``season`` (re-read every :data:`LIST_TTL_SECONDS`)."""
-        return self._timed_get(f"odds/{season}", LIST_TTL_SECONDS, lambda: load_live_odds(self.store, season))
+        return self._timed_get(f"odds/{season}", LIST_TTL_SECONDS, lambda: load_live_odds(self.store, season),
+                               stale_ok=True)
 
     def dfo_lines(self, season: int) -> pl.DataFrame | None:
         """DailyFaceoff line-combination versions for ``season``."""
@@ -355,6 +378,16 @@ class SiteData:
         finished seasons once a day."""
         return self._timed_get(f"processed/{key}", RANKINGS_TTL_SECONDS if current else DAY_SECONDS,
                                lambda: self.store.get_parquet(key), stale_ok=True)
+
+    def lineup_season(self, season: int, current: bool) -> dict:
+        """One season's stats behind the lineups tab, keyed for lookups
+        (:func:`nhl.api.lineupstats.season_block`); cached like :meth:`processed`."""
+        def load() -> dict:
+            return lineupstats.season_block(
+                self.processed(keys.onice_context_summary(season), current), self.units(season, current),
+                self.processed(keys.goalie_starts(season), current), self.processed(keys.team_game_logs(season), current))
+        return self._timed_get(f"lineup-season/{season}", RANKINGS_TTL_SECONDS if current else DAY_SECONDS, load,
+                               stale_ok=True)
 
     def ledger(self) -> pl.DataFrame | None:
         """The paper/real bet ledger (re-read every :data:`MUTABLE_TTL_SECONDS`)."""

@@ -170,17 +170,6 @@ export interface GoalieProb {
   source: string;
 }
 
-export interface PricePoint {
-  stamp: string;
-  as_of: string;
-  p_home_win: number;
-  mkt_p_home_win: number | null;
-  mean_home_goals: number;
-  mean_away_goals: number;
-  home_starter: string | null;
-  away_starter: string | null;
-}
-
 export interface CatalogGame {
   game_id: number;
   game_date: string;
@@ -201,10 +190,7 @@ export interface GameResponse {
   game: CatalogGame;
   teams: Record<string, TeamInfo>;
   pregame: SlateGame | null;
-  lineups: { home: LineupPlayer[]; away: LineupPlayer[] };
-  goalies: { home: GoalieProb[]; away: GoalieProb[] };
   edges: Edge[];
-  history: PricePoint[];
   markets: MarketView;
 }
 
@@ -303,9 +289,14 @@ export interface RatingsMeta {
   season: number;
 }
 
+/** Heat-color scale per column (the 95th percentile of |value − center| league-wide), from the API. */
+export type HeatScales = Record<string, number>;
+
 export interface PlayersResponse extends RatingsMeta {
   skaters: Skater[];
   goalies: Goalie[];
+  /** Skaters: xgd, xgf, xga, pp, pk, fin; goalies: save, gsax (every rated player on a team). */
+  scales: { skaters: HeatScales; goalies: HeatScales };
 }
 
 export interface TeamLineupPlayer {
@@ -343,6 +334,8 @@ export interface TeamsResponse extends RatingsMeta {
   /** League-average xG/60 the team rates are measured against. */
   league: { xg60_5v5: number; xg60_pp: number };
   teams: TeamRating[];
+  /** gd, xgd, xgf, xga, fin, save, pp, pk across all teams (xGF/xGA, PP/PK centred on the league). */
+  scales: HeatScales;
 }
 
 export interface LinePlayer {
@@ -391,6 +384,8 @@ export interface LinesResponse extends RatingsMeta {
   line_season: number;
   seasons: number[];
   lines: LineRating[];
+  /** Per unit kind (F, D, PP, PK): xgd, xgf, xga from every unit of that kind. */
+  scales: Record<string, HeatScales>;
 }
 
 /** One decomposition part per 60: xGF (``f``), xGA (``a``, lower is better) and xGD (``d``). */

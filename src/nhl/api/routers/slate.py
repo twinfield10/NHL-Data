@@ -13,9 +13,10 @@ from fastapi import APIRouter, Depends
 from nhl.api import markets as mk
 from nhl.api.data import SiteData
 from nhl.api.deps import game_day, get_data
-from nhl.api.serialize import rows, with_selection
+from nhl.api.serialize import json_view, rows, with_selection
 from nhl.api.teaminfo import team_context
 from nhl.betting import blend
+from nhl.site import views
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +125,13 @@ def _three_way(data: SiteData, games: pl.DataFrame, day: date) -> list[dict]:
 @router.get("/slate")
 def get_slate(day: date = Depends(game_day), data: SiteData = Depends(get_data)) -> dict:
     """Each game's final pregame view for ``date``: prices, starters, flags, edges, bets, freshness."""
+    if (raw := data.view(views.slate_key(day))) is not None:
+        return json_view(raw)
+    return build_slate(data, day)
+
+
+def build_slate(data: SiteData, day: date) -> dict:
+    """The ``/api/slate`` payload for ``day`` (also prebuilt by :mod:`nhl.site.publish`)."""
     games = data.games()
     slate = data.day_slate(day)
     priced = [] if slate is None else slate["game_id"].to_list()
