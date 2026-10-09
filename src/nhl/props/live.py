@@ -120,9 +120,10 @@ def project_day(store: Store, day: date, write: bool = True) -> pl.DataFrame:
     if (cached := store.get_parquet(key)) is not None:
         return cached
     season = int(store.read_parquet_required(keys.GAMES).filter(pl.col("game_id") == prices["game_id"][0])["season"][0])
-    pit, mix = rates.rates_for_day(store, season, day, dep)
+    pit, mix, team_f = rates.rates_for_day(store, season, day, dep)
     dists = project.team_goal_dists(prices.select("game_id", "home_team_id", "away_team_id", "score_matrix"))
-    proj = project.calibrate(project.project_players(project.shares(dep, pit, mix), dists, thresholds=THRESHOLDS),
+    proj = project.calibrate(project.project_players(project.shares(dep, pit, mix, team_f=team_f, dep_power=project.DEP_POWER),
+                                                     dists, thresholds=THRESHOLDS),
                              THRESHOLDS)
     info = dep.select("game_id", "player_id", "slot", "pp_unit", "pk_unit", "source", "confidence", "pregame_stamp")
     proj = proj.filter(pl.col("player_id").is_not_null()).join(info, on=["game_id", "player_id"], how="left").with_columns(
