@@ -7,14 +7,14 @@ import { Signed } from "./ui";
 
 const MARKET = { moneyline: "ML", puckline: "PL", total: "Total" } as const;
 
-/** The paper bet on this side: price taken (when it differs from now), time placed, CLV now. */
-function Placed({ e }: { e: Edge }) {
-  if (e.bet_price == null) return null;
+/** A paper bet already placed: price taken, book and time (ET). */
+export function PlacedBet({ price, book, stake, at }: { price: number | null | undefined; book: string | null | undefined;
+  stake: number | null | undefined; at: string | null | undefined }) {
+  if (price == null) return null;
   return (
-    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs"
-      title={`placed ${american(e.bet_price)} at ${e.bet_book}, ${e.bet_stake?.toFixed(2)}u; CLV now ${signedPct(e.bet_clv, 2)}`}>
-      <span className="font-medium">{american(e.bet_price)}</span>
-      <span className="text-muted-foreground">{e.bet_book} · {timeET(e.placed_at)}</span>
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs" title={`placed ${american(price)} at ${book}, ${stake?.toFixed(2)}u`}>
+      <span className="font-medium">{american(price)}</span>
+      <span className="text-muted-foreground">{book} · {timeET(at)}</span>
     </span>
   );
 }
@@ -74,7 +74,7 @@ export default function EdgeTable({ edges, showGame = true }: { edges: Edge[]; s
                 <Signed value={e.edge}>{signedPct(e.edge)}</Signed>
               </td>
               <td className="px-3 py-2 text-right">{e.stake_units > 0 ? `${e.stake_units.toFixed(2)}u` : ""}</td>
-              {withBets && <td className="px-3 py-2"><Placed e={e} /></td>}
+              {withBets && <td className="px-3 py-2"><PlacedBet price={e.bet_price} book={e.bet_book} stake={e.bet_stake} at={e.placed_at} /></td>}
             </tr>
           ))}
         </tbody>

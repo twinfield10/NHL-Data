@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import SortTable, { type Column } from "@/components/SortTable";
+import { PlacedBet } from "@/components/EdgeTable";
 import { TeamTag } from "@/components/TeamLogo";
-import { american, dateTimeET, pct, signedPct, timeET } from "@/lib/format";
+import { Signed } from "@/components/ui";
+import { american, pct, signedPct, timeET } from "@/lib/format";
 import { isPlay, playStake, propBet, SLOT_LABEL } from "@/lib/props";
 import type { PropEdge } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -80,26 +82,16 @@ export default function PropTable({ rows, showGame = true }: { rows: PropEdge[];
     { key: "books", label: "Books", align: "right", sort: (e) => e.books, render: (e) => e.books },
     {
       key: "edge", label: "Edge", title: "Blend × decimal price − 1 at the best book", align: "right", sort: (e) => e.edge,
-      render: (e) => (
-        <span className={cn("font-semibold", e.flagged ? "text-positive" : e.edge > 0 ? "text-foreground" : "text-muted-foreground")}>
-          {signedPct(e.edge)}
-        </span>
-      ),
+      render: (e) => <span className="font-medium"><Signed value={e.edge}>{signedPct(e.edge)}</Signed></span>,
     },
     {
-      key: "risk", label: "", sort: (e) => (isPlay(e) ? playStake(e) : null),
-      render: (e) =>
-        isPlay(e) ? (
-          <span className="inline-flex items-center gap-1.5"
-            title={e.bet_price != null
-              ? `placed ${american(e.bet_price)} at ${e.bet_book}, ${dateTimeET(e.placed_at)} ET; CLV now ${signedPct(e.bet_clv, 2)}${e.flagged ? " (still +EV)" : " (no longer a play)"}`
-              : "not placed yet"}>
-            <RiskBadge stake={playStake(e)} />
-            {e.bet_price != null && e.bet_price !== e.price && (
-              <span className="text-[11px] text-muted-foreground">@ {american(e.bet_price)}</span>
-            )}
-          </span>
-        ) : null,
+      key: "stake", label: "Stake", title: "Units at risk: as placed, else the current stake", align: "right",
+      sort: (e) => (isPlay(e) ? playStake(e) : null),
+      render: (e) => (isPlay(e) ? `${playStake(e).toFixed(2)}u` : ""),
+    },
+    {
+      key: "placed", label: "Placed", title: "Paper bet already placed: price, book, time (ET)", sort: (e) => e.placed_at ?? null,
+      render: (e) => <PlacedBet price={e.bet_price} book={e.bet_book} stake={e.bet_stake} at={e.placed_at} />,
     },
   ];
   return (
