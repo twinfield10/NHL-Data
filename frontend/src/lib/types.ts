@@ -590,10 +590,26 @@ export interface OnIce {
   xga60: number;
 }
 
+/** A skater's power-play (5v4) or penalty-kill (4v5) season: time, share of his team's time in
+ *  that state, and on-ice expected goals per 60. */
+export interface SpecialTeamsSeason {
+  toi_s: number;
+  share: number;
+  xgf60: number;
+  xga60: number;
+}
+
 export interface LineupPlayerStats extends LineupPlayer {
-  /** 5v5 ratings per 60 vs average (``ev_def`` is prevention: higher is better). */
-  rating: { ev_off: number; ev_def: number; ev_net: number; ev_toi_s: number } | null;
+  /** Ratings per 60 vs average (``ev_def`` / ``pk_def`` are prevention: higher is better). */
+  rating: { ev_off: number; ev_def: number; ev_net: number; ev_toi_s: number; pp_off: number; pk_def: number;
+    /** Goals per xG on his own shots vs average (shrunk). */
+    finishing: number | null } | null;
   onice: SeasonPair<OnIce>;
+  special: SeasonPair<{ pp: SpecialTeamsSeason | null; pk: SpecialTeamsSeason | null }>;
+  /** Forward archetype (defensemen have none). */
+  archetype: string | null;
+  /** His own position: LW / C / RW, or LD / RD by shooting hand. */
+  role: string;
 }
 
 export interface UnitRecord {
@@ -609,6 +625,8 @@ export interface LineupUnit {
   slot: string;
   kind: "F" | "D" | "PP" | "PK";
   player_ids: number[];
+  /** Position each player fills, parallel to ``player_ids`` (the slot on a 5v5 line or pair). */
+  roles: string[];
   record: SeasonPair<UnitRecord>;
 }
 
@@ -643,15 +661,48 @@ export interface LineupSource {
   details?: string | null;
 }
 
+/** A team's regular-season power-play conversion or penalty-kill success and league rank (1 = best). */
+export interface TeamSpecialRate {
+  pct: number | null;
+  rank: number | null;
+  goals: number;
+  opps: number;
+  teams: number;
+}
+
 export interface TeamLineup {
   players: LineupPlayerStats[];
+  special_teams: SeasonPair<{ pp: TeamSpecialRate; pk: TeamSpecialRate }>;
   units: LineupUnit[];
   goalies: GoalieStats[];
   sources: { lines: LineupSource | null; goalie: LineupSource | null };
 }
 
+/** A heat column's neutral point and saturation (``heat(v, scale, { center })``). */
+export interface HeatScale {
+  center: number;
+  scale: number;
+}
+
+/** League color scales for one season's results. */
+export interface SeasonScales {
+  xgf?: HeatScale;
+  xga?: HeatScale;
+  xgd?: HeatScale;
+  pp?: HeatScale;
+  pk?: HeatScale;
+  sv_pct?: HeatScale;
+  gsax?: HeatScale;
+}
+
 export interface GameLineupsResponse {
   season: number;
+  scales: {
+    /** Talent ratings, centered at 0 (same scales as the ratings pages). */
+    rating: Partial<Record<"ev_off" | "ev_def" | "ev_net" | "pp_off" | "pk_def" | "finishing" | "save", number>>;
+    cur: SeasonScales;
+    prev: SeasonScales;
+  };
   home: TeamLineup;
   away: TeamLineup;
 }
