@@ -303,16 +303,24 @@ def cmd_pregame_history(args: argparse.Namespace) -> None:
 
 
 def cmd_props_backtest(args: argparse.Namespace) -> None:
-    """M9 phase B: player goals / assists / points projections vs baselines on past seasons."""
+    """M9: player props projections vs baselines on past seasons: goals / assists / points
+    (``scoring``, phase B) and shots / blocks / saves (``volume``, phase C)."""
     from pathlib import Path
 
     from nhl.props import backtest
     from nhl.storage.s3 import Store
 
     seasons = [config.season_id(y) for y in config.parse_seasons(args.seasons)]
-    results = backtest.run(Store(), seasons)
-    backtest.write_report(results, Path(args.report))
-    print(f"report -> {args.report}")
+    if args.what in ("scoring", "all"):
+        results = backtest.run(Store(), seasons)
+        backtest.write_report(results, Path(args.report))
+        print(f"report -> {args.report}")
+    if args.what in ("volume", "all"):
+        from nhl.props import backtest_volume
+
+        results = backtest_volume.run(Store(), seasons)
+        backtest_volume.write_report(results, Path(args.volume_report))
+        print(f"report -> {args.volume_report}")
 
 
 def cmd_fit_blend(args: argparse.Namespace) -> None:
@@ -817,7 +825,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("props-backtest", help="M9: player goals/assists/points projections vs baselines")
     p.add_argument("--seasons", default="2016-2025")
+    p.add_argument("--what", choices=("scoring", "volume", "all"), default="all")
     p.add_argument("--report", default="docs/reports/props-backtest.md")
+    p.add_argument("--volume-report", default="docs/reports/props-volume-backtest.md")
     p.set_defaults(func=cmd_props_backtest)
 
     p = sub.add_parser("pregame-history", help="M6: honest pregame prices with score matrices for past seasons")
