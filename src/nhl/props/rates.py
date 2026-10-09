@@ -11,7 +11,9 @@ Per strength bucket (:data:`BUCKETS`: even strength, power play, shorthanded) an
 * ``fin`` = goals / individual xG over all strengths, shrunk with :attr:`Shrink.fin` xG of
   league-average finishing (finishing is noisy: it takes a large sample to move);
 * ``g60 = xg60 × fin``, the goal rate the projection uses;
-* ``a60`` = assists (primary + secondary) per 60, shrunk with :attr:`Shrink.ast` minutes.
+* ``a60`` = assists (primary + secondary) per 60, shrunk with :attr:`Shrink.ast` minutes;
+* ``sog60`` / ``blk60`` = individual shots on goal / blocked shots per 60 (phase C), shrunk with
+  :attr:`Shrink.sog` / :attr:`Shrink.blk` minutes.
 
 **Empty net** (``EN_opp``: the other team's goalie pulled; ``EN_own``: ours pulled, an extra
 attacker) is its own bucket. Its minutes go mostly to stars (the top decile of projected scorers
@@ -39,7 +41,7 @@ BUCKET_NAMES = ("ev", "pp", "sh", "en")
 RATE_BUCKETS = ("ev", "pp", "sh")
 #: Weight of (this season, last season, two back) in the rate sums.
 SEASON_WEIGHTS = (1.0, 0.6, 0.35)
-STATS = ("toi", "goals", "ast", "ixg")
+STATS = ("toi", "goals", "ast", "ixg", "sog", "blk")
 
 
 @dataclass(frozen=True)
@@ -54,6 +56,8 @@ class Shrink:
     ast: float = 250.0
     fin: float = 20.0
     en_games: float = 5.0
+    sog: float = 150.0
+    blk: float = 300.0
     team_goals: float = 150.0
 
 
@@ -78,6 +82,7 @@ def bucket_logs(store: Store, season: int) -> pl.DataFrame:
         pl.col("strength").replace_strict(BUCKETS).alias("b"),
         (pl.col("toi_s") / 60).alias("toi"), pl.col("goals").cast(pl.Float64),
         (pl.col("a1") + pl.col("a2")).cast(pl.Float64).alias("ast"), pl.col("ixg").cast(pl.Float64),
+        pl.col("isf").cast(pl.Float64).alias("sog"), pl.col("blocks").cast(pl.Float64).alias("blk"),
     ).group_by("game_id", "game_date", "player_id", "team_id", "grp", "b").agg(pl.col(list(STATS)).sum())
     wide = long.pivot(on="b", index=["game_id", "game_date", "player_id", "team_id", "grp"], values=list(STATS))
     cols = [f"{s}_{b}" for s in STATS for b in BUCKET_NAMES]
@@ -100,6 +105,8 @@ def league_rates(logs: pl.DataFrame) -> pl.DataFrame:
         "grp",
         *[(pl.col(f"ixg_{b}") / pl.col(f"toi_{b}") * 60).alias(f"lg_xg60_{b}") for b in RATE_BUCKETS],
         *[(pl.col(f"ast_{b}") / pl.col(f"toi_{b}") * 60).alias(f"lg_a60_{b}") for b in RATE_BUCKETS],
+        *[(pl.col(f"sog_{b}") / pl.col(f"toi_{b}") * 60).alias(f"lg_sog60_{b}") for b in BUCKET_NAMES],
+        *[(pl.col(f"blk_{b}") / pl.col(f"toi_{b}") * 60).alias(f"lg_blk60_{b}") for b in BUCKET_NAMES],
         (pl.sum_horizontal(*[f"goals_{b}" for b in RATE_BUCKETS])
          / pl.sum_horizontal(*[f"ixg_{b}" for b in RATE_BUCKETS])).alias("lg_fin"),
         (pl.col("toi_en") / pl.col("gp")).alias("lg_en_pg"),
@@ -170,18 +177,24 @@ def season_rates(store: Store, season: int, shrink: Shrink = Shrink(),
         toi = total[f"toi_{b}"]
         xg60 = (total[f"ixg_{b}"] + shrink.xg / 60 * pl.col(f"lg_xg60_{b}")) / (toi + shrink.xg) * 60
         exprs += [xg60.alias(f"xg60_{b}"),
+                  ((total[f"sog_{b}"] + shrink.sog / 60 * pl.col(f"lg_sog60_{b}")) / (toi + shrink.sog) * 60).alias(f"sog60_{b}"),
+                  ((total[f"blk_{b}"] + shrink.blk / 60 * pl.col(f"lg_blk60_{b}")) / (toi + shrink.blk) * 60).alias(f"blk60_{b}"),
                   ((total[f"ast_{b}"] + shrink.ast / 60 * pl.col(f"lg_a60_{b}")) / (toi + shrink.ast) * 60).alias(f"a60_{b}")]
     out = df.with_columns(exprs).with_columns(
         *[(pl.col(f"xg60_{b}") * pl.col("fin")).alias(f"g60_{b}") for b in RATE_BUCKETS],
         pl.col("a60_ev").alias("a60_en"),
+        # Empty net: a shot at an empty net is his even-strength shooting; blocks there are rare.
+        pl.col("sog60_ev").alias("sog60_en"), pl.col("blk60_ev").alias("blk60_en"),
     ).with_columns(
         pl.col("g60_ev").alias("g60_en"),
         pl.sum_horizontal(*[f"goals_{b}" for b in BUCKET_NAMES]).alias("goals"),
         pl.sum_horizontal(*[f"ast_{b}" for b in BUCKET_NAMES]).alias("ast"),
         pl.sum_horizontal(*[f"toi_{b}" for b in BUCKET_NAMES]).alias("toi"),
+        pl.sum_horizontal(*[f"sog_{b}" for b in BUCKET_NAMES]).alias("shots"),
+        pl.sum_horizontal(*[f"blk_{b}" for b in BUCKET_NAMES]).alias("blocks"),
     ).with_columns((pl.col("goals") + pl.col("ast")).alias("points"))
     keep = ["game_id", "game_date", "player_id", "team_id", "grp", "fin", "en_pg", "goals", "ast", "points", "toi",
-            *[f"{k}_{b}" for k in ("g60", "a60") for b in BUCKET_NAMES]]
+            "shots", "blocks", *[f"{k}_{b}" for k in ("g60", "a60", "sog60", "blk60") for b in BUCKET_NAMES]]
     return out.select(keep), mix
 
 
@@ -239,7 +252,7 @@ def rates_for_day(store: Store, season: int, day: date, players: pl.DataFrame, s
     team_f = team_mix(logs, season, mix, shrink).join(targets.select("game_id", "team_id").unique(),
                                                       on=["game_id", "team_id"], how="inner")
     return out.join(targets.select("game_id", "player_id"), on=["game_id", "player_id"], how="inner").drop(
-        "goals", "ast", "points", "toi"), mix, team_f
+        "goals", "ast", "points", "toi", "shots", "blocks"), mix, team_f
 
 
 __all__ = ["BUCKETS", "BUCKET_NAMES", "RATE_BUCKETS", "SEASON_WEIGHTS", "Shrink", "bucket_logs", "league_rates",

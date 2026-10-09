@@ -375,3 +375,8 @@ def props_edges(day: date, stamp: str) -> str:
 
 
 PROPS_LEDGER = "bets/props_ledger.parquet"
+
+
+def props_volume_backtest(season: int) -> str:
+    """Player shots / blocks and goalie saves projections and baselines (M9 phase C)."""
+    return f"predictions/props_volume_backtest/{season}.parquet"

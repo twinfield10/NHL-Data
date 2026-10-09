@@ -10,7 +10,11 @@ on goals ≥ 2 in 9 of 10 (see [Phase B results](#phase-b-results-2026-10-08),
 [report](../reports/props-backtest.md)). **Phase D built 2026-10-08:** live projections,
 edges and a props paper ledger (`src/nhl/props/live.py`, `ledger.py`; `nhl props-edges`; run on
 every odds / props poll that moves and every reprice; graded nightly by `nhl grade-bets`).
-See [Phase D](#phase-d-live-edges-and-the-paper-ledger-2026-10-08). **Phase E built 2026-10-08:**
+See [Phase D](#phase-d-live-edges-and-the-paper-ledger-2026-10-08). **Phase C built 2026-10-09:**
+shots on goal, blocks and saves (`src/nhl/props/volume.py`, `backtest_volume.py`;
+`nhl props-backtest --what volume`): gate passed on all 13 targets in every season
+([Phase C results](#phase-c-results-2026-10-09), [report](../reports/props-volume-backtest.md)).
+Not yet in the live edges or the site. **Phase E built 2026-10-08:**
 the site's Props tab, a Props sub-tab on every game page, and Model Results → Props
 (`src/nhl/api/routers/props.py`; `frontend/src/app/props`, `components/GameProps.tsx`).
 **Depends on:** M2 game logs (`processed/game_logs/player/{season}`), M3 ratings and
@@ -176,7 +180,7 @@ how to weight the blend.
 |---|---|---|
 | A | FanDuel + LowVig pollers in the odds schedule; nightly coverage report per book | ≥95% of scheduled games with props from each book; ≥98% player resolution |
 | B | Projection backtest for goals, assists, points (simulator attribution + TOI model) | Beats all three baselines in log loss at ≥1 thresholds, every season |
-| C | Team shot-volume layer; SOG, blocks, saves | Same gate; shots calibrated by decile |
+| C | Team shot-volume layer; SOG, blocks, saves | Same gate; shots calibrated by decile (**built 2026-10-09**; live edges and site to follow) |
 | D | Daily projections, edges, paper ledger, nightly grading | Runs in the pregame cron (**built 2026-10-08**) |
 | E | Props tab and game sub-tab | — |
 | F | After ~4-6 weeks: blend fit, thresholds, which markets/books to bet | CLV > 0 on flagged plays |
@@ -245,6 +249,57 @@ goals ≥ 1 0.3922, assists ≥ 1 0.5179, points ≥ 1 0.5959. The gate is uncha
 
 **Open items:**
 - Shots on goal, blocks and saves wait for the team shot-volume layer (phase C).
+
+## Phase C results (2026-10-09)
+
+**Method** (`src/nhl/props/volume.py`):
+- **Team model:** E[team SOG] (and E[team blocks]) is a Poisson regression on point-in-time
+  inputs:
+  - the team's own shots-for per game (blocks per game for blocks);
+  - the opponent's shots-against per game (shot attempts for blocks);
+  - home;
+  - logit P(win) from the pregame model.
+
+  Each is relative to the league level, which is itself point-in-time: this season so far,
+  shrunk to last season. Shot totals drift: 30.1 per team-game in 2023-24, 28.2 in 2024-25.
+  Anchoring on last season alone had every 2024-25 projection ~4% high.
+  - Fitted on 2016-19 (`COEF`). Shots: own 0.63, opponent 0.74, home +0.016, P(win) +0.064.
+    Blocks: own 0.83, opponent attempts 1.28.
+  - The count is negative binomial, size 92 for shots and 25 for blocks. Team shots vary 1.4x
+    the Poisson variance within a team-season, blocks 1.6x.
+- **Players:** shots and blocks are Binomial(team count, player share) mixed over the
+  negative binomial, the same structure as goals. The share is deployment × individual rate
+  per 60 by strength, mixed by the league share by strength. Tuned on 2016-19:
+  - shots: deployment exponent 1.15, rate shrinkage 150 min;
+  - blocks: exponent 1.0 (depth defencemen block as much as the top pair), shrinkage 300 min.
+- **Saves:** the starter faces the opponent's shots (negative binomial). Each is a goal with
+  q = the simulator's expected goals, less empty-net goals (5.6%), ÷ expected shots. He
+  finishes 94% of starts; a pulled starter plays about half.
+
+**Pooled log loss** (2016-26; 444,883 skater-games, 26,374 starts):
+
+| target | model | without the team model | season average | last 10 |
+|---|---|---|---|---|
+| shots ≥ 2 | **0.6207** | 0.6233 | 0.6270 | 0.6368 |
+| shots ≥ 3 | **0.4996** | 0.5022 | 0.5047 | 0.5148 |
+| shots ≥ 4 | **0.3238** | 0.3259 | 0.3269 | 0.3353 |
+| blocks ≥ 1 | **0.6185** | 0.6205 | 0.6273 | 0.6364 |
+| blocks ≥ 2 | **0.4306** | 0.4329 | 0.4368 | 0.4477 |
+| saves ≥ 23 | **0.5702** | 0.5873 | 0.6095 | 0.6140 |
+| saves ≥ 25 | **0.6358** | 0.6564 | 0.6718 | 0.6784 |
+| saves ≥ 27 | **0.6616** | 0.6834 | 0.6992 | 0.7076 |
+
+- **Gate:** the model beats every baseline in every season on all 13 targets.
+- **Shots and blocks** are calibrated by decile within ~0.05 at every level (top decile:
+  shots 3.09 vs 3.14, blocks 1.97 vs 1.93).
+- **Saves** run ~0.3 high on average and ~1.0 in the top decile (31.0 vs 30.0). The likely
+  cause: a goalie facing many shots is also more likely to be pulled, and the model treats
+  the pull as independent. That's the open item for saves.
+- **The team model matters most for saves:** 0.017-0.022 of log loss, against 0.002-0.003
+  for skaters.
+
+**Tested:** team-rate shrinkage of 5-80 games is flat (the regression coefficients absorb it);
+kept at 10.
 
 ## Phase D: live edges and the paper ledger (2026-10-08)
 
