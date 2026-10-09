@@ -8,7 +8,8 @@ import pytest
 
 from nhl.api import lineupstats
 from nhl.api import markets as mk
-from nhl.sim.markets import MAX_GOALS, three_way
+from nhl.betting import blend
+from nhl.sim.markets import MAX_GOALS, overtime_split, split_three_way, three_way
 
 UTC = timezone.utc
 
@@ -74,6 +75,54 @@ def test_three_way_card_edges_use_the_best_price():
     home = next(s for s in card["sides"] if s["side"] == "home")
     assert home["edge"] == pytest.approx(0.5 * 2 - 1)
     assert mk.three_way_card(None, None) is None
+
+
+def test_split_three_way_with_the_simulators_inputs_is_its_own_three_way():
+    m = _matrix({(0, 3, 1): 0.45, (0, 1, 2): 0.3, (1, 3, 2): 0.15, (2, 2, 3): 0.1})[None]
+    p_ot, p_home_ot = overtime_split(m)
+    assert p_ot[0] == pytest.approx(0.25) and p_home_ot[0] == pytest.approx(0.6)
+    p_win = 0.45 + 0.15
+    assert np.allclose(split_three_way(np.array([p_win]), p_ot, p_home_ot), three_way(m))
+
+
+def test_three_way_blend_follows_the_moneyline_blend_and_calibrated_overtime():
+    m = _matrix({(0, 3, 1): 0.45, (0, 1, 2): 0.3, (1, 3, 2): 0.15, (2, 2, 3): 0.1})
+    # Market-only moneyline blend; overtime calibrated to a flat 30%.
+    model = {"markets": {"moneyline": {"other": {"coef": [0.0, 1.0, 0.0]}}},
+             "overtime": {"coef": [float(np.log(0.3 / 0.7)), 0.0], "feature": "abs_logit_p_home_win"}}
+    tw = blend.three_way(model, "other", m, 0.5)
+    assert tw["blend"]["draw"] == pytest.approx(0.3) and tw["model"]["draw"] == pytest.approx(0.3)
+    assert tw["blend"]["home"] == pytest.approx(0.5 - 0.3 * 0.6)  # market moneyline less the OT games home wins
+    assert sum(tw["blend"].values()) == pytest.approx(1.0)
+    assert tw["model"]["home"] == pytest.approx(0.6 - 0.3 * 0.6)
+    # No stored blend: the simulator's own split, no blend.
+    raw = blend.three_way(None, "other", m, 0.5)
+    assert raw["blend"] is None and raw["model"]["draw"] == pytest.approx(0.25)
+
+
+def test_three_way_card_edges_use_the_blend_when_there_is_a_moneyline():
+    m = _matrix({(0, 3, 1): 0.5, (0, 1, 2): 0.3, (1, 3, 2): 0.2})
+    model = {"markets": {"moneyline": {"other": {"coef": [0.0, 1.0, 0.0]}}}}
+    cons = {"books": 1, "fair": {"home": 0.45, "draw": 0.22, "away": 0.33},
+            "best": {s: {"price": 100.0, "book": "A"} for s in ("home", "draw", "away")}}
+    card = mk.three_way_card(m, cons, {"fair": {"home": 0.6, "away": 0.4}}, model)
+    home = next(s for s in card["sides"] if s["side"] == "home")
+    assert home["p_blend"] == pytest.approx(0.6 - 0.2) and home["edge"] == pytest.approx(0.4 * 2 - 1)
+
+
+def test_fit_overtime_gives_close_games_more_overtimes():
+    rng = np.random.default_rng(0)
+    p_win = rng.uniform(0.25, 0.75, 20_000)
+    true = 1 / (1 + np.exp(-(-1.1 - 0.5 * np.abs(np.log(p_win / (1 - p_win))))))
+    prices = pl.DataFrame({"game_id": np.arange(p_win.size), "p_home_win": p_win})
+    games = pl.DataFrame({"game_id": np.arange(p_win.size), "season_type": "R",
+                          "last_period": np.where(rng.random(p_win.size) < true, 4, 3)})
+    fit = blend.fit_overtime(prices, games)
+    assert fit["n"] == p_win.size and fit["coef"][1] == pytest.approx(-0.5, abs=0.2)
+    close, lopsided = blend.overtime({"overtime": fit}, np.array([0.5, 0.8]), np.array([0.2, 0.2]))
+    assert close > 0.24 > lopsided
+    # A blend stored before the calibration keeps the simulator's rate.
+    assert blend.overtime({}, np.array([0.5]), np.array([0.21]))[0] == pytest.approx(0.21)
 
 
 def test_unit_groups_and_records():

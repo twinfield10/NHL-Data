@@ -88,3 +88,28 @@ def three_way(matrix: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     i, j = np.meshgrid(np.arange(k), np.arange(k), indexing="ij")
     home, away = (reg * (i > j)).sum(axis=(1, 2)), (reg * (i < j)).sum(axis=(1, 2))
     return home, 1.0 - home - away, away
+
+
+def overtime_split(matrix: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """``(p_overtime, p_home_given_ot)`` per game: how often the game passes regulation and how
+    often the home team wins once it does (0.5 where it never does)."""
+    k = MAX_GOALS + 1
+    ot = np.asarray(matrix, dtype=np.float64).reshape(-1, 3, k, k)[:, 1:].sum(axis=1)
+    i, j = np.meshgrid(np.arange(k), np.arange(k), indexing="ij")
+    p_ot = ot.sum(axis=(1, 2))
+    home = (ot * (i > j)).sum(axis=(1, 2))
+    return p_ot, np.where(p_ot > 0, home / np.maximum(p_ot, 1e-12), 0.5)
+
+
+def split_three_way(p_home_win: np.ndarray, p_ot: np.ndarray, p_home_ot: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """``(p_home_reg, p_draw, p_away_reg)`` from a full-game home win probability, the chance of
+    overtime and the home share of overtime wins: each side's regulation win is its full-game
+    win less the overtime games it wins. With the simulator's own three inputs this is exactly
+    :func:`three_way`; with a blended moneyline or a calibrated overtime rate it keeps the
+    three-way consistent with them. A side that would go negative is floored and the rest
+    renormalised."""
+    p_home_win, p_ot, p_home_ot = (np.asarray(x, dtype=np.float64) for x in (p_home_win, p_ot, p_home_ot))
+    home = np.maximum(p_home_win - p_ot * p_home_ot, 1e-4)
+    away = np.maximum(1 - p_home_win - p_ot * (1 - p_home_ot), 1e-4)
+    total = home + away + p_ot
+    return home / total, p_ot / total, away / total

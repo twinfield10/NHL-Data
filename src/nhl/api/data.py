@@ -211,6 +211,13 @@ class SiteData:
         frames = [f for f in frames if f.height]
         return pl.concat(frames, how="diagonal_relaxed") if frames else None
 
+    def blend_model(self) -> dict | None:
+        """The stored model/market blend and overtime calibration (None before the first fit)."""
+        def load() -> dict | None:
+            raw = self.store.get_bytes(keys.blend_model())
+            return json.loads(raw) if raw is not None else None
+        return self._timed_get("blend", DAY_SECONDS, load)
+
     # ------------------------------------------------------------------ odds and lineup sources
     def live_odds(self, season: int) -> pl.DataFrame:
         """Every live-polled odds transition for ``season`` (re-read every :data:`LIST_TTL_SECONDS`)."""
