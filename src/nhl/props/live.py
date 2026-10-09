@@ -61,7 +61,7 @@ THRESHOLDS = {"goals": (1, 2, 3), "ast": (1, 2, 3), "points": (1, 2, 3, 4), "sho
 #: :data:`MIN_P_START` one that can be flagged (the prop is void if he doesn't start).
 MIN_P_START_PROJECTED = 0.05
 #: Bumped whenever the projection's contents change, so cached projections are rebuilt.
-PROJECTION_VERSION = 2
+PROJECTION_VERSION = 3
 MIN_P_START = 0.9
 DEFAULT_MARGIN = 0.07
 OUTLIER = 0.10

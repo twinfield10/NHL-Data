@@ -22,9 +22,9 @@ structure as goals (:mod:`nhl.props.project`); blocks likewise with blocked-shot
 
 **Goalie saves.** The starter faces the opponent's shots on goal *T* (negative binomial as above);
 each is a goal against with q = the opponent's expected goals on him (the simulator's mean,
-less empty-net goals, :data:`EN_GOAL_SHARE`) ÷ E[T]. He finishes the game with
-:data:`P_FINISH`; a pulled starter plays about half (:data:`PULLED_SHARE`). Saves | T is then
-Binomial(T, (1 − q) · exposure).
+less empty-net goals, :data:`EN_GOAL_SHARE`) ÷ E[T]. Saves | T is Binomial(T, 1 − q), mixed over
+the games he finishes and the ones he's pulled from, the pull more likely the more goals he's
+expected to allow (:data:`SAVES`).
 """
 
 from __future__ import annotations
@@ -43,8 +43,14 @@ TEAM_PRIOR_GAMES = 10.0
 LEAGUE_PRIOR_GAMES = 200.0
 #: Share of goals scored into an empty net (not on the goalie): 4,418 of 78,918, 2016-2026.
 EN_GOAL_SHARE = 0.056
-P_FINISH = 0.94
-PULLED_SHARE = 0.5
+#: Saves (:func:`saves_props`, fitted on 2016-17 to 2018-19 with :func:`fit_saves`):
+#: * P(starter finishes) = logistic(c0 + c1 · expected goals on him): heavy nights get pulled
+#:   more (93% finish at 2.5 expected goals, 89% at 3.5), so a flat 94% over-counted saves
+#:   exactly where they're highest;
+#: * a pulled starter faces ``pulled_share`` of a full game's shots and allows goals at
+#:   ``m_pull`` x the per-shot rate (``m_fin`` x when he finishes);
+#: * ``k`` scales the opponent's expected shots to the shots the starter sees.
+SAVES: dict[str, float] = {"c0": 3.999, "c1": -0.540, "pulled_share": 0.555, "k": 0.996, "m_fin": 0.939, "m_pull": 2.334}
 MAX_COUNT = {"sog": 90, "blk": 60}
 #: Poisson-regression coefficients (intercept, own rate, opponent rate, home, logit P(win)) and
 #: negative-binomial size r, per target; fitted on 2016-17 to 2018-19 (:func:`fit`).
@@ -228,29 +234,54 @@ def player_props(shares: pl.DataFrame, team_mu: pl.DataFrame, stat: str, ks: tup
                            *[pl.Series(f"p_{stat}_{k}", v) for k, v in tails.items()])
 
 
-def saves_props(starters: pl.DataFrame, ks: tuple[int, ...], r: float | None = None) -> pl.DataFrame:
-    """P(saves >= k) per starting goalie.
+def saves_props(starters: pl.DataFrame, ks: tuple[int, ...], r: float | None = None,
+                params: dict[str, float] | None = None) -> pl.DataFrame:
+    """P(saves >= k) per starting goalie: a mixture of the games he finishes and the ones he's pulled from.
 
     Args:
         starters: ``mu_against`` (opponent's expected SOG) and ``goals_against`` (opponent's
             expected goals, shootout removed) per row.
         ks: Thresholds.
         r: Negative-binomial size of team SOG (default :data:`COEF`).
+        params: :data:`SAVES` (default).
     """
-    mu = starters["mu_against"].to_numpy()
-    q = np.clip(starters["goals_against"].to_numpy() * (1 - EN_GOAL_SHARE) / mu, 0.0, 0.5)
-    n = MAX_COUNT["sog"]
-    pmf = nb_pmf(mu, r or COEF["sog"]["r"], n)
+    c = params or SAVES
+    mu = starters["mu_against"].to_numpy() * c["k"]
+    ga = starters["goals_against"].to_numpy() * (1 - EN_GOAL_SHARE)
+    q = np.clip(ga / mu, 0.0, 0.5)
+    p_fin = 1 / (1 + np.exp(-(c["c0"] + c["c1"] * ga)))
+    n, size = MAX_COUNT["sog"], r or COEF["sog"]["r"]
     t = np.arange(n + 1)
-    tails = {}
-    for k in ks:
-        full = binom.sf(k - 1, t[None, :], (1 - q)[:, None])
-        pulled = binom.sf(k - 1, t[None, :], ((1 - q) * PULLED_SHARE)[:, None])
-        tails[k] = ((P_FINISH * full + (1 - P_FINISH) * pulled) * pmf).sum(axis=1)
-    exp = mu * (1 - q) * (P_FINISH + (1 - P_FINISH) * PULLED_SHARE)
-    return starters.with_columns(pl.Series("exp_saves", exp), *[pl.Series(f"p_saves_{k}", v) for k, v in tails.items()])
+    parts = []  # (weight, shot pmf, save probability per shot)
+    for w, scale, mult in ((p_fin, 1.0, c["m_fin"]), (1 - p_fin, c["pulled_share"], c["m_pull"])):
+        parts.append((w, nb_pmf(mu * scale, size, n), 1 - np.clip(q * mult, 0.0, 0.6)))
+    tails = {k: sum(w * (binom.sf(k - 1, t[None, :], sv[:, None]) * pmf).sum(axis=1) for w, pmf, sv in parts) for k in ks}
+    exp = sum(w * mu * scale * (1 - np.clip(q * mult, 0.0, 0.6))
+              for w, scale, mult in ((p_fin, 1.0, c["m_fin"]), (1 - p_fin, c["pulled_share"], c["m_pull"])))
+    return starters.with_columns(pl.Series("exp_saves", exp), pl.Series("p_finish", p_fin),
+                                 *[pl.Series(f"p_saves_{k}", v) for k, v in tails.items()])
 
 
-__all__ = ["COEF", "EN_GOAL_SHARE", "TARGETS", "expected", "features", "fit", "nb_pmf", "player_props", "player_shares",
+def fit_saves(rows: pl.DataFrame) -> dict[str, float]:
+    """Fit :data:`SAVES` on starts with ``mu_against``, ``goals_against`` (model) and the outcomes
+    ``finished``, ``shots_against``, ``ga_act`` (goals on him)."""
+    from sklearn.linear_model import LogisticRegression
+
+    ga = (rows["goals_against"] * (1 - EN_GOAL_SHARE)).to_numpy()
+    m = LogisticRegression(C=1e6).fit(ga[:, None], rows["finished"].to_numpy())
+    fin, pul = rows.filter(pl.col("finished")), rows.filter(~pl.col("finished"))
+    share = (pul["shots_against"].sum() / pul["mu_against"].sum()) / (fin["shots_against"].sum() / fin["mu_against"].sum())
+    p_fin = m.predict_proba(ga[:, None])[:, 1]
+    k = rows["shots_against"].sum() / float((rows["mu_against"].to_numpy() * (p_fin + (1 - p_fin) * share)).sum())
+
+    def mult(part: pl.DataFrame) -> float:
+        q = part["goals_against"].to_numpy() * (1 - EN_GOAL_SHARE) / part["mu_against"].to_numpy()
+        return float(part["ga_act"].sum() / (part["shots_against"].to_numpy() * q).sum())
+
+    return {"c0": float(m.intercept_[0]), "c1": float(m.coef_[0][0]), "pulled_share": float(share), "k": float(k),
+            "m_fin": mult(fin), "m_pull": mult(pul)}
+
+
+__all__ = ["COEF", "EN_GOAL_SHARE", "SAVES", "fit_saves", "TARGETS", "expected", "features", "fit", "nb_pmf", "player_props", "player_shares",
            "saves_props", "stat_mix", "team_logs", "team_rates", "thinned_tails"]
 

@@ -72,8 +72,28 @@ def test_thinned_tails_match_direct_sum() -> None:
 def test_saves_mixture() -> None:
     starters = pl.DataFrame({"mu_against": [30.0, 30.0], "goals_against": [2.0, 4.0]})
     out = V.saves_props(starters, (20, 25))
-    # More goals against means fewer saves at the same shots.
+    # More goals against means fewer saves at the same shots, and a likelier pull.
     assert out["exp_saves"][0] > out["exp_saves"][1]
+    assert out["p_finish"][0] > out["p_finish"][1]
     assert (out["p_saves_20"] > out["p_saves_25"]).all()
-    q = 2.0 * (1 - V.EN_GOAL_SHARE) / 30.0
-    assert out["exp_saves"][0] == pytest.approx(30 * (1 - q) * (V.P_FINISH + (1 - V.P_FINISH) * V.PULLED_SHARE))
+    c = V.SAVES
+    mu, ga = 30 * c["k"], 2.0 * (1 - V.EN_GOAL_SHARE)
+    q, pf = ga / mu, 1 / (1 + np.exp(-(c["c0"] + c["c1"] * ga)))
+    want = pf * mu * (1 - q * c["m_fin"]) + (1 - pf) * mu * c["pulled_share"] * (1 - q * c["m_pull"])
+    assert out["exp_saves"][0] == pytest.approx(want)
+
+
+def test_fit_saves_recovers_pull_effect() -> None:
+    rng = np.random.default_rng(0)
+    n = 4000
+    ga = rng.uniform(1.5, 4.5, n)
+    p_fin = 1 / (1 + np.exp(-(4.0 - 0.6 * ga * (1 - V.EN_GOAL_SHARE))))
+    fin = rng.random(n) < p_fin
+    mu = np.full(n, 30.0)
+    shots = np.where(fin, 30.0, 15.0)
+    rows = pl.DataFrame({"mu_against": mu, "goals_against": ga, "finished": fin, "shots_against": shots,
+                         "ga_act": shots * ga * (1 - V.EN_GOAL_SHARE) / mu})
+    fit = V.fit_saves(rows)
+    assert fit["c1"] == pytest.approx(-0.6, abs=0.15)
+    assert fit["pulled_share"] == pytest.approx(0.5, abs=0.01)
+    assert fit["m_fin"] == pytest.approx(1.0, abs=0.02)
