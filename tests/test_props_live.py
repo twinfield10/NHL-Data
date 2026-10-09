@@ -132,7 +132,8 @@ def test_grade(monkeypatch: pytest.MonkeyPatch) -> None:
                           "start_time_et": ["2026-10-08T19:00:00"], "game_date": [date(2026, 10, 8)],
                           "home_abbr": ["OTT"], "away_abbr": ["PHI"]})
     logs = pl.DataFrame({"game_id": [2026020061] * 2, "player_id": [8480000, 8480000], "strength": ["all", "PP"],
-                         "goals": [1, 1], "a1": [0, 0], "a2": [1, 0]})
+                         "position": ["C", "C"], "goals": [1, 1], "a1": [0, 0], "a2": [1, 0], "isf": [4, 2], "blocks": [1, 0],
+                         "sa": [0, 0], "ga": [0, 0]})
     store = FakeStore({keys.GAMES: games, keys.player_game_logs(20262027): logs})
     ledger.add_paper(store, pl.DataFrame([  # type: ignore[arg-type]
         edge_row(), edge_row(line=2.5, price=600.0, side="over"), edge_row(player_id=8479999, player_name="Scratched")]))
@@ -179,3 +180,35 @@ def test_stakes_player_cap_counts_placed() -> None:
                        "flagged": True, "kelly": 0.01}])
     out = live._stakes(e, store, date(2026, 10, 8))  # type: ignore[arg-type]
     assert out["stake_units"][0] == pytest.approx(0.2)  # 1 u per player-game, 0.8 already in
+
+
+def test_broken_two_way_is_skipped() -> None:
+    q = pl.DataFrame([quote("DK", "over", 135), quote("DK", "under", 140),  # sums to 0.84: not a market
+                      quote("FD", "over", -188), quote("FD", "under", 140), quote("LV", "over", -167), quote("LV", "under", 128)])
+    m = live.market_probs(q)
+    dk = m.filter(pl.col("book") == "DK").row(0, named=True)
+    assert dk["outlier"]
+    assert dk["books"] == 2  # the consensus counts FD and LV only
+    best = live.price_quotes(m, projections(0.6))
+    assert "DK" not in best["book"].to_list()
+
+
+def test_grade_shots_and_saves(monkeypatch: pytest.MonkeyPatch) -> None:
+    from nhl.storage import keys
+
+    games = pl.DataFrame({"game_id": [2026020061], "season": [20262027], "is_final": [True],
+                          "start_time_et": ["2026-10-08T19:00:00"], "game_date": [date(2026, 10, 8)],
+                          "home_abbr": ["OTT"], "away_abbr": ["PHI"]})
+    logs = pl.DataFrame({"game_id": [2026020061] * 2, "player_id": [8480000, 8475000], "strength": ["all", "all"],
+                         "position": ["C", "G"], "goals": [0, 0], "a1": [0, 0], "a2": [0, 0], "isf": [4, 0], "blocks": [2, 0],
+                         "sa": [0, 30], "ga": [0, 2]})
+    store = FakeStore({keys.GAMES: games, keys.player_game_logs(20262027): logs})
+    ledger.add_paper(store, pl.DataFrame([  # type: ignore[arg-type]
+        edge_row(prop_type="shots", line=3.5), edge_row(prop_type="blocks", line=2.5),
+        edge_row(player_id=8475000, player_name="Goalie", prop_type="saves", line=27.5, side="over")]))
+    monkeypatch.setattr("nhl.props.live.latest_quotes", lambda *a, **k: pl.DataFrame(
+        schema={"book": pl.String, "game_id": pl.Int64, "player_id": pl.Int64, "prop_type": pl.String, "line": pl.Float64,
+                "side": pl.String, "price": pl.Float64}))
+    assert ledger.grade(store) == 3  # type: ignore[arg-type]
+    res = {r["prop_type"]: (r["stat"], r["result"]) for r in ledger.load(store).iter_rows(named=True)}  # type: ignore[arg-type]
+    assert res == {"shots": (4.0, "win"), "blocks": (2.0, "loss"), "saves": (28.0, "win")}

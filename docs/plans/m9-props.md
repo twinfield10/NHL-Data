@@ -14,7 +14,8 @@ See [Phase D](#phase-d-live-edges-and-the-paper-ledger-2026-10-08). **Phase C bu
 shots on goal, blocks and saves (`src/nhl/props/volume.py`, `backtest_volume.py`;
 `nhl props-backtest --what volume`): gate passed on all 13 targets in every season
 ([Phase C results](#phase-c-results-2026-10-09), [report](../reports/props-volume-backtest.md)).
-Not yet in the live edges or the site. **Phase E built 2026-10-08:**
+Live in the edges, the props ledger and the site since 2026-10-09 (see
+[Phase C live](#phase-c-live-2026-10-09)). **Phase E built 2026-10-08:**
 the site's Props tab, a Props sub-tab on every game page, and Model Results → Props
 (`src/nhl/api/routers/props.py`; `frontend/src/app/props`, `components/GameProps.tsx`).
 **Depends on:** M2 game logs (`processed/game_logs/player/{season}`), M3 ratings and
@@ -180,7 +181,7 @@ how to weight the blend.
 |---|---|---|
 | A | FanDuel + LowVig pollers in the odds schedule; nightly coverage report per book | ≥95% of scheduled games with props from each book; ≥98% player resolution |
 | B | Projection backtest for goals, assists, points (simulator attribution + TOI model) | Beats all three baselines in log loss at ≥1 thresholds, every season |
-| C | Team shot-volume layer; SOG, blocks, saves | Same gate; shots calibrated by decile (**built 2026-10-09**; live edges and site to follow) |
+| C | Team shot-volume layer; SOG, blocks, saves | Same gate; shots calibrated by decile (**built and live 2026-10-09**) |
 | D | Daily projections, edges, paper ledger, nightly grading | Runs in the pregame cron (**built 2026-10-08**) |
 | E | Props tab and game sub-tab | — |
 | F | After ~4-6 weeks: blend fit, thresholds, which markets/books to bet | CLV > 0 on flagged plays |
@@ -300,6 +301,25 @@ goals ≥ 1 0.3922, assists ≥ 1 0.5179, points ≥ 1 0.5959. The gate is uncha
 
 **Tested:** team-rate shrinkage of 5-80 games is flat (the regression coefficients absorb it);
 kept at 10.
+
+## Phase C live (2026-10-09)
+
+- **Projections:** `live.project_day` adds shots (1-8+) and blocks (1-5+) for every projected
+  skater, and saves (12-45+) for each goalie at least 5% to start, conditional on his
+  starting. Team volume for today's games uses every game logged before today, the same
+  math as the backtest (`live._team_volume`). The cache key carries `PROJECTION_VERSION`, so
+  a code change rebuilds the day's projections.
+- **Flags:** the same rules as before; a goalie must be at least 90% to start.
+- **Broken quotes:** a two-way pair whose implied probabilities sum below 1 (e.g. a stale under
+  next to a fresh over from another poll, seen on DraftKings shots 2026-10-09) is skipped and
+  left out of the consensus.
+- **Grading:** the ledger grades shots (individual shots on goal), blocks and saves (shots
+  against less goals against while in net) from the game logs.
+- **Site:**
+  - The Props tab filters Shots / Blocks / Saves.
+  - Each team's board on the game page adds xSOG and 2+ SOG, 3+ SOG and 2+ BLK.
+  - A Goalies section shows P(start), expected saves and the main saves line, with every
+    book's prices on click.
 
 ## Phase D: live edges and the paper ledger (2026-10-08)
 

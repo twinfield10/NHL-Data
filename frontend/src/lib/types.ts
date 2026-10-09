@@ -655,9 +655,9 @@ export interface GameLineupsResponse {
 }
 
 // /api/props, /api/games/{id}/props, /api/props/bets (see nhl.props.live and nhl.props.ledger).
-// prop_type is goals | assists | points; side over | under; lines are N - 0.5 ("1+" = over 0.5).
+// prop_type is goals | assists | points | shots | blocks | saves; side over | under; lines are N - 0.5 ("1+" = over 0.5).
 
-export type PropType = "goals" | "assists" | "points";
+export type PropType = "goals" | "assists" | "points" | "shots" | "blocks" | "saves";
 
 export interface PropEdge {
   game_id: number;
@@ -715,10 +715,15 @@ export interface PropPlayer {
   p_dressed: number | null;
   confidence: string | null;
   source: string | null;
-  exp_goals: number;
-  exp_ast: number;
-  exp_points: number;
-  [prob: `p_${string}_${number}`]: number;
+  /** Skaters: goals / assists / points / shots / blocks; goalies (position "G"): saves, and
+   * p_dressed is his chance to start (saves are conditional on starting). */
+  exp_goals: number | null;
+  exp_ast: number | null;
+  exp_points: number | null;
+  exp_shots?: number | null;
+  exp_blocks?: number | null;
+  exp_saves?: number | null;
+  [prob: `p_${string}_${number}`]: number | null;
 }
 
 export interface PropQuote {

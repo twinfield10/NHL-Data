@@ -99,7 +99,7 @@ def get_game_props(game_id: int, data: SiteData = Depends(get_data)) -> dict:
     players = proj.with_columns(
         pl.Series("player_name", [names.get(p, "Unknown") for p in proj["player_id"]], dtype=pl.String),
         pl.col("team_id").replace_strict(abbr, default=None, return_dtype=pl.String).alias("team"),
-    ).sort("team", -pl.col("exp_points"))
+    ).sort("team", -pl.col("exp_points").fill_null(-1.0))
 
     cutoff = datetime.now(timezone.utc)
     if game.get("start_time_et"):
@@ -113,7 +113,8 @@ def get_game_props(game_id: int, data: SiteData = Depends(get_data)) -> dict:
         edges = edges.filter(pl.col("game_id") == game_id).select([c for c in EDGE_COLS if c in edges.columns])
         edges = _with_bets(_with_movement(edges, data), data)
     keep = ["player_id", "player_name", "team", "position", "slot", "pp_unit", "p_dressed", "confidence", "source",
-            *[c for c in players.columns if c.startswith(("p_goals_", "p_ast_", "p_points_", "exp_"))]]
+            *[c for c in players.columns if c.startswith(("p_goals_", "p_ast_", "p_points_", "p_shots_", "p_blocks_", "p_saves_",
+                                                         "exp_"))]]
     return {
         "game_id": game_id,
         "stamp": proj["stamp"][0],
