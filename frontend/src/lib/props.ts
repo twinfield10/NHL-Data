@@ -1,17 +1,22 @@
 import type { PropType } from "./types";
 
-export const PROP_LABEL: Record<PropType, string> = { goals: "Goals", assists: "Assists", points: "Points" };
+export const PROP_LABEL: Record<PropType, string> = {
+  goals: "Goals", assists: "Assists", points: "Points", shots: "Shots", blocks: "Blocks", saves: "Saves",
+};
 
 /** Projection column stem per prop type (the API says "ast" for assists). */
-export const PROP_STEM: Record<PropType, string> = { goals: "goals", assists: "ast", points: "points" };
+export const PROP_STEM: Record<PropType, string> = {
+  goals: "goals", assists: "ast", points: "points", shots: "shots", blocks: "blocks", saves: "saves",
+};
+
+const RUNG_ABBR: Record<PropType, string> = { goals: "G", assists: "A", points: "Pts", shots: "SOG", blocks: "BLK", saves: "SV" };
 
 /** ("points", 0.5, "over") -> "Points O0.5" */
 export const propBet = (prop: PropType, line: number, side: "over" | "under") =>
   `${PROP_LABEL[prop]} ${side === "over" ? "O" : "U"}${line}`;
 
 /** ("points", 0.5) -> "1+ Pts" (the ladder rung an over is the same bet as). */
-export const rung = (prop: PropType, line: number) =>
-  `${Math.floor(line) + 1}+ ${prop === "goals" ? "G" : prop === "assists" ? "A" : "Pts"}`;
+export const rung = (prop: PropType, line: number) => `${Math.floor(line) + 1}+ ${RUNG_ABBR[prop]}`;
 
 /** Model P(over line) from a projection row's p_{stem}_{k} columns. */
 export const modelOver = (row: Record<string, unknown>, prop: PropType, line: number): number | null => {

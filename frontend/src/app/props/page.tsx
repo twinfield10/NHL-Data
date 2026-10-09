@@ -17,7 +17,7 @@ const VIEWS = [
   { key: "all", label: "All" },
 ] as const;
 type View = (typeof VIEWS)[number]["key"];
-const STATS: (PropType | "all")[] = ["all", "goals", "assists", "points"];
+const STATS: (PropType | "all")[] = ["all", "goals", "assists", "points", "shots", "blocks", "saves"];
 
 function Toggle<T extends string>({ options, value, onChange }: { options: { key: T; label: string }[]; value: T; onChange: (v: T) => void }) {
   return (
@@ -98,7 +98,8 @@ function Props() {
               className="w-44 rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground"
             />
             <span className="ml-auto text-xs text-muted-foreground">
-              Edge uses a 50/50 blend of model and market; plays need ≥ 5% edge, ≥ 2 books and a confirmed lineup spot.
+              Edge uses a 50/50 blend of model and market; plays need ≥ 5% edge, ≥ 2 books and a confirmed lineup spot
+              (goalies: ≥ 90% to start).
             </span>
           </div>
 

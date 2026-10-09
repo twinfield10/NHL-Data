@@ -3,7 +3,8 @@
 ``bets/props_ledger.parquet``, one row per bet:
 
 * identity: ``bet_id``, ``kind`` (``paper``), ``placed_at``, ``game_id``, ``game_date``,
-  ``player_id``, ``player_name``, ``team``, ``prop_type`` (goals | assists | points), ``line``,
+  ``player_id``, ``player_name``, ``team``, ``prop_type`` (goals | assists | points | shots |
+  blocks | saves), ``line``,
   ``side`` (over | under), ``book``, ``price`` (American), ``stake_units``;
 * the view when placed: ``p_model``, ``p_market``, ``p_blend``, ``edge``, ``books``,
   ``pregame_stamp``;
@@ -79,15 +80,22 @@ def add_paper(store: Store, edges: pl.DataFrame) -> int:
 
 
 def outcomes(store: Store, game_ids: list[int]) -> pl.DataFrame:
-    """``game_id, player_id`` and the player's goals, assists and points for games with logs."""
+    """``game_id, player_id`` and the player's goals, assists, points, shots, blocks (skaters) and
+    saves (goalies: shots against less goals against while he was in net) for logged games."""
     seasons = sorted({int(str(g)[:4]) for g in game_ids})
     frames = [f for y in seasons if (f := store.get_parquet(keys.player_game_logs(int(f"{y}{y + 1}")))) is not None]
     if not frames:
         return pl.DataFrame(schema={"game_id": pl.Int64, "player_id": pl.Int64})
     logs = pl.concat(frames, how="diagonal_relaxed").filter((pl.col("strength") == "all") & pl.col("game_id").is_in(game_ids))
-    return logs.select("game_id", pl.col("player_id").cast(pl.Int64), pl.col("goals").cast(pl.Float64).alias("goals"),
-                       (pl.col("a1") + pl.col("a2")).cast(pl.Float64).alias("assists")).with_columns(
-        (pl.col("goals") + pl.col("assists")).alias("points"))
+    goalie = pl.col("position") == "G"
+    return logs.select(
+        "game_id", pl.col("player_id").cast(pl.Int64),
+        pl.when(goalie).then(None).otherwise(pl.col("goals")).cast(pl.Float64).alias("goals"),
+        pl.when(goalie).then(None).otherwise(pl.col("a1") + pl.col("a2")).cast(pl.Float64).alias("assists"),
+        pl.when(goalie).then(None).otherwise(pl.col("isf")).cast(pl.Float64).alias("shots"),
+        pl.when(goalie).then(None).otherwise(pl.col("blocks")).cast(pl.Float64).alias("blocks"),
+        pl.when(goalie).then(pl.col("sa") - pl.col("ga")).cast(pl.Float64).alias("saves"),
+    ).with_columns((pl.col("goals") + pl.col("assists")).alias("points"))
 
 
 def grade(store: Store) -> int:
@@ -111,8 +119,8 @@ def grade(store: Store) -> int:
     probs = market_probs(quotes)
     close = probs.select("book", "game_id", "player_id", "prop_type", "line", "price_over", "price_under", "p_market")
     consensus = close.group_by("game_id", "player_id", "prop_type", "line").agg(pl.col("p_market").first().alias("_p_close"))
-    long = res.unpivot(index=["game_id", "player_id"], on=["goals", "assists", "points"], variable_name="prop_type",
-                       value_name="stat")
+    long = res.unpivot(index=["game_id", "player_id"], on=["goals", "assists", "points", "shots", "blocks", "saves"],
+                       variable_name="prop_type", value_name="stat").drop_nulls("stat")
     g = (todo.drop("close_price", "p_close", "clv", "stat", "result", "pnl_units", "graded_at")
          .join(close.drop("p_market"), on=["book", "game_id", "player_id", "prop_type", "line"], how="left")
          .join(consensus, on=["game_id", "player_id", "prop_type", "line"], how="left")

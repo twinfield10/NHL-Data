@@ -6,13 +6,15 @@ logged before today (:func:`nhl.props.rates.rates_for_day`), through
 :mod:`nhl.props.project`, then the backtest's logit calibration (:data:`nhl.props.project.CALIBRATION`). Stored per pregame run at ``pregame/props/{date}/{stamp}.parquet``
 with the inputs (slot, PP unit, P(dressed), source), so a moved edge can be explained later.
 
-**Edges** (:func:`compute`), for goals, assists and points over/unders and N+ ladders from every
-captured book (DraftKings via ESPN, FanDuel, LowVig, 4Casters):
+**Edges** (:func:`compute`), for goals, assists, points, shots on goal, blocks and saves
+over/unders and N+ ladders from every captured book (DraftKings via ESPN, FanDuel, LowVig,
+4Casters). Shots, blocks and saves come from the team volume model (:mod:`nhl.props.volume`):
 
 1. **Book probability** (P(over) at the book's line). A two-way market is devigged
    multiplicatively. A one-sided ladder rung is divided by 1 + that book's margin on the same
    stat, measured from its own two-way markets that day (:data:`DEFAULT_MARGIN` without
-   any).
+   any). A two-way pair whose implied probabilities sum below 1 is a broken quote (sides from
+   different moments or markets) and is skipped.
 2. **Market** = the median book probability for that player, stat and line. A book more than
    :data:`OUTLIER` from it is treated as a bad quote and skipped.
 3. **Blend** = logit average of model and market with weight :data:`MODEL_WEIGHT`. This is a
@@ -20,8 +22,8 @@ captured book (DraftKings via ESPN, FanDuel, LowVig, 4Casters):
 4. **Edge** = p × decimal − 1 per side; the best book per (game, player, stat, line, side).
 5. **Flag** when the edge clears :data:`MIN_EDGE` and the bet is one the backtest can stand
    behind: price no longer than :data:`MAX_PRICE`, at least :data:`MIN_BOOKS` books in the
-   market, the player projected to dress for certain (no game-time decision) with high lineup
-   confidence.
+   market, the skater projected to dress for certain (no game-time decision) with high lineup
+   confidence, or the goalie at least :data:`MIN_P_START` likely to start.
 6. **Stake**: ¼ Kelly on the 100-unit bankroll, at most :data:`MAX_BET_UNITS` per bet,
    :data:`MAX_PLAYER_UNITS` per player-game and :data:`MAX_DAY_UNITS` per day of props,
    counting bets already in the props ledger. That's separate from the game-line caps.
@@ -42,7 +44,7 @@ import polars as pl
 
 from nhl.betting.edges import _games, last_pregame_prices
 from nhl.odds.props import load_props
-from nhl.props import project, rates
+from nhl.props import project, rates, volume
 from nhl.sources.common import stamp
 from nhl.storage import keys
 from nhl.storage.s3 import Store
@@ -51,9 +53,16 @@ logger = logging.getLogger(__name__)
 
 EASTERN = ZoneInfo("America/New_York")
 #: Book prop_type -> projection stat.
-STATS = {"goals": "goals", "assists": "ast", "points": "points"}
+STATS = {"goals": "goals", "assists": "ast", "points": "points", "shots": "shots", "blocks": "blocks", "saves": "saves"}
 #: Thresholds projected per stat (P(stat >= k)); a line above the top one isn't priced.
-THRESHOLDS = {"goals": (1, 2, 3), "ast": (1, 2, 3), "points": (1, 2, 3, 4)}
+THRESHOLDS = {"goals": (1, 2, 3), "ast": (1, 2, 3), "points": (1, 2, 3, 4), "shots": tuple(range(1, 9)),
+              "blocks": tuple(range(1, 6)), "saves": tuple(range(12, 46))}
+#: Goalies projected to start at least this likely get a saves projection; at least
+#: :data:`MIN_P_START` one that can be flagged (the prop is void if he doesn't start).
+MIN_P_START_PROJECTED = 0.05
+#: Bumped whenever the projection's contents change, so cached projections are rebuilt.
+PROJECTION_VERSION = 2
+MIN_P_START = 0.9
 DEFAULT_MARGIN = 0.07
 OUTLIER = 0.10
 MODEL_WEIGHT = 0.5
@@ -89,24 +98,53 @@ def _implied(price: pl.Expr) -> pl.Expr:
 
 
 # ------------------------------------------------------------------------- projections --
-def _snapshot_inputs(store: Store, day: date) -> tuple[pl.DataFrame, pl.DataFrame] | None:
-    """Each game's last pregame prices and the projected lineup from the same run."""
+def _snapshot_inputs(store: Store, day: date) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame] | None:
+    """Each game's last pregame prices, and the projected lineup and starting-goalie
+    probabilities from the same run."""
     prices = last_pregame_prices(store, day)
     if prices is None or prices.is_empty():
         return None
-    deps = []
+    deps, goalies = [], []
     for (st,), part in prices.partition_by("stamp", as_dict=True).items():
+        ids = part["game_id"].implode()
         dep = store.get_parquet(keys.pregame_lineups(day, st))
         if dep is not None:
-            deps.append(dep.filter(pl.col("game_id").is_in(part["game_id"].implode())).drop("as_of", "stamp", strict=False)
+            deps.append(dep.filter(pl.col("game_id").is_in(ids)).drop("as_of", "stamp", strict=False)
                         .with_columns(pl.lit(st).alias("pregame_stamp")))
+        g = store.get_parquet(keys.pregame_goalies(day, st))
+        if g is not None:
+            goalies.append(g.filter(pl.col("game_id").is_in(ids)).select("game_id", pl.col("team_id").cast(pl.Int64), "player_id",
+                                                                       "p_start").with_columns(pl.lit(st).alias("pregame_stamp")))
     if not deps:
         return None
-    return prices, pl.concat(deps, how="diagonal_relaxed")
+    gdf = pl.concat(goalies, how="diagonal_relaxed") if goalies else pl.DataFrame(
+        schema={"game_id": pl.Int64, "team_id": pl.Int64, "player_id": pl.Int64, "p_start": pl.Float64, "pregame_stamp": pl.String})
+    return prices, pl.concat(deps, how="diagonal_relaxed"), gdf
+
+
+def _team_volume(store: Store, season: int, day: date, prices: pl.DataFrame) -> pl.DataFrame:
+    """Expected team shots on goal and blocks for ``day``'s games (``game_id, team_id,
+    opp_team_id, mu_sog, mu_blk``), from every game logged before it (:mod:`nhl.props.volume`)."""
+    cur, last = volume.team_logs(store, season), volume.team_logs(store, season - 10001)
+    today = pl.concat([
+        prices.select("game_id", pl.lit(day).alias("game_date"), pl.col(f"{a}_team_id").cast(pl.Int64).alias("team_id"),
+                      pl.col(f"{b}_team_id").cast(pl.Int64).alias("opp_team_id"), pl.lit(a == "home").alias("is_home"))
+        for a, b in (("home", "away"), ("away", "home"))
+    ]).with_columns(*[pl.lit(0.0).alias(c) for c in ("sf", "sa", "cf", "blocks")])
+    if not cur.is_empty():
+        today = today.select(cur.columns).cast(cur.schema)
+        cur = pl.concat([cur.filter(pl.col("game_date") < day), today])
+    else:
+        cur = today
+    feat = volume.features(volume.team_rates(cur, last), prices.select("game_id", "home_team_id", "p_home_win")).filter(
+        pl.col("game_id").is_in(prices["game_id"].implode()))
+    return feat.select("game_id", "team_id", "opp_team_id", volume.expected(feat, "sog").alias("mu_sog"),
+                       volume.expected(feat, "blk").alias("mu_blk"))
 
 
 def project_day(store: Store, day: date, write: bool = True) -> pl.DataFrame:
-    """Goals / assists / points projections for every projected skater on ``day``'s games.
+    """Projections for every projected skater (goals, assists, points, shots, blocks) and every
+    probable starting goalie (saves, conditional on starting) on ``day``'s games.
 
     Cached per set of pregame runs: the key's stamp is the newest pregame stamp involved, so a
     new pregame run (a lineup change, a new starter) makes a new projection.
@@ -114,20 +152,44 @@ def project_day(store: Store, day: date, write: bool = True) -> pl.DataFrame:
     got = _snapshot_inputs(store, day)
     if got is None:
         return pl.DataFrame()
-    prices, dep = got
+    prices, dep, goalies = got
     st = str(prices["stamp"].max())
-    key = keys.props_projections(day, st)
+    # The version makes a code change (new markets, a model fix) rebuild the day's cache.
+    key = keys.props_projections(day, f"{st}-v{PROJECTION_VERSION}")
     if (cached := store.get_parquet(key)) is not None:
         return cached
     season = int(store.read_parquet_required(keys.GAMES).filter(pl.col("game_id") == prices["game_id"][0])["season"][0])
-    pit, mix, team_f = rates.rates_for_day(store, season, day, dep)
+    logs = {s: rates.bucket_logs(store, s) for s in (season, season - 10001, season - 20002)}
+    pit, mix, team_f = rates.rates_for_day(store, season, day, dep, logs=logs)
     dists = project.team_goal_dists(prices.select("game_id", "home_team_id", "away_team_id", "score_matrix"))
     proj = project.calibrate(project.project_players(project.shares(dep, pit, mix, team_f=team_f, dep_power=project.DEP_POWER),
                                                      dists, thresholds=THRESHOLDS),
                              THRESHOLDS)
+    # Shots and blocks: team volume x each skater's share (phase C).
+    vol = _team_volume(store, season, day, prices)
+    for stat, key_ in (("shots", "sog"), ("blocks", "blk")):
+        sh = volume.player_shares(dep, pit, volume.stat_mix(logs[season - 10001], key_), key_, volume.DEP_POWER[key_])
+        p = volume.player_props(sh, vol.select("game_id", "team_id", pl.col(f"mu_{key_}").alias("mu")), key_, THRESHOLDS[stat])
+        p = p.rename({f"p_{key_}_{k}": f"p_{stat}_{k}" for k in THRESHOLDS[stat]} | {f"exp_{key_}": f"exp_{stat}"})
+        proj = proj.join(p.filter(pl.col("player_id").is_not_null()).unique(["game_id", "player_id"])
+                         .select("game_id", "player_id", f"exp_{stat}", *[f"p_{stat}_{k}" for k in THRESHOLDS[stat]]),
+                         on=["game_id", "player_id"], how="left")
     info = dep.select("game_id", "player_id", "slot", "pp_unit", "pk_unit", "source", "confidence", "pregame_stamp")
-    proj = proj.filter(pl.col("player_id").is_not_null()).join(info, on=["game_id", "player_id"], how="left").with_columns(
-        pl.lit(st).alias("stamp"))
+    proj = proj.filter(pl.col("player_id").is_not_null()).join(info, on=["game_id", "player_id"], how="left")
+    # Saves: every probable starter, conditional on his starting (a prop on a goalie who sits is void).
+    starters = goalies.filter(pl.col("player_id").is_not_null() & (pl.col("p_start") >= MIN_P_START_PROJECTED)).join(
+        vol.select("game_id", "team_id", "opp_team_id"), on=["game_id", "team_id"], how="inner").join(
+        vol.select("game_id", pl.col("team_id").alias("opp_team_id"), pl.col("mu_sog").alias("mu_against")),
+        on=["game_id", "opp_team_id"], how="inner").join(
+        dists.select("game_id", pl.col("team_id").alias("opp_team_id"), pl.col("mean_goals").alias("goals_against")),
+        on=["game_id", "opp_team_id"], how="inner")
+    if starters.height:
+        g = volume.saves_props(starters, THRESHOLDS["saves"]).with_columns(
+            pl.lit("G").alias("position"), pl.col("p_start").alias("p_dressed"),
+            pl.when(pl.col("p_start") >= MIN_P_START).then(pl.lit("high")).otherwise(pl.lit("low")).alias("confidence"),
+            pl.lit("goalie").alias("source"))
+        proj = pl.concat([proj, g.drop("opp_team_id", "mu_against", "goals_against")], how="diagonal_relaxed")
+    proj = proj.with_columns(pl.lit(st).alias("stamp"))
     if write:
         store.put_parquet(key, proj)
     return proj
@@ -146,9 +208,12 @@ def market_probs(quotes: pl.DataFrame) -> pl.DataFrame:
         (either may be null), ``p_book`` (devigged P(over)), ``two_way``, ``p_market``,
         ``books`` and ``outlier``.
     """
-    if quotes.is_empty():
-        return quotes
     key = ["book", "game_id", "player_id", "prop_type", "line"]
+    if quotes.is_empty():
+        return pl.DataFrame(schema={"book": pl.String, "game_id": pl.Int64, "player_id": pl.Int64, "prop_type": pl.String,
+                                    "line": pl.Float64, "price_over": pl.Float64, "price_under": pl.Float64,
+                                    "two_way": pl.Boolean, "margin": pl.Float64, "p_book": pl.Float64, "p_market": pl.Float64,
+                                    "books": pl.Int64, "outlier": pl.Boolean})
     quotes = quotes.with_columns(pl.col("price").cast(pl.Float64), pl.col("line").cast(pl.Float64))
     wide = quotes.pivot(on="side", index=key, values="price", aggregate_function="last")
     for side in ("over", "under"):
@@ -163,10 +228,16 @@ def market_probs(quotes: pl.DataFrame) -> pl.DataFrame:
         .when(pl.col("price_over").is_not_null()).then(io / (1 + pl.col("margin").fill_null(DEFAULT_MARGIN)))
         .otherwise(1 - iu / (1 + pl.col("margin").fill_null(DEFAULT_MARGIN)))
         .clip(0.001, 0.999).alias("p_book"))
+    # A two-way pair whose sides sum below 1 is no real market (sides from different moments or
+    # markets, e.g. a stale under beside a fresh over): it's left out of the consensus and never bet.
+    broken = pl.col("two_way") & (io + iu < 1.0)
+    wide = wide.with_columns(broken.fill_null(False).alias("_broken"))
     group = ["game_id", "player_id", "prop_type", "line"]
-    return wide.with_columns(pl.col("p_book").median().over(group).alias("p_market"),
-                             pl.col("book").n_unique().over(group).alias("books")).with_columns(
-        ((pl.col("p_book") - pl.col("p_market")).abs() > OUTLIER).alias("outlier"))
+    good = wide.filter(~pl.col("_broken"))
+    cons = good.group_by(group).agg(pl.col("p_book").median().alias("p_market"), pl.col("book").n_unique().alias("books"))
+    return wide.join(cons, on=group, how="left").with_columns(
+        (pl.col("_broken") | ((pl.col("p_book") - pl.col("p_market")).abs() > OUTLIER)).fill_null(True).alias("outlier"),
+        pl.col("books").fill_null(0)).drop("_broken")
 
 
 def latest_quotes(store: Store, season: int, game_ids: list[int], cutoff: datetime | dict[int, datetime]) -> pl.DataFrame:
@@ -189,9 +260,12 @@ def _model_over(proj: pl.DataFrame) -> pl.DataFrame:
     rows = []
     for prop_type, stat in STATS.items():
         for k in THRESHOLDS[stat]:
+            if f"p_{stat}_{k}" not in proj.columns:  # an older cached projection
+                continue
             rows.append(proj.select("game_id", "player_id", pl.lit(prop_type).alias("prop_type"),
                                     pl.lit(k - 0.5).alias("line"), pl.col(f"p_{stat}_{k}").alias("p_model")))
-    return pl.concat(rows)
+    # Skaters have no saves line and goalies no skater lines.
+    return pl.concat(rows).drop_nulls("p_model")
 
 
 def _logit(x: pl.Expr) -> pl.Expr:
@@ -268,7 +342,9 @@ def compute(store: Store, day: date | None = None, now: datetime | None = None, 
         games.select("game_id", "game_date", "start_utc", "home_abbr", "away_abbr"), on="game_id").with_columns(
         pl.lit(now).alias("as_of"))
     flagged = ((pl.col("edge") >= MIN_EDGE) & (pl.col("price") <= MAX_PRICE) & (pl.col("books") >= MIN_BOOKS)
-               & (pl.col("p_dressed").fill_null(1.0) >= 0.999) & (pl.col("confidence") == "high"))
+               & pl.when(pl.col("position") == "G").then(pl.col("p_dressed") >= MIN_P_START)
+                 .otherwise(pl.col("p_dressed").fill_null(1.0) >= 0.999)
+               & (pl.col("confidence") == "high"))
     return _stakes(best.with_columns(flagged.fill_null(False).alias("flagged")), store, day)
 
 
