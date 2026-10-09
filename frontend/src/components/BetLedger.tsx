@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { TeamTag } from "@/components/TeamLogo";
 import { Badge, Card, Empty, Signed } from "@/components/ui";
-import { american, dateTimeET, fairAmerican, pct, signedPct, units } from "@/lib/format";
+import { american, dateTimeET, pct, signedPct, timeET, units } from "@/lib/format";
 import type { BetInfo, BetInfoBreakdown, BetStatus, BetTotals, BetWindow } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -23,10 +23,13 @@ export interface LedgerRow {
   edge: number | null;
   nowPrice: number | null;
   nowBook: string | null;
-  /** Graded: the close (a price, or the fair consensus when only that is known). */
-  close: ReactNode;
+  /** Graded: the same book's closing price. */
+  closePrice: number | null;
   clv: number | null;
   clvNow: number | null;
+  /** vs. the same book later: its close once graded, else its price now. */
+  priceClv: number | null;
+  bookNow: number | null;
   status: BetStatus;
   result: string | null;
   pnl: number | null;
@@ -44,6 +47,28 @@ const STATUS: Record<Exclude<BetStatus, "graded">, { label: string; tone: "pos" 
 };
 const GRADE_TONE = { A: "pos", B: "warn", C: "neg" } as const;
 export const WINDOW_LABEL: Record<BetWindow, string> = { open: "Open", pre: "Pre", post: "Post" };
+
+/** A CLV value in green / red, or a dash. */
+export function ClvCell({ v, title }: { v: number | null | undefined; title?: string }) {
+  if (v == null) return <span className="text-muted-foreground">–</span>;
+  return (
+    <span title={title} className={cn("font-semibold", v > 0 ? "text-positive" : v < 0 ? "text-negative" : "text-muted-foreground")}>
+      {signedPct(v, 1)}
+    </span>
+  );
+}
+
+/** A paper bet already placed: price taken, book and time (ET). */
+export function PlacedBet({ price, book, stake, at }: { price: number | null | undefined; book: string | null | undefined;
+  stake: number | null | undefined; at: string | null | undefined }) {
+  if (price == null) return null;
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs" title={`placed ${american(price)} at ${book}, ${stake?.toFixed(2)}u`}>
+      <span className="font-medium">{american(price)}</span>
+      <span className="text-muted-foreground">{book} · {timeET(at)}</span>
+    </span>
+  );
+}
 
 /** Minutes before puck drop -> "45m" / "6.5h". */
 export const lead = (m: number | null) => (m == null ? null : m < 60 ? `${Math.round(m)}m` : `${(m / 60).toFixed(1)}h`);
@@ -103,22 +128,20 @@ function PriceNow({ r }: { r: LedgerRow }) {
   );
 }
 
-/** A close we only know as a devigged probability, shown as its fair American price. */
-export const fairClose = (p: number | null) =>
-  p == null ? <span className="text-muted-foreground">–</span> : <span title={`fair ${pct(p)}`}>{fairAmerican(p)}</span>;
-
 const COLS: Record<LedgerView, { h: string; right?: boolean; title?: string }[]> = {
   pending: [
     { h: "Placed (ET)" }, { h: "Timing", title: "Open = the day's first edges run; Post = the last 30 minutes before puck drop" },
     { h: "Game" }, { h: "Bet" }, { h: "Book" }, { h: "Price", right: true }, { h: "Stake", right: true },
-    { h: "Edge", right: true }, { h: "Now", right: true }, { h: "CLV", right: true, title: "Live: vs. the consensus now" },
+    { h: "Edge", right: true }, { h: "Now", right: true }, { h: "Fair CLV", right: true, title: "vs. the devigged market consensus now" },
+    { h: "Price CLV", right: true, title: "vs. the same book's price now (positive = it shortened since the bet)" },
     { h: "Info", title: "What the model knew at placement: A = starters confirmed and lineups projected; C = a starter or lineup from the model alone, or a stale input. Dots: away, home goalie." },
     { h: "Status" },
   ],
   graded: [
     { h: "Placed (ET)" }, { h: "Timing", title: "Open = the day's first edges run; Post = the last 30 minutes before puck drop" },
     { h: "Game" }, { h: "Bet" }, { h: "Book" }, { h: "Price", right: true }, { h: "Stake", right: true },
-    { h: "Edge", right: true }, { h: "Close", right: true }, { h: "CLV", right: true, title: "vs. the devigged closing consensus" },
+    { h: "Edge", right: true }, { h: "Close", right: true, title: "The same book's last price before puck drop" }, { h: "Fair CLV", right: true, title: "vs. the devigged closing consensus" },
+    { h: "Price CLV", right: true, title: "vs. the same book's closing price" },
     { h: "Info", title: "What the model knew at placement: A = starters confirmed and lineups projected; C = a starter or lineup from the model alone, or a stale input. Dots: away, home goalie." },
     { h: "Result" }, { h: "Units", right: true },
   ],
@@ -159,6 +182,9 @@ export function LedgerTable({ rows, view }: { rows: LedgerRow[]; view: LedgerVie
                 <>
                   <td className="whitespace-nowrap px-3 py-2 text-right"><PriceNow r={r} /></td>
                   <td className="px-3 py-2 text-right italic"><Signed value={r.clvNow}>{signedPct(r.clvNow, 2)}</Signed></td>
+                  <td className="px-3 py-2 text-right italic" title={r.bookNow != null ? `${r.book} now ${american(r.bookNow)}` : undefined}>
+                    <Signed value={r.priceClv}>{signedPct(r.priceClv, 2)}</Signed>
+                  </td>
                   <td className="whitespace-nowrap px-3 py-2"><InfoCell info={r.info} /></td>
                   <td className="whitespace-nowrap px-3 py-2">
                     {r.status !== "graded" && (
@@ -168,8 +194,9 @@ export function LedgerTable({ rows, view }: { rows: LedgerRow[]; view: LedgerVie
                 </>
               ) : (
                 <>
-                  <td className="px-3 py-2 text-right text-muted-foreground">{r.close}</td>
+                  <td className="px-3 py-2 text-right text-muted-foreground">{american(r.closePrice)}</td>
                   <td className="px-3 py-2 text-right"><Signed value={r.clv}>{signedPct(r.clv, 2)}</Signed></td>
+                  <td className="px-3 py-2 text-right"><Signed value={r.priceClv}>{signedPct(r.priceClv, 2)}</Signed></td>
                   <td className="whitespace-nowrap px-3 py-2"><InfoCell info={r.info} /></td>
                   <td className="px-3 py-2 capitalize">{r.result && <Badge tone={RESULT_TONE[r.result] ?? "muted"}>{r.result}</Badge>}</td>
                   <td className="px-3 py-2 text-right"><Signed value={r.pnl}>{units(r.pnl)}</Signed></td>
@@ -192,7 +219,7 @@ export function BreakdownTable<T extends Metrics>({ rows, labels }: { rows: T[];
       <table className="w-full text-sm tabular">
         <thead className="text-left text-xs text-muted-foreground">
           <tr className="border-b border-border">
-            {[...labels.map((l) => l.h), "Bets", "Staked", "Units", "ROI", "CLV", "Beat close"].map((h, i) => (
+            {[...labels.map((l) => l.h), "Bets", "Staked", "Units", "ROI", "Fair CLV", "Price CLV", "Beat fair close"].map((h, i) => (
               <th key={h} className={cn("px-3 py-2 font-medium", i >= labels.length && "text-right")}>{h}</th>
             ))}
           </tr>
@@ -206,6 +233,7 @@ export function BreakdownTable<T extends Metrics>({ rows, labels }: { rows: T[];
               <td className="px-3 py-2 text-right"><Signed value={r.pnl}>{units(r.pnl)}</Signed></td>
               <td className="px-3 py-2 text-right"><Signed value={r.roi}>{signedPct(r.roi)}</Signed></td>
               <td className="px-3 py-2 text-right"><Signed value={r.mean_clv}>{signedPct(r.mean_clv, 2)}</Signed></td>
+              <td className="px-3 py-2 text-right"><Signed value={r.mean_price_clv}>{signedPct(r.mean_price_clv, 2)}</Signed></td>
               <td className="px-3 py-2 text-right">{pct(r.beat_close, 0)}</td>
             </tr>
           ))}

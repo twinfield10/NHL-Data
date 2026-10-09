@@ -331,6 +331,22 @@ class SiteData:
 
         return self._timed_get(f"lines/{day}/{sorted(game_ids)}", LIST_TTL_SECONDS, load)
 
+    def book_prices(self, season: int, game_ids: list[int], point: str) -> pl.DataFrame | None:
+        """Every book's main-market price per game at ``point`` (``last`` = now, ``close`` = the
+        last before puck drop): ``game_id, market, book, line, price_1, price_2``."""
+        if not game_ids:
+            return None
+
+        def load() -> pl.DataFrame | None:
+            try:
+                rows = edges_mod.book_rows(self.store, season, game_ids, point=point)
+            except Exception:  # a bad odds file must not take the page down
+                logger.exception("book prices failed for %s", game_ids)
+                return None
+            return None if rows.is_empty() else rows.select("game_id", "market", "book", "line", "price_1", "price_2")
+
+        return self._timed_get(f"book_prices/{point}/{sorted(game_ids)}", LIST_TTL_SECONDS, load)
+
     # ------------------------------------------------------------------ ratings
     def rating_snapshot(self, day: date) -> date | None:
         """The latest rating snapshot dated on or before ``day`` (the one ``day``'s prices use)."""

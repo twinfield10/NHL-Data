@@ -211,6 +211,12 @@ def live_view(bets: pl.DataFrame, edges: pl.DataFrame | None, starts: pl.DataFra
     )
 
 
+
+def _mean_if(col: str, df: pl.DataFrame) -> pl.Expr:
+    """Mean of ``col`` as ``mean_<col>``, null when the frame doesn't carry it."""
+    return (pl.col(col).mean() if col in df.columns else pl.lit(None, dtype=pl.Float64)).alias(f"mean_{col}")
+
+
 def timing(bets: pl.DataFrame) -> pl.DataFrame:
     """Graded, non-void bets by how long before puck drop they were placed (``lead_bucket``
     from :func:`live_view`): count, mean CLV, share beating the close, units, ROI."""
@@ -218,10 +224,11 @@ def timing(bets: pl.DataFrame) -> pl.DataFrame:
     g = bets.filter(pl.col("graded_at").is_not_null() & (pl.col("result") != "void") & pl.col("lead_bucket").is_not_null())
     if g.is_empty():
         return pl.DataFrame(schema={"lead_bucket": pl.String, "bets": pl.UInt32, "staked": pl.Float64, "pnl": pl.Float64,
-                                    "mean_clv": pl.Float64, "beat_close": pl.Float64, "roi": pl.Float64})
+                                    "mean_clv": pl.Float64, "beat_close": pl.Float64, "mean_price_clv": pl.Float64, "roi": pl.Float64})
     return g.group_by("lead_bucket").agg(
         pl.len().alias("bets"), pl.col("stake_units").sum().alias("staked"), pl.col("pnl_units").sum().alias("pnl"),
         pl.col("clv").mean().alias("mean_clv"), (pl.col("clv") > 0).mean().alias("beat_close"),
+        _mean_if("price_clv", g),
     ).with_columns((pl.col("pnl") / pl.col("staked")).alias("roi")).sort(
         pl.col("lead_bucket").replace_strict(order, list(range(len(order)))))
 

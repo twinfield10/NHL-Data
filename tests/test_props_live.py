@@ -43,6 +43,19 @@ def test_market_probs_two_way_and_ladder() -> None:
     assert both["p_market"][0] == pytest.approx((dk["p_book"][0] + fd["p_book"][0]) / 2)
 
 
+def test_market_probs_prefers_two_way_books() -> None:
+    # Gauthier assists O0.5, 2026-10-09: two two-way books and two over-only books.
+    q = pl.DataFrame([quote("DK", "over", 170), quote("DK", "under", -235), quote("4C", "over", 150),
+                      quote("4C", "under", -189), quote("FD", "over", 110), quote("LV", "over", 100)])
+    m = live.market_probs(q)
+    two = [implied(170) / (implied(170) + implied(-235)), implied(150) / (implied(150) + implied(-189))]
+    assert m["p_market"][0] == pytest.approx(sum(two) / 2)  # over-only quotes left out
+    assert set(m["books"]) == {4} and set(m["two_way_books"]) == {2}
+    # One two-way book: not enough, so every book counts.
+    m1 = live.market_probs(q.filter(pl.col("book") != "4C"))
+    assert m1["two_way_books"][0] == 1 and m1["p_market"][0] == pytest.approx(m1["p_book"].median())
+
+
 def test_market_probs_outlier() -> None:
     q = pl.DataFrame([quote("A", "over", -150), quote("A", "under", 130), quote("B", "over", -150),
                       quote("B", "under", 130), quote("C", "over", 250), quote("C", "under", -300)])
@@ -246,4 +259,4 @@ def test_live_view_status_clv_and_timing() -> None:
     assert set(after.filter(pl.col("bet_id") != "d")["status"]) == {"closed"}
     t = ledger.timing(after)
     assert t.to_dicts() == [{"lead_bucket": "12h+", "bets": 1, "staked": 0.3, "pnl": 0.5, "mean_clv": 0.1,
-                             "beat_close": 1.0, "roi": pytest.approx(0.5 / 0.3)}]
+                             "beat_close": 1.0, "mean_price_clv": None, "roi": pytest.approx(0.5 / 0.3)}]

@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta, timezone
 
 import polars as pl
+import pytest
 
 from nhl.betting import info, ledger
 from nhl.props import ledger as props_ledger
@@ -86,7 +87,7 @@ def test_add_paper_records_snapshot_and_old_ledgers_load() -> None:
     # A ledger written before the snapshot columns still loads, then backfills.
     store.data[keys.BETS_LEDGER] = led.drop(list(info.SCHEMA))
     assert ledger.load(store)["info_grade"][0] is None  # type: ignore[arg-type]
-    assert info.backfill(store) == {"game": 1, "props": 0}  # type: ignore[arg-type]
+    assert info.backfill(store) == {"game": 1, "props": 0, "game_close_prices": 0}  # type: ignore[arg-type]
     assert ledger.load(store)["info_grade"][0] == "A"  # type: ignore[arg-type]
 
 
@@ -110,3 +111,19 @@ def test_breakdown_and_game_live_view() -> None:
     st = dict(zip(zip(v["market"], v["side"]), v["status"]))
     assert st == {("moneyline", 1): "graded", ("total", 1): "faded", ("total", 2): "gone"}
     assert v.filter(pl.col("market") == "total", pl.col("side") == 1)["clv_now"][0] > 0  # -110 vs 55% fair
+
+
+def test_price_clv_and_same_book_close() -> None:
+    df = pl.DataFrame({"price": [-115.0, 170.0, 145.0], "ref": [-138.0, 170.0, 150.0]})
+    v = df.select(ledger.price_clv(pl.col("price"), pl.col("ref")).alias("v"))["v"].to_list()
+    assert v[0] == pytest.approx((1 + 100 / 115) / (1 + 100 / 138) - 1)  # shortened: positive
+    assert v[1] == 0.0 and v[2] < 0  # unchanged; lengthened: negative
+
+    bets = pl.DataFrame({"bet_id": ["a", "b", "c"], "game_id": [1, 1, 1], "market": ["moneyline", "total", "total"],
+                         "book": ["DK", "DK", "DK"], "line": [None, 6.5, 5.5], "side": [2, 1, 1]},
+                        schema_overrides={"line": pl.Float64})
+    lines = pl.DataFrame({"game_id": [1, 1, 1], "market": ["moneyline", "total", "moneyline"], "book": ["DK", "DK", "FD"],
+                          "line": [None, 6.5, None], "price_1": [-150.0, -110.0, -140.0], "price_2": [130.0, -105.0, 120.0],
+                          "point": ["close"] * 3, "source": ["live"] * 3}, schema_overrides={"line": pl.Float64})
+    # Away moneyline at DK's close; over 6.5 at DK; no DK close at 5.5.
+    assert ledger._close_prices(bets, lines).to_list() == [130.0, -110.0, None]

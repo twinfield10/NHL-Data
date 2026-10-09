@@ -8,7 +8,8 @@ same way on closing-line value (CLV) and result.
   ``book``, ``price`` (American), ``stake_units``, ``tier``;
 * the model's view when placed: ``p_model``, ``p_market``, ``p_blend``, ``edge``,
   ``pregame_stamp``;
-* grading (filled by :func:`grade` once the game is final): ``close_line``, ``p_close``
+* grading (filled by :func:`grade` once the game is final): ``close_line``, ``close_price``
+  (the bet's book's last price before puck drop at the bet's line), ``p_close``
   (devigged closing consensus for the side), ``clv`` (p_close × decimal − 1, only when the
   close is at the bet's line), ``result`` (``win`` | ``loss`` | ``push``), ``pnl_units``,
   ``graded_at``.
@@ -37,7 +38,7 @@ SCHEMA = {
     "market": pl.String, "side": pl.Int8, "line": pl.Float64, "book": pl.String, "price": pl.Float64, "stake_units": pl.Float64,
     "tier": pl.String, "p_model": pl.Float64, "p_market": pl.Float64, "p_blend": pl.Float64, "edge": pl.Float64,
     "pregame_stamp": pl.String, "note": pl.String,
-    "close_line": pl.Float64, "p_close": pl.Float64, "clv": pl.Float64, "result": pl.String, "pnl_units": pl.Float64,
+    "close_line": pl.Float64, "close_price": pl.Float64, "p_close": pl.Float64, "clv": pl.Float64, "result": pl.String, "pnl_units": pl.Float64,
     "graded_at": pl.Datetime("us", "UTC"),
     **info.SCHEMA,
 }
@@ -118,6 +119,41 @@ def _latest_view(store: Store, day: date, game_id: int, market: str, side: int, 
     return e.row(0, named=True) if e.height else {}
 
 
+def price_clv(price: pl.Expr, ref: pl.Expr) -> pl.Expr:
+    """Price CLV: implied(ref) / implied(price) − 1, the same as decimal(price) / decimal(ref) − 1.
+
+    ``ref`` is the same book's price later (now or at the close) on the same side and line, so
+    the book's margin mostly cancels; positive when the price shortened after the bet."""
+    return pl.when(price < 0).then(1 + 100 / -price).otherwise(1 + price / 100) / pl.when(ref < 0).then(
+        1 + 100 / -ref).otherwise(1 + ref / 100) - 1
+
+
+def _close_prices(bets: pl.DataFrame, lines: pl.DataFrame) -> pl.Series:
+    """Each bet's book's closing price on its side, when that book closed at the bet's line."""
+    close = lines.filter((pl.col("point") == "close") & (pl.col("source") == "live")).select(
+        "game_id", "market", "book", "line", "price_1", "price_2").unique(["game_id", "market", "book", "line"], keep="last")
+    j = bets.select("bet_id", "game_id", "market", "book", "line", "side").join(
+        close, on=["game_id", "market", "book", "line"], how="left", nulls_equal=True)
+    j = j.with_columns(pl.when(pl.col("side") == 1).then("price_1").otherwise("price_2").alias("close_price"))
+    return bets.select("bet_id").join(j.select("bet_id", "close_price"), on="bet_id", how="left")["close_price"]
+
+
+def fill_close_prices(store: Store) -> int:
+    """Fill ``close_price`` on graded bets graded before it was recorded. Returns bets filled."""
+    led = load(store)
+    todo = led.filter(pl.col("graded_at").is_not_null() & pl.col("close_price").is_null())
+    if todo.is_empty():
+        return 0
+    seasons = sorted({int(g) // 1_000_000 for g in todo["game_id"].to_list()})
+    lines = pl.concat([lines_mod.build(store, int(f"{y}{y + 1}")) for y in seasons])
+    todo = todo.with_columns(_close_prices(todo, lines).alias("close_price"))
+    filled = todo.filter(pl.col("close_price").is_not_null())
+    if filled.height:
+        out = pl.concat([led.join(filled.select("bet_id"), on="bet_id", how="anti"), filled]).sort("placed_at")
+        store.put_parquet(keys.BETS_LEDGER, out.cast(SCHEMA).select(list(SCHEMA)))
+    return filled.height
+
+
 def grade(store: Store) -> int:
     """Grade every ungraded bet whose game is final. Returns bets graded."""
     led = load(store)
@@ -134,6 +170,7 @@ def grade(store: Store) -> int:
         devig.consensus(lines.filter(pl.col("market") == m), method, ("close",)) for m, method in evaluate.METHOD.items()
     ]).select("game_id", "market", pl.col("line").alias("close_line"), pl.col("p_fair").alias("close_p1"))
     scores = games.select("game_id", "home_score", "away_score")
+    todo = todo.with_columns(_close_prices(todo, lines).alias("close_price"))
     g = lines_mod.grade(todo.drop("close_line", "p_close", "clv", "result", "pnl_units", "graded_at"), scores)
     g = g.join(close, on=["game_id", "market"], how="left")
     dec = pl.when(pl.col("price") < 0).then(1 + 100 / -pl.col("price")).otherwise(1 + pl.col("price") / 100)

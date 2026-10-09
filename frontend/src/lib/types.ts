@@ -145,6 +145,9 @@ export interface Edge {
   bet_stake?: number | null;
   placed_at?: string | null;
   bet_clv?: number | null;
+  /** The bet's book's price now (the close once started), and price CLV against it. */
+  bet_book_now?: number | null;
+  bet_price_clv?: number | null;
 }
 
 export interface EdgesResponse {
@@ -220,6 +223,8 @@ export interface Bet extends BetInfo, LiveBet {
   stake_units: number;
   p_blend: number;
   edge: number;
+  /** The bet's book's last price before puck drop, at the bet's line. */
+  close_price: number | null;
   /** Devigged closing consensus for the side (null when the close moved off the bet's line). */
   p_close: number | null;
   clv: number | null;
@@ -260,6 +265,10 @@ export interface LiveBet {
   p_now: number | null;
   clv_now: number | null;
   status: BetStatus;
+  /** The bet's book's price now (pending only), and price CLV against the same book: its close
+   *  once graded, else now. decimal(price) / decimal(later) − 1. */
+  book_now: number | null;
+  price_clv: number | null;
 }
 
 /** graded; closed = started, awaiting grading; value = still a play now; faded = quoted, no longer
@@ -274,6 +283,7 @@ export interface BetInfoBreakdown extends Omit<BetTotals, "bets"> {
 }
 
 export interface OpenTotals {
+  mean_price_clv?: number | null;
   bets: number;
   staked: number;
   mean_clv: number | null;
@@ -286,6 +296,8 @@ export interface OpenTotals {
 }
 
 export interface BetTotals {
+  /** Mean price CLV: vs. the same book's close (graded) or price now (open). */
+  mean_price_clv?: number | null;
   bets: number;
   staked: number;
   pnl: number;
@@ -795,8 +807,10 @@ export interface PropEdge {
   /** Best book for this side, and its American price. */
   book: string;
   price: number;
-  /** Books quoting this player, stat and line. */
+  /** Books quoting this player, stat and line, and how many quote both sides (the consensus
+   *  uses only those when there are at least two). */
   books: number;
+  two_way_books?: number | null;
   p_model_side: number;
   p_market_side: number;
   /** Model-market blend for the side (what the edge uses). */
@@ -815,6 +829,9 @@ export interface PropEdge {
   placed_at: string | null;
   /** That bet's CLV against this row's consensus: p_market_side × decimal(bet_price) − 1. */
   bet_clv: number | null;
+  /** The bet's book's price now, and price CLV against it: decimal(bet_price) / decimal(now) − 1. */
+  bet_book_now?: number | null;
+  bet_price_clv?: number | null;
 }
 
 export interface PropsResponse {

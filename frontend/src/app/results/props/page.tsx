@@ -5,7 +5,6 @@ import { BreakdownTable, InfoBreakdown, type LedgerRow, LedgerTable } from "@/co
 import ResultsHeader, { GradedStats, OpenStats, useLedgerView } from "@/components/ResultsHeader";
 import { ErrorState, Loading, SectionTitle } from "@/components/ui";
 import { usePropBets } from "@/lib/api";
-import { american } from "@/lib/format";
 import { PROP_LABEL, propBet } from "@/lib/props";
 import type { PropBet } from "@/lib/types";
 
@@ -21,7 +20,7 @@ const toRow = (b: PropBet): LedgerRow => ({
     </span>
   ),
   book: b.book, price: b.price, stake: b.stake_units, edge: b.edge, nowPrice: b.now_price, nowBook: b.now_book,
-  close: american(b.close_price), clv: b.clv, clvNow: b.clv_now, status: b.status, result: b.result, pnl: b.pnl_units, info: b,
+  closePrice: b.close_price, clv: b.clv, clvNow: b.clv_now, priceClv: b.price_clv, bookNow: b.book_now, status: b.status, result: b.result, pnl: b.pnl_units, info: b,
 });
 
 function PropResults() {

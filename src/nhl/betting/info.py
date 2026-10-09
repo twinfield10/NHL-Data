@@ -140,7 +140,8 @@ def props_prefix(day: date) -> str:
 
 
 def backfill(store: Store) -> dict[str, int]:
-    """Fill the snapshot columns on every paper bet in both ledgers that lacks them. Returns
+    """Fill the snapshot columns on every paper bet in both ledgers that lacks them, and the
+    game ledger's same-book closing prices on bets graded before they were recorded. Returns
     bets filled per ledger."""
     from nhl.betting import ledger
     from nhl.props import ledger as props_ledger
@@ -157,7 +158,14 @@ def backfill(store: Store) -> dict[str, int]:
         out = pl.concat([led.join(filled.select("bet_id"), on="bet_id", how="anti"), filled]).sort("placed_at")
         store.put_parquet(key, out.cast(mod.SCHEMA).select(list(mod.SCHEMA)))
         done[name] = filled.filter(pl.col("info_grade").is_not_null()).height
+    done["game_close_prices"] = ledger.fill_close_prices(store)
     return done
+
+
+
+def _mean_if(col: str, df: pl.DataFrame) -> pl.Expr:
+    """Mean of ``col`` as ``mean_<col>``, null when the frame doesn't carry it."""
+    return (pl.col(col).mean() if col in df.columns else pl.lit(None, dtype=pl.Float64)).alias(f"mean_{col}")
 
 
 def breakdown(bets: pl.DataFrame) -> pl.DataFrame:
@@ -166,11 +174,12 @@ def breakdown(bets: pl.DataFrame) -> pl.DataFrame:
     g = bets.filter(pl.col("graded_at").is_not_null() & ~pl.col("result").is_in(["void", "push"])) if bets.height else bets
     if g.is_empty():
         return pl.DataFrame(schema={"window": pl.String, "info_grade": pl.String, "bets": pl.UInt32, "staked": pl.Float64,
-                                    "pnl": pl.Float64, "roi": pl.Float64, "mean_clv": pl.Float64, "beat_close": pl.Float64})
+                                    "pnl": pl.Float64, "roi": pl.Float64, "mean_clv": pl.Float64, "beat_close": pl.Float64, "mean_price_clv": pl.Float64})
     order = {"open": 0, "pre": 1, "post": 2}
     return g.group_by("window", "info_grade").agg(
         pl.len().alias("bets"), pl.col("stake_units").sum().alias("staked"), pl.col("pnl_units").sum().alias("pnl"),
         pl.col("clv").mean().alias("mean_clv"), (pl.col("clv") > 0).mean().alias("beat_close"),
+        _mean_if("price_clv", g),
     ).with_columns((pl.col("pnl") / pl.col("staked")).alias("roi")).sort(
         pl.col("window").replace_strict(order, default=9, return_dtype=pl.Int8), pl.col("info_grade"), nulls_last=True)
 

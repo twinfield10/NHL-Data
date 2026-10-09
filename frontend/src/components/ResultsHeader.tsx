@@ -53,9 +53,10 @@ export default function ResultsHeader({ title, view, onView, pending, graded, ri
 /** Ungraded bets against the market now. */
 export function OpenStats({ open }: { open: OpenTotals }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
       <Stat label="Pending bets" value={`${open.bets} · ${open.staked.toFixed(2)}u`} />
-      <Stat label="Live CLV" value={signedPct(open.mean_clv, 2)} tone={tone(open.mean_clv)} />
+      <Stat label="Live fair CLV" value={signedPct(open.mean_clv, 2)} tone={tone(open.mean_clv)} />
+      <Stat label="Live price CLV" value={signedPct(open.mean_price_clv, 2)} tone={tone(open.mean_price_clv)} />
       <Stat label="Beating the market" value={pct(open.beating, 0)} />
       <Stat label="Still +EV" value={open.value} />
       <Stat label="Faded / Pulled / Closed" value={`${open.faded} / ${open.gone} / ${open.closed}`} />
@@ -66,12 +67,13 @@ export function OpenStats({ open }: { open: OpenTotals }) {
 /** Headline numbers for graded bets. */
 export function GradedStats({ totals }: { totals: BetTotals }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
       <Stat label="Graded bets" value={totals.bets} />
       <Stat label="Units won" value={units(totals.pnl)} tone={tone(totals.pnl)} />
       <Stat label="ROI" value={signedPct(totals.roi)} tone={tone(totals.roi)} />
-      <Stat label="Mean CLV" value={signedPct(totals.mean_clv, 2)} tone={tone(totals.mean_clv)} />
-      <Stat label="Beat the close" value={pct(totals.beat_close, 0)} />
+      <Stat label="Mean fair CLV" value={signedPct(totals.mean_clv, 2)} tone={tone(totals.mean_clv)} />
+      <Stat label="Mean price CLV" value={signedPct(totals.mean_price_clv, 2)} tone={tone(totals.mean_price_clv)} />
+      <Stat label="Beat the fair close" value={pct(totals.beat_close, 0)} />
     </div>
   );
 }

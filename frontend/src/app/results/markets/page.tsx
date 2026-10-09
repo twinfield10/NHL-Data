@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { BreakdownTable, fairClose, InfoBreakdown, type LedgerRow, LedgerTable } from "@/components/BetLedger";
+import { BreakdownTable, InfoBreakdown, type LedgerRow, LedgerTable } from "@/components/BetLedger";
 import ResultsHeader, { OpenStats, GradedStats, useLedgerView } from "@/components/ResultsHeader";
 import { Badge, ErrorState, Loading, Pills, SectionTitle } from "@/components/ui";
 import { useBets } from "@/lib/api";
@@ -25,7 +25,7 @@ const toRow = (b: Bet): LedgerRow => ({
     </span>
   ),
   book: b.book, price: b.price, stake: b.stake_units, edge: b.edge, nowPrice: b.now_price, nowBook: b.now_book,
-  close: fairClose(b.p_close), clv: b.clv, clvNow: b.clv_now, status: b.status, result: b.result, pnl: b.pnl_units, info: b,
+  closePrice: b.close_price, clv: b.clv, clvNow: b.clv_now, priceClv: b.price_clv, bookNow: b.book_now, status: b.status, result: b.result, pnl: b.pnl_units, info: b,
 });
 
 function MarketResults() {
