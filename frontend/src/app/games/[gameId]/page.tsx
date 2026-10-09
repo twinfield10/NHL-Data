@@ -48,9 +48,9 @@ function Game({ gameId }: { gameId: string }) {
       <Card className="overflow-hidden">
         <GameBanner
           large
-          away={{ abbr: game.away_abbr, info: data.teams[game.away_abbr], color: colors.away,
+          away={{ abbr: game.away_abbr, info: data.teams[game.away_abbr],
             goalie: p ? { name: p.away_starter, p: p.away_starter_p, status: p.away_starter_dfo } : undefined }}
-          home={{ abbr: game.home_abbr, info: data.teams[game.home_abbr], color: colors.home,
+          home={{ abbr: game.home_abbr, info: data.teams[game.home_abbr],
             goalie: p ? { name: p.home_starter, p: p.home_starter_p, status: p.home_starter_dfo } : undefined }}
           status={gameStatus(game, p?.start_time ?? data.markets.start)}
           venue={game.venue_name}

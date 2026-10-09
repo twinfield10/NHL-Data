@@ -4,11 +4,11 @@
 
 :root {
   --background: #f8fafc;
-  --foreground: #0f172a;
+  --foreground: #020617;
   --card: #ffffff;
-  --border: #e2e8f0;
+  --border: #cbd5e1;
   --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --muted-foreground: #475569;
   --accent: #0284c7;      /* ice blue */
   --positive: #059669;
   --negative: #dc2626;
@@ -16,16 +16,16 @@
 }
 
 .dark {
-  --background: #0b1220;
-  --foreground: #e2e8f0;
-  --card: #131c2e;
-  --border: #243049;
-  --muted: #1a2438;
-  --muted-foreground: #8b9bb4;
+  --background: #000000;
+  --foreground: #f5f5f5;
+  --card: #0e0e0e;
+  --border: #3a3a3a;
+  --muted: #1a1a1a;
+  --muted-foreground: #b0b0b0;
   --accent: #38bdf8;
   --positive: #34d399;
   --negative: #f87171;
-  --away: #475569;
+  --away: #525252;
 }
 
 @theme inline {

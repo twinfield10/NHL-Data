@@ -47,7 +47,7 @@ function columns(s: TeamScales, open: number | null): Column<TeamRating>[] {
         <IdentityCell abbr={t.abbr}>
           <span className="inline-flex items-center gap-1.5">
             <span className="font-medium">{t.place} {t.name}</span>
-            {open === t.team_id ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+            {open === t.team_id ? <ChevronDown className="h-3.5 w-3.5 text-white/75" /> : <ChevronRight className="h-3.5 w-3.5 text-white/75" />}
           </span>
         </IdentityCell>
       ),

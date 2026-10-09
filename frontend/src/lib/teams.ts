@@ -90,6 +90,23 @@ function visible(t: Team, dark: boolean): string {
 /** One team's color, readable on the current background. */
 export const teamColor = (abbr: string, dark: boolean) => visible(team(abbr), dark);
 
+/** Blend a color toward black (amount 0..1). */
+function darken(hex: string, amount: number): string {
+  const mixed = rgb(hex).map((c) => Math.round(c * (1 - amount)));
+  return `#${mixed.map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+}
+
+/**
+ * A solid background that always carries white text: darkened until white reads on it (≥ 6:1),
+ * and in dark mode lifted off pure black so the fill still shows against the page.
+ */
+export function fillColor(hex: string, dark: boolean): string {
+  let c = hex;
+  for (let i = 0; i < 20 && luminance(c) > 0.125; i++) c = darken(c, 0.1);
+  if (dark) for (let i = 0; i < 20 && luminance(c) < 0.012; i++) c = lighten(c, 0.06);
+  return c;
+}
+
 /** Hex color with an alpha channel, for gradients. */
 export const alpha = (hex: string, a: number) => `${hex}${Math.round(a * 255).toString(16).padStart(2, "0")}`;
 
