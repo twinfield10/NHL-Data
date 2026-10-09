@@ -52,12 +52,12 @@ def deployment() -> pl.DataFrame:
 
 
 def rate_rows(g60: tuple[float, float], a60: tuple[float, float]) -> pl.DataFrame:
-    return pl.DataFrame({"game_id": [1, 1], "player_id": [1, 2],
+    return pl.DataFrame({"game_id": [1, 1], "player_id": [1, 2], "en_pg": [0.5, 0.5],
                          **{f"g60_{b}": list(g60) for b in rates.BUCKET_NAMES},
                          **{f"a60_{b}": list(a60) for b in rates.BUCKET_NAMES}})
 
 
-MIX = {"f": {"ev": 0.8, "pp": 0.18, "sh": 0.02}, "apg": {"ev": 1.6, "pp": 1.8, "sh": 1.0}}
+MIX = {"f": {"ev": 0.72, "pp": 0.18, "sh": 0.02, "en": 0.08}, "apg": {"ev": 1.6, "pp": 1.8, "sh": 1.0, "en": 1.4}}
 
 
 def test_shares_split_team_goals() -> None:
@@ -107,7 +107,7 @@ def test_season_rates_point_in_time() -> None:
     def logs(season: int, days: list[date], goals: list[float]) -> pl.DataFrame:
         n = len(days)
         base = {"game_id": list(range(season, season + n)), "game_date": days, "season": [season] * n,
-                "player_id": [7] * n, "team_id": [10] * n, "grp": ["F"] * n}
+                "player_id": [7] * n, "team_id": [10] * n, "grp": ["F"] * n, "gp": [1.0] * n}
         cols = {f"{s}_{b}": [0.0] * n for s in rates.STATS for b in rates.BUCKET_NAMES}
         cols["toi_ev"], cols["ixg_ev"], cols["goals_ev"] = [15.0] * n, [0.3] * n, goals
         return pl.DataFrame({**base, **cols})

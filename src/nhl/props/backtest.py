@@ -99,7 +99,8 @@ def baselines(logs: dict[int, pl.DataFrame], season: int) -> pl.DataFrame:
 
 def run_season(store: Store, season: int, shrink: rates.Shrink = rates.Shrink(),
                logs: dict[int, pl.DataFrame] | None = None, dep: pl.DataFrame | None = None,
-               power: float = project.RATE_POWER) -> pl.DataFrame:
+               power: float = project.RATE_POWER, team_term: bool = True,
+               dep_power: float = project.DEP_POWER) -> pl.DataFrame:
     """All methods' probabilities and the outcome for every scored skater-game of ``season``.
 
     Returns:
@@ -113,7 +114,8 @@ def run_season(store: Store, season: int, shrink: rates.Shrink = rates.Shrink(),
     history = store.read_parquet_required(keys.pregame_history(season))
     dep = dep if dep is not None else deployment(store, season)
     pit, mix = rates.season_rates(store, season, shrink, logs)
-    sh = project.shares(dep, pit, mix, power)
+    team_f = rates.team_mix(logs, season, mix, shrink) if team_term else None
+    sh = project.shares(dep, pit, mix, power, team_f, dep_power)
 
     dists = project.team_goal_dists(history)
     league_mean = float(dists["mean_goals"].mean())

@@ -27,11 +27,21 @@ from nhl.props.rates import BUCKET_NAMES
 from nhl.sim.markets import MAX_GOALS
 
 #: Deployment share column per bucket.
-SHARE_COL = {"ev": "s5", "pp": "spp", "sh": "spk"}
+#: Ice-time column per bucket: the projected deployment shares, and for empty-net play the
+#: player's own empty-net minutes per game (from :mod:`nhl.props.rates`).
+SHARE_COL = {"ev": "s5", "pp": "spp", "sh": "spk", "en": "en_pg"}
+#: Deployment columns (the rest of :data:`SHARE_COL` comes with the rates).
+DEP_COLS = ("s5", "spp", "spk")
 #: A player is never more than this likely to be on a goal as an assister.
 MAX_ASSIST_P = 0.9
 #: Exponent on player rates in the shares (see :func:`shares`).
 RATE_POWER = 1.0
+#: Exponent on projected deployment shares (see :func:`shares`). The lineup projection pulls
+#: each player's share toward his slot's typical share and averages recent games, which
+#: understates how much (and how high-leverage) stars play: at 1.0 the top decile of projected
+#: scorers was 7% short and the bottom 5-8% high. Tuned on 2016-19 (1.3 best); out of sample on
+#: 2019-26 it cut points >= 1 log loss by 0.0014.
+DEP_POWER = 1.3
 #: Beta-binomial concentration per stat (None = binomial); see :func:`tail_probs`.
 CONCENTRATION: dict[str, float | None] = {"goals": None, "ast": None, "points": None}
 #: Thresholds scored and stored: P(stat >= k).
@@ -74,7 +84,7 @@ def team_goal_dists(history: pl.DataFrame) -> pl.DataFrame:
 
 
 def shares(dep: pl.DataFrame, rates: pl.DataFrame, mix: dict[str, dict[str, float]],
-           power: float = 1.0) -> pl.DataFrame:
+           power: float = 1.0, team_f: pl.DataFrame | None = None, dep_power: float = 1.0) -> pl.DataFrame:
     """Per projected skater: ``p_goal`` and ``p_assist`` per team goal.
 
     Args:
@@ -84,25 +94,34 @@ def shares(dep: pl.DataFrame, rates: pl.DataFrame, mix: dict[str, dict[str, floa
         rates: :func:`nhl.props.rates.season_rates` (point-in-time rates per game).
         mix: League ``f`` (goal share by bucket) and ``apg`` (assists per goal by bucket).
         power: Rates enter the shares as ``rate ** power``; above 1 spreads players apart.
+        team_f: Per (game, team) share of goals by bucket (``f_ev`` ...,
+            :func:`nhl.props.rates.team_mix`); the league's ``mix["f"]`` when None.
     """
-    rate_cols = [f"{k}_{b}" for k in ("g60", "a60") for b in BUCKET_NAMES]
+    rate_cols = [f"{k}_{b}" for k in ("g60", "a60") for b in BUCKET_NAMES] + ["en_pg"]
     weight = dep.select("p_dressed").to_series() if "p_dressed" in dep.columns else None
-    df = dep.select("game_id", "team_id", "player_id", "position", *SHARE_COL.values(),
+    df = dep.select("game_id", "team_id", "player_id", "position", *DEP_COLS,
                     *(["p_dressed"] if weight is not None else [])).join(
         rates.select("game_id", "player_id", *rate_cols), on=["game_id", "player_id"], how="left")
     # Players with no rate row (no game log yet, placeholders): their group's mean rate that game.
     grp = pl.when(pl.col("position") == "D").then(pl.lit("D")).otherwise(pl.lit("F"))
     df = df.with_columns(grp.alias("_grp")).with_columns(
         [pl.col(c).fill_null(pl.col(c).mean().over("game_id", "_grp")).fill_null(pl.col(c).mean()) for c in rate_cols])
+    if team_f is not None:
+        df = df.join(team_f, on=["game_id", "team_id"], how="left")
+    f = {b: (pl.col(f"f_{b}").fill_null(mix["f"][b]) if team_f is not None else pl.lit(mix["f"][b])) for b in SHARE_COL}
     dressed = pl.col("p_dressed").fill_null(1.0) if weight is not None else pl.lit(1.0)
     exprs_g, exprs_a = [], []
     for b, share in SHARE_COL.items():
         # Teammates count by how likely they dress; the player's own share is conditional on
         # his dressing (a prop on a player who sits is void).
-        wg = pl.col(share) * pl.col(f"g60_{b}") ** power
-        wa = pl.col(share) * pl.col(f"a60_{b}") ** power
-        exprs_g.append(mix["f"][b] * wg / (wg * dressed).sum().over("game_id", "team_id"))
-        exprs_a.append(mix["f"][b] * mix["apg"][b] * wa / (wa * dressed).sum().over("game_id", "team_id"))
+        if share in DEP_COLS:
+            ice = pl.col(share) ** dep_power
+        else:  # empty net: his own minutes per game, only if he's projected to play at all
+            ice = pl.when(pl.col("s5") > 0).then(pl.col(share)).otherwise(0.0)
+        wg = ice * pl.col(f"g60_{b}") ** power
+        wa = ice * pl.col(f"a60_{b}") ** power
+        exprs_g.append(f[b] * wg / (wg * dressed).sum().over("game_id", "team_id"))
+        exprs_a.append(f[b] * mix["apg"][b] * wa / (wa * dressed).sum().over("game_id", "team_id"))
     out = df.with_columns(
         pl.sum_horizontal([e.fill_nan(0.0) for e in exprs_g]).alias("p_goal"),
         pl.sum_horizontal([e.fill_nan(0.0) for e in exprs_a]).clip(0.0, MAX_ASSIST_P).alias("p_assist"),
@@ -164,13 +183,13 @@ def project_players(player_shares: pl.DataFrame, goal_dists: pl.DataFrame,
 
 
 #: Logit recalibration ``logit p' = a + b · logit p`` per (stat, k), fitted on the 2016-2026
-#: backtest (444,883 skater-games; out of sample on 2019-26 when fitted on 2016-19 it gained
-#: 0.0001-0.0005 log loss). b > 1: the raw projection is slightly too compressed (stars low,
-#: depth players high). A k above the fitted ones uses the stat's highest fitted k.
+#: backtest (444,883 skater-games). Since the empty-net bucket and :data:`DEP_POWER`
+#: (2026-10-09) the slopes are 0.95-1.04 and the out-of-sample gain is nil; it stays as a guard.
+#: A k above the fitted ones uses the stat's highest fitted k.
 CALIBRATION: dict[tuple[str, int], tuple[float, float]] = {
-    ("goals", 1): (0.105, 1.058), ("goals", 2): (0.059, 1.010),
-    ("ast", 1): (0.114, 1.095), ("ast", 2): (0.278, 1.074),
-    ("points", 1): (0.073, 1.114), ("points", 2): (0.255, 1.095), ("points", 3): (0.244, 1.038),
+    ("goals", 1): (0.057, 1.026), ("goals", 2): (-0.192, 0.945),
+    ("ast", 1): (0.021, 1.003), ("ast", 2): (-0.014, 0.982),
+    ("points", 1): (0.040, 1.036), ("points", 2): (0.057, 1.009), ("points", 3): (-0.099, 0.956),
 }
 
 

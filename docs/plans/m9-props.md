@@ -205,11 +205,11 @@ phases need that history for F.
 
 | target | model | without the team term | season average | last 10 |
 |---|---|---|---|---|
-| goals ≥ 1 | **0.3926** | 0.3938 | 0.4105 | 0.4187 |
+| goals ≥ 1 | **0.3926** (0.3922 after the 2026-10-09 fix) | 0.3938 | 0.4105 | 0.4187 |
 | goals ≥ 2 | **0.0763** | 0.0766 | 0.0786 | 0.0838 |
-| assists ≥ 1 | **0.5186** | 0.5206 | 0.5331 | 0.5423 |
+| assists ≥ 1 | **0.5186** (0.5179) | 0.5206 | 0.5331 | 0.5423 |
 | assists ≥ 2 | **0.1533** | 0.1544 | 0.1565 | 0.1642 |
-| points ≥ 1 | **0.5970** | 0.5997 | 0.6087 | 0.6178 |
+| points ≥ 1 | **0.5970** (0.5959) | 0.5997 | 0.6087 | 0.6178 |
 | points ≥ 2 | **0.2633** | 0.2654 | 0.2671 | 0.2769 |
 | points ≥ 3 | **0.0794** | 0.0804 | 0.0807 | 0.0847 |
 
@@ -227,10 +227,23 @@ phases need that history for F.
 - A logit recalibration fitted on 2016-19 and tested on 2019-26: +0.0001 to +0.0005 (slopes
   1.03-1.08). Left to the market blend in phase F.
 
+**Stars' under-prediction (fixed 2026-10-09).** Grouped by projected points per game, the
+top decile was 7% short (0.93 vs 1.00; 2+ points 24.0% vs 26.7%) and the bottom 5-8% high.
+Variance tracked the mean, so the bias was in the mean. Two causes, plus one ruled out:
+
+| Change | Why | Points ≥ 1 log loss, 2019-26 out of sample |
+|---|---|---|
+| **Empty-net bucket** (`rates.py`: `EN_opp` + `EN_own`; a player's own empty-net minutes per game, shrunk with 5 games) | Empty-net play was folded into even strength and shared by 5v5 ice time. The top decile gets ~16x the bottom's extra-attacker minutes (29 s vs 1.8 s a game) but only 1.2x the even-strength time; empty net is ~10% of their points | part of the -0.0014 below |
+| **Deployment exponent 1.3** (`project.DEP_POWER`, props only) | The lineup projection pulls each player toward his slot's typical share and averages recent games, understating how much (and how high-leverage) stars play. Tuned on 2016-19 | **-0.0014** together (tuned seasons -0.0010) |
+| Team-specific goal mix by strength (`rates.team_mix`, kept) | A strong power play scores more of its goals there | ~0 (+0.00002) |
+
+After: top decile 0.98 vs 1.00 points, 2+ points 25.9% vs 26.7%, bottom decile on target. Log
+loss improved on every target out of sample except goals ≥ 2 (flat). The live logit
+calibration was refit (slopes now 0.95-1.04, out-of-sample gain nil; kept as a guard). Pooled:
+goals ≥ 1 0.3922, assists ≥ 1 0.5179, points ≥ 1 0.5959. The gate is unchanged: 2+ goals in
+2017-18 still trails the no-team-term version by 0.0001.
+
 **Open items:**
-- Stars' 2+ point nights are under-predicted (top decile 24.0% vs 26.7% realized), and
-  low-usage players are slightly over-predicted. Candidates: team-specific PP goal share
-  (stars carry the PP), and score-state ice time.
 - Shots on goal, blocks and saves wait for the team shot-volume layer (phase C).
 
 ## Phase D: live edges and the paper ledger (2026-10-08)
