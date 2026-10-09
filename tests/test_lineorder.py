@@ -1,4 +1,4 @@
-from nhl.api.lineorder import order_lineup, order_unit
+from nhl.api.lineorder import natural_role, order_lineup, order_unit, unit_roles
 
 
 def _p(pid, pos, slot=None):
@@ -23,3 +23,23 @@ def test_order_lineup_reorders_lines_and_pairs_only():
             _p(6, "C", None), _p(7, "L", None)]
     out = order_lineup(rows, {4: "R", 5: "L"})
     assert [p["player_id"] for p in out] == [3, 2, 1, 5, 4, 6, 7]
+
+
+def test_unit_roles_five_on_five_slots_and_pairs():
+    # Two centres on one line: the right-shot one plays the right wing.
+    line = [{"player_id": 1, "position": "C"}, {"player_id": 2, "position": "L"}, {"player_id": 3, "position": "C"}]
+    hands = {1: "L", 2: "L", 3: "R"}
+    assert unit_roles(line, hands) == ["LW", "C", "RW"]
+    # Two left shots on a pair: one of them plays the right side.
+    pair = [{"player_id": 4, "position": "D"}, {"player_id": 5, "position": "D"}]
+    assert unit_roles(pair, {4: "L", 5: "L"}) == ["LD", "RD"]
+
+
+def test_unit_roles_special_teams_use_own_position():
+    pp = [{"player_id": i, "position": pos} for i, pos in enumerate(["C", "C", "L", "R", "D"], start=1)]
+    assert unit_roles(pp, {5: "R"}, five_on_five=False) == ["LW", "C", "RW", "C", "RD"]
+
+
+def test_natural_role():
+    assert natural_role({"player_id": 1, "position": "D"}, {}) == "D"
+    assert natural_role({"player_id": 1, "position": "R"}) == "RW"

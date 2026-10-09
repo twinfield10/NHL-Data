@@ -132,9 +132,9 @@ export default function GameCard({ g, edges, bets, teams, threeWay, expanded = f
       )}
     >
       <GameBanner
-        away={{ abbr: g.away_team_abbr, info: teams[g.away_team_abbr], color: colors.away, price: find("moneyline", 2)?.price,
+        away={{ abbr: g.away_team_abbr, info: teams[g.away_team_abbr], price: find("moneyline", 2)?.price,
           tone: awayTone, goalie: { name: g.away_starter, p: g.away_starter_p, status: g.away_starter_dfo } }}
-        home={{ abbr: g.home_team_abbr, info: teams[g.home_team_abbr], color: colors.home, price: find("moneyline", 1)?.price,
+        home={{ abbr: g.home_team_abbr, info: teams[g.home_team_abbr], price: find("moneyline", 1)?.price,
           tone: homeTone, goalie: { name: g.home_starter, p: g.home_starter_p, status: g.home_starter_dfo } }}
         status={gameStatus(g, g.start_time)}
         venue={g.venue_name}
@@ -188,8 +188,8 @@ export function UnpricedGameCard({ g, teams, lines, threeWay, expanded = false }
   return (
     <Link href={`/games/${g.game_id}`} className="block overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-muted-foreground">
       <GameBanner
-        away={{ abbr: g.away_abbr, info: teams[g.away_abbr], color: colors.away, price: find("moneyline", 2)?.price }}
-        home={{ abbr: g.home_abbr, info: teams[g.home_abbr], color: colors.home, price: homeMl?.price }}
+        away={{ abbr: g.away_abbr, info: teams[g.away_abbr], price: find("moneyline", 2)?.price }}
+        home={{ abbr: g.home_abbr, info: teams[g.home_abbr], price: homeMl?.price }}
         status={gameStatus(g, g.start_time)}
         venue={g.venue_name}
         location={g.venue_location}

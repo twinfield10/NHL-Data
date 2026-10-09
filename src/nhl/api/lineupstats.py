@@ -119,3 +119,127 @@ def goalie_source(dfo_goalies: pl.DataFrame | None, tweets: pl.DataFrame | None,
     return {"goalie_name": r["goalie_name"], "status": r["status"], "details": r["news_details"],
             "source_name": r["news_source_name"], "url": r["news_source_url"], "updated_at": r["news_created_at"],
             "tweet": _tweet(tweets, r["news_source_url"])}
+
+
+#: Special-teams unit kind -> per-player prefix.
+SPECIAL = {"PP": "pp", "PK": "pk"}
+#: A skater counts toward a league color scale with at least this share of his team's time in
+#: that state (a regular, so early-season one-shift samples don't stretch the scale).
+REGULAR_SHARE = 0.25
+
+
+def special_teams(units: pl.DataFrame | None) -> pl.DataFrame | None:
+    """Every skater's power-play (5v4) and penalty-kill (4v5) usage in a season, from the observed
+    units: ``player_id, kind, toi_s, share`` (of his teams' time in that state), ``xgf60, xga60``
+    on ice. Summed over teams for a traded player."""
+    if units is None or units.is_empty():
+        return None
+    per_team = (
+        units.filter(pl.col("kind").is_in(list(SPECIAL))).explode("player_ids", empty_as_null=False).rename({"player_ids": "player_id"})
+        .group_by("player_id", "team_id", "kind")
+        .agg(pl.col("toi_s").sum(), pl.col("xgf").sum(), pl.col("xga").sum(), pl.col("team_toi_s").first())
+    )
+    return per_team.group_by("player_id", "kind").agg(
+        pl.col("toi_s").sum(), pl.col("xgf").sum(), pl.col("xga").sum(), pl.col("team_toi_s").sum(),
+    ).filter(pl.col("toi_s") > 0).select(
+        "player_id", "kind", "toi_s",
+        (pl.col("toi_s") / pl.col("team_toi_s")).alias("share"),
+        (pl.col("xgf") * 3600 / pl.col("toi_s")).alias("xgf60"),
+        (pl.col("xga") * 3600 / pl.col("toi_s")).alias("xga60"),
+    )
+
+
+def special_by_player(table: pl.DataFrame | None, pids: list[int]) -> dict[int, dict]:
+    """``player_id -> {pp: {toi_s, share, xgf60, xga60} | None, pk: ...}`` for ``pids``."""
+    out: dict[int, dict] = {pid: {"pp": None, "pk": None} for pid in pids}
+    if table is None:
+        return out
+    for r in table.filter(pl.col("player_id").is_in(pids)).iter_rows(named=True):
+        out[r.pop("player_id")][SPECIAL[r.pop("kind")]] = r
+    return out
+
+
+def spread(values: list[float | None], center: float = 0.0, q: float = 0.95) -> float:
+    """The ``q`` quantile of ``|value - center|``: the saturation point of a heat column (as
+    ``heatScale`` on the ratings pages), 1 when there is nothing to scale."""
+    d = sorted(abs(v - center) for v in values if v is not None and v == v)
+    if not d:
+        return 1.0
+    return d[min(len(d) - 1, int(q * (len(d) - 1)))] or 1.0
+
+
+def _centered(rates: pl.Series, toi: pl.Series) -> dict:
+    """``{center, scale}`` for a rate: TOI-weighted league mean and its spread."""
+    if rates.is_empty() or toi.sum() <= 0:
+        return {"center": 0.0, "scale": 1.0}
+    center = float((rates * toi).sum() / toi.sum())
+    return {"center": center, "scale": spread(rates.to_list(), center)}
+
+
+def season_scales(onice_summary: pl.DataFrame | None, special: pl.DataFrame | None, starts: pl.DataFrame | None) -> dict:
+    """League color scales for one season's results: on-ice 5v5 xGF / xGA / xGD per 60 (regular
+    skaters: at least a quarter of the 90th-percentile TOI), power-play xGF/60 and penalty-kill
+    xGA/60 (regulars on that unit), goalie Sv% and GSAx. Each is ``{center, scale}``."""
+    out: dict[str, dict] = {}
+    if onice_summary is not None and not onice_summary.is_empty():
+        p = onice(onice_summary, onice_summary["player_id"].unique().to_list())
+        df = pl.DataFrame(list(p.values()))
+        df = df.filter(pl.col("toi_s") >= 0.25 * df["toi_s"].quantile(0.9))
+        out["xgf"] = _centered(df["xgf60"], df["toi_s"])
+        out["xga"] = _centered(df["xga60"], df["toi_s"])
+        out["xgd"] = {"center": 0.0, "scale": spread((df["xgf60"] - df["xga60"]).to_list())}
+    if special is not None:
+        for kind, col in (("PP", "xgf60"), ("PK", "xga60")):
+            reg = special.filter((pl.col("kind") == kind) & (pl.col("share") >= REGULAR_SHARE))
+            out[SPECIAL[kind]] = _centered(reg[col], reg["toi_s"])
+    if starts is not None and not starts.is_empty():
+        g = starts.group_by("starter").agg(pl.col("shots_against").sum(), pl.col("goals_against").sum(), pl.col("gsax").sum(),
+                                           pl.len().alias("n"))
+        g = g.filter((pl.col("n") >= max(1, 0.25 * g["n"].quantile(0.9))) & (pl.col("shots_against") > 0))
+        sv = 1 - g["goals_against"] / g["shots_against"]
+        out["sv_pct"] = _centered(sv, g["shots_against"].cast(pl.Float64))
+        out["gsax"] = {"center": 0.0, "scale": spread(g["gsax"].to_list())}
+    return out
+
+
+def rating_scales(skaters: pl.DataFrame | None, goalies: pl.DataFrame | None) -> dict:
+    """League color scales for the talent ratings, from every rated player (centered at 0, the
+    same scales as the ratings pages)."""
+    out = {}
+    if skaters is not None:
+        for k in ("ev_off", "ev_def", "ev_net", "pp_off", "pk_def", "finishing"):
+            out[k] = spread(skaters[k].to_list())
+    if goalies is not None:
+        out["save"] = spread(goalies["save"].to_list())
+    return out
+
+
+def team_special_teams(logs: pl.DataFrame | None) -> dict[int, dict]:
+    """``team_id -> {pp: {pct, rank, goals, opps}, pk: {...}}``: regular-season power-play
+    conversion (PP goals / opportunities) and penalty-kill success (1 − PP goals against / times
+    shorthanded), ranked across the league (1 = best, ties share the better rank)."""
+    if logs is None or logs.is_empty():
+        return {}
+    t = logs.filter(pl.col("game_id").cast(pl.String).str.slice(4, 2) == "02")
+    opps = t.filter(pl.col("strength") == "all").select("team_id", "opp_team_id", "pp_opportunities")
+    df = (
+        opps.group_by("team_id").agg(pl.col("pp_opportunities").sum().alias("pp_opps"))
+        .join(opps.group_by(pl.col("opp_team_id").alias("team_id")).agg(pl.col("pp_opportunities").sum().alias("pk_opps")),
+              on="team_id", how="full", coalesce=True)
+        .join(t.filter(pl.col("strength") == "PP").group_by("team_id").agg(pl.col("gf").sum().alias("pp_goals")),
+              on="team_id", how="left")
+        .join(t.filter(pl.col("strength") == "SH").group_by("team_id").agg(pl.col("ga").sum().alias("pk_goals")),
+              on="team_id", how="left")
+        .fill_null(0)
+        .with_columns(
+            pl.when(pl.col("pp_opps") > 0).then(pl.col("pp_goals") / pl.col("pp_opps")).alias("pp_pct"),
+            pl.when(pl.col("pk_opps") > 0).then(1 - pl.col("pk_goals") / pl.col("pk_opps")).alias("pk_pct"),
+        )
+        .with_columns(
+            pl.col("pp_pct").rank("min", descending=True).alias("pp_rank"),
+            pl.col("pk_pct").rank("min", descending=True).alias("pk_rank"),
+        )
+    )
+    return {r["team_id"]: {k: {"pct": r[f"{k}_pct"], "rank": r[f"{k}_rank"], "goals": r[f"{k}_goals"], "opps": r[f"{k}_opps"],
+                               "teams": df.height} for k in ("pp", "pk")}
+            for r in df.iter_rows(named=True)}

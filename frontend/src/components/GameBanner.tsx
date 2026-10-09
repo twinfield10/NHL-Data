@@ -1,19 +1,22 @@
+"use client";
+
 /* eslint-disable @next/next/no-img-element -- remote SVGs from the NHL CDN */
 import type { ReactNode } from "react";
 import { american, pct } from "@/lib/format";
-import { alpha, logoUrl } from "@/lib/teams";
+import { fillColor, logoUrl, matchupColors } from "@/lib/teams";
 import type { Record3, TeamInfo } from "@/lib/types";
+import { useDark } from "@/lib/useDark";
 import { cn } from "@/lib/utils";
 
 export type Tone = "warn" | "play" | null;
 
+/** Tone colors for text on the banner's dark team fill (same in both themes). */
 export const toneText = (t: Tone) =>
-  t === "warn" ? "text-red-600 dark:text-red-400 font-bold" : t === "play" ? "text-emerald-600 dark:text-emerald-400 font-bold" : "";
+  t === "warn" ? "text-red-300 font-bold" : t === "play" ? "text-emerald-300 font-bold" : "";
 
 export interface BannerSide {
   abbr: string;
   info?: TeamInfo;
-  color: string;
   price?: number | null;
   tone?: Tone;
   goalie?: { name: string | null; p: number | null; status: string | null };
@@ -43,12 +46,7 @@ function Logo({ abbr, side, large }: { abbr: string; side: "left" | "right"; lar
     large ? "h-40 w-40" : "h-24 w-24 sm:h-28 sm:w-28",
     side === "left" ? (large ? "-left-8" : "-left-6") : large ? "-right-8" : "-right-6"
   );
-  return (
-    <>
-      <img src={logoUrl(abbr, "light")} alt="" className={cn(cls, "dark:hidden")} />
-      <img src={logoUrl(abbr, "dark")} alt="" className={cn(cls, "hidden dark:block")} />
-    </>
-  );
+  return <img src={logoUrl(abbr, "dark")} alt="" className={cls} />;
 }
 
 function TeamBlock({ s, align, large }: { s: BannerSide; align: "left" | "right"; large: boolean }) {
@@ -57,10 +55,10 @@ function TeamBlock({ s, align, large }: { s: BannerSide; align: "left" | "right"
   const showPrev = rec && rec.gp === 0 && s.info?.prev_record;
   return (
     <div className={cn("min-w-0", right ? "text-right" : "text-left", large ? (right ? "pr-28" : "pl-28") : right ? "pr-14 sm:pr-20" : "pl-14 sm:pl-20")}>
-      <div className={cn("flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-[11px]", right && "justify-end")}>
+      <div className={cn("flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/75 sm:text-[11px]", right && "justify-end")}>
         {s.tone && (
           <span className={cn("rounded-full px-1.5 py-px text-[10px] font-bold",
-            s.tone === "warn" ? "bg-red-500/15 text-red-700 dark:text-red-400" : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400")}>
+            s.tone === "warn" ? "bg-red-500/30 text-red-100" : "bg-emerald-500/30 text-emerald-100")}>
             {s.tone === "warn" ? "WARN" : "PLAY"}
           </span>
         )}
@@ -68,32 +66,32 @@ function TeamBlock({ s, align, large }: { s: BannerSide; align: "left" | "right"
       </div>
       <div className={cn("truncate font-extrabold uppercase leading-tight tracking-tight",
         large ? "text-3xl" : (s.info?.name ?? s.abbr).length > 11 ? "text-base sm:text-lg" : "text-lg sm:text-xl",
-        s.tone ? toneText(s.tone) : "text-foreground")}>
+        s.tone ? toneText(s.tone) : "text-white")}>
         {s.info?.name ?? s.abbr}
       </div>
       <div className="mt-0.5 truncate text-xs tabular">
         {rec && (
           showPrev ? (
-            <span className="text-muted-foreground">Last season {wlo(s.info!.prev_record!)}</span>
+            <span className="text-white/75">Last season {wlo(s.info!.prev_record!)}</span>
           ) : (
             <>
-              <span className="font-semibold text-foreground">{wlo(rec)}</span>
-              <span className="text-muted-foreground"> · {pctg(rec.pts_pct)}</span>
+              <span className="font-semibold text-white">{wlo(rec)}</span>
+              <span className="text-white/75"> · {pctg(rec.pts_pct)}</span>
             </>
           )
         )}
         {s.price != null && (
-          <span className={cn(s.tone ? toneText(s.tone) : "text-muted-foreground")}> · ML {american(s.price)}</span>
+          <span className={cn(s.tone ? toneText(s.tone) : "text-white/75")}> · ML {american(s.price)}</span>
         )}
       </div>
       {s.info && s.info.l10.gp > 0 && (
-        <div className="truncate text-[11px] text-muted-foreground tabular">
+        <div className="truncate text-[11px] text-white/75 tabular">
           L{s.info.l10.gp} {wlo(s.info.l10)}
           {s.info.streak && ` · ${s.info.streak}`}
         </div>
       )}
       {s.goalie && (
-        <div className={cn("mt-0.5 flex items-center gap-1.5 text-[11px] text-foreground", right && "flex-row-reverse")}>
+        <div className={cn("mt-0.5 flex items-center gap-1.5 text-[11px] text-white", right && "flex-row-reverse")}>
           <GoalieDot status={s.goalie.status} p={s.goalie.p} />
           <span className="truncate">{s.goalie.name ?? "TBD"}</span>
         </div>
@@ -114,30 +112,36 @@ interface GameBannerProps {
   className?: string;
 }
 
-/** Matchup header: team colors fading into the middle, logos bleeding off the edges, records and form. */
+/** Matchup header: dark team fills meeting in a darker middle, logos bleeding off the edges, white text
+ *  in either theme, records and form. */
 export default function GameBanner({ away, home, status, venue, location, chips, large = false, className }: GameBannerProps) {
-  const background = `linear-gradient(90deg, ${alpha(away.color, 0.5)} 0%, ${alpha(away.color, 0.14)} 28%, transparent 48%, transparent 52%, ${alpha(home.color, 0.14)} 72%, ${alpha(home.color, 0.5)} 100%)`;
+  const dark = useDark();
+  // Light-mode picks are the true primaries (clashes resolved); fillColor makes them carry white text.
+  const colors = matchupColors(away.abbr, home.abbr, false);
+  const [a, h] = [fillColor(colors.away, dark), fillColor(colors.home, dark)];
+  const mid = (c: string) => `color-mix(in srgb, ${c} 55%, black)`;
+  const background = `linear-gradient(90deg, ${a} 0%, ${a} 30%, ${mid(a)} 46%, ${mid(h)} 54%, ${h} 70%, ${h} 100%)`;
   return (
-    <div className={cn("relative overflow-hidden", className)} style={{ background }}>
+    <div className={cn("relative overflow-hidden text-white", className)} style={{ background }}>
       <Logo abbr={away.abbr} side="left" large={large} />
       <Logo abbr={home.abbr} side="right" large={large} />
       <div className={cn("relative grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3", large ? "px-6 py-7" : "px-3 py-4")}>
         <TeamBlock s={away} align="left" large={large} />
         <div className="flex flex-col items-center text-center">
           <div className={cn("font-semibold", large ? "text-base" : "text-sm")}>{status}</div>
-          {venue && <div className="mt-0.5 max-w-40 truncate text-[11px] text-muted-foreground">{venue}</div>}
-          {location && <div className="text-[11px] text-muted-foreground">{location}</div>}
+          {venue && <div className="mt-0.5 max-w-40 truncate text-[11px] text-white/75">{venue}</div>}
+          {location && <div className="text-[11px] text-white/75">{location}</div>}
           {chips && chips.length > 0 && (
             <div className="mt-2 flex flex-wrap justify-center gap-1">
               {chips.map((c) => (
                 <div
                   key={c.label}
                   className={cn(
-                    "min-w-12 rounded-md border bg-card/70 px-1.5 py-0.5 backdrop-blur-sm",
-                    c.highlight ? "border-amber-500/60" : "border-border"
+                    "min-w-12 rounded-md border bg-black/30 px-1.5 py-0.5 backdrop-blur-sm",
+                    c.highlight ? "border-amber-400/70" : "border-white/25"
                   )}
                 >
-                  <div className={cn("text-[9px] font-semibold uppercase tracking-wider", c.highlight ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")}>
+                  <div className={cn("text-[9px] font-semibold uppercase tracking-wider", c.highlight ? "text-amber-300" : "text-white/75")}>
                     {c.label}
                   </div>
                   <div className="text-xs font-semibold tabular">{c.value}</div>
