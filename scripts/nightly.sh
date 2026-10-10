@@ -15,6 +15,9 @@ run_with_timeout 600 nhl poll --what transactions,injuries || echo "post-update 
 # Site ratings boards from the new snapshot (pregame runs rebuild them too; this covers off days).
 run_with_timeout 600 nhl site-tables || echo "site tables failed (non-fatal)"
 # Grade finished bets (paper and real): CLV against our captured close, result, units.
+# ESPN's published closes (last night's games only; earlier ones are cached): fills games we
+# never polled, and logs how our captured closes compare with ESPN's.
+run_with_timeout 900 nhl odds-history || echo "ESPN odds history failed (non-fatal)"
 run_with_timeout 600 nhl grade-bets || echo "grading failed (non-fatal)"
 # Final scores and graded bets: rebuild yesterday's and today's prebuilt site views in full.
 run_with_timeout 600 nhl site-views --force --date "$(TZ=America/New_York date -v-1d +%F)" || echo "site views (yesterday) failed (non-fatal)"
