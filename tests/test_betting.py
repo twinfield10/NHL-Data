@@ -212,7 +212,7 @@ def test_ledger_paper_once_then_grade_clv_and_result():
                          "source": ["live"] * 2, "season": [20262027] * 2}, schema_overrides={"line": pl.Float64, "season": pl.Int32})
     import nhl.betting.lines as L
     orig = L.build
-    L.build = lambda store_, season: live
+    L.build = lambda store_, season, alternates=False: live
     try:
         assert ledger.grade(store) == 1
     finally:
@@ -237,3 +237,129 @@ def test_last_pregame_prices_keeps_each_games_final_run():
     assert got["p_home_win"].to_list() == [0.50, 0.45]
     assert got["stamp"].to_list() == ["T1", "T2"]
     assert E.last_pregame_prices(_Mem({}), day) is None
+
+
+_START = datetime(2026, 10, 10, 23, tzinfo=timezone.utc)
+
+
+def _poll(book, game, t, price_home, price_away=None, market="moneyline", alternate=False, start=_START):
+    """Two odds-table rows (home/away) from one poll of a game starting at ``start``."""
+    away = -price_home if price_away is None else price_away
+    uid = f"game|{market}|game|main"
+    base = {"book": book, "game_id": game, "captured_at": t, "start_time": start, "period": "game", "market": market,
+            "subject": "game", "line": None, "is_alternate": alternate, "market_uid": uid, "price_point": "live"}
+    return [{**base, "side": "home", "price": price_home}, {**base, "side": "away", "price": away}]
+
+
+def _odds(rows):
+    from nhl.odds.core import ODDS_SCHEMA
+
+    return pl.DataFrame(rows, schema={k: v for k, v in ODDS_SCHEMA.items() if k in rows[0]})
+
+
+def test_record_seen_keeps_latest_pregame_poll_per_market():
+    from datetime import timedelta
+
+    from nhl.odds.store import load_seen, record_seen
+    from nhl.storage import keys
+
+    start = _START
+    store, key = _Mem(), keys.odds_seen(20262027, "test")
+    assert record_seen(store, key, _odds(_poll("LowVig", 1, start - timedelta(hours=3), -120.0, 100.0))) == 1
+    record_seen(store, key, _odds(_poll("LowVig", 1, start - timedelta(minutes=5), -120.0, 100.0)
+                                  + _poll("LowVig", 2, start - timedelta(minutes=5), -110.0, -110.0, alternate=True)))
+    # In-play polls never count as seen pregame.
+    record_seen(store, key, _odds(_poll("LowVig", 1, start + timedelta(minutes=10), -300.0, 240.0)))
+    seen = load_seen(store, keys.odds_seen_prefix(20262027)).sort("game_id")
+    assert seen.height == 2  # the alternate rung is tracked too
+    assert seen["last_seen"].to_list() == [start - timedelta(minutes=5)] * 2
+
+
+def test_live_close_drops_markets_pulled_before_puck_drop():
+    from datetime import timedelta
+
+    from nhl.storage import keys
+
+    start = _START
+    early, late = start - timedelta(hours=4), start - timedelta(minutes=5)
+    # Transitions: each book quoted once, early, and never moved.
+    odds = _odds(_poll("LowVig", 2026020050, early, -120.0, 100.0) + _poll("4Casters", 2026020050, early, -125.0, 108.0)
+                 + _poll("DraftKings", 2026020050, early, -118.0, -102.0)
+                 + _poll("4Casters", 2026020050, start + timedelta(minutes=20), -400.0, 320.0))  # in-play: not a close
+    seen = pl.DataFrame({
+        "book": ["LowVig", "4Casters"], "game_id": [2026020050] * 2,
+        "market_uid": ["game|moneyline|game|main"] * 2, "last_seen": [late, early],
+    }, schema={"book": pl.Utf8, "game_id": pl.Int64, "market_uid": pl.Utf8, "last_seen": pl.Datetime("us", "UTC")})
+    store = _Mem({keys.odds(20262027, "x"): odds, keys.odds_seen(20262027, "x"): seen})
+    close = L.live_lines(store, 20262027).filter(pl.col("point") == "close")
+    got = {r["book"]: r["price_1"] for r in close.iter_rows(named=True)}
+    # LowVig held its price to the last poll; 4Casters was pulled after its early quote;
+    # DraftKings has no seen entry for the game (polled before the table) and is kept.
+    assert got == {"LowVig": -120.0, "DraftKings": -118.0}
+
+
+def test_exchanges_count_in_closing_consensus():
+    rows = (_rows("4Casters", 2026020001, "moneyline", "close", None, None, -200.0, 180.0)
+            + _rows("Novig", 2026020001, "moneyline", "close", None, None, -200.0, 200.0)
+            + _rows("DraftKings", 2026020001, "moneyline", "close", None, None, -150.0, 130.0))
+    c = D.consensus(L.pair_sides(pl.DataFrame(rows, schema_overrides={"line": pl.Float64}), "test"), "multiplicative").row(0, named=True)
+    assert c["books"] == 3 and c["p_fair"] > 0.64  # the median is an exchange, not DraftKings
+
+
+def _alt(rows):
+    """Mark ``rows`` as an alternate rung (a book's second line comes from its ladder)."""
+    return [{**r, "is_alternate": True} for r in rows]
+
+
+def _pairs(rows):
+    rows = [{"is_alternate": False, **r} for r in rows]
+    return L.pair_sides(pl.DataFrame(rows, schema_overrides={"line": pl.Float64}), "test")
+
+
+def test_primary_total_is_each_books_lowest_hold_line():
+    g = 2026020080
+    rows = (
+        # A sportsbook with both lines: 6.5 at -140/+110 holds ~6.0%, 6 at -108/-107 ~3.6% -> 6.
+        _rows("LowVig", g, "total", "close", 6.5, 6.5, -140.0, 110.0) + _alt(_rows("LowVig", g, "total", "close", 6.0, 6.0, -108.0, -107.0))
+        + _rows("DraftKings", g, "total", "close", 6.0, 6.0, -110.0, -110.0)
+        # An exchange holds less everywhere; it votes once, for its own lowest-hold line.
+        + _rows("Novig", g, "total", "close", 6.5, 6.5, -125.0, 125.0) + _alt(_rows("Novig", g, "total", "close", 5.5, 5.5, -300.0, 290.0))
+    )
+    c = D.consensus(_pairs(rows), "multiplicative").row(0, named=True)
+    assert c["line"] == 6.0 and c["books"] == 2
+    by = {r["line"]: r for r in D.consensus_by_line(_pairs(rows), "multiplicative").iter_rows(named=True)}
+    # Every line keeps its own over/under consensus, so a bet at 6.5 is judged at 6.5.
+    assert by[6.5]["books"] == 2 and by[5.5]["books"] == 1 and 0.55 < by[6.5]["p_fair"] < 0.57
+
+
+def test_primary_tie_breaks_on_books_then_hold_not_lower_line():
+    g = 2026020081
+    rows = (_rows("4Casters", g, "total", "close", 6.0, 6.0, -105.0, -105.0)
+            + _rows("DraftKings", g, "total", "close", 6.5, 6.5, -115.0, -105.0)
+            + _rows("LowVig", g, "total", "close", 6.5, 6.5, -112.0, -108.0) + _alt(_rows("LowVig", g, "total", "close", 6.0, 6.0, -150.0, 120.0)))
+    # One vote each for 6 (4Casters) and 6.5 (DraftKings, LowVig): 6.5 has two votes.
+    assert D.consensus(_pairs(rows), "multiplicative")["line"].to_list() == [6.5]
+    tie = _rows("4Casters", g, "total", "close", 6.0, 6.0, -105.0, -105.0) + _rows("DraftKings", g, "total", "close", 6.5, 6.5, -115.0, -105.0)
+    # One vote each, one book each: the lower median hold (6.0 here) wins, not the lower line by default.
+    assert D.consensus(_pairs(tie), "multiplicative")["line"].to_list() == [6.0]
+
+
+def test_pair_sides_pairs_each_rung_at_its_own_line():
+    g = 2026020082
+    rows = (_rows("4Casters", g, "puckline", "close", -1.5, 1.5, 150.0, -170.0)
+            + _rows("4Casters", g, "puckline", "close", 1.5, -1.5, -300.0, 250.0)
+            + _rows("4Casters", g, "total", "close", 5.5, 5.5, -150.0, 130.0) + _rows("4Casters", g, "total", "close", 6.5, 6.5, 120.0, -140.0))
+    rows = [{**r, "is_alternate": r["line"] in (1.5, 6.5) if r["side"] in ("home", "over") else r["line"] in (-1.5, 6.5)} for r in rows]
+    p = _pairs(rows)
+    got = sorted(zip(p["market"], p["line"], p["price_1"], p["price_2"]))
+    assert got == [("puckline", -1.5, 150.0, -170.0), ("puckline", 1.5, -300.0, 250.0),
+                   ("total", 5.5, -150.0, 130.0), ("total", 6.5, 120.0, -140.0)]
+
+
+def test_exchange_primary_ties_on_hold_go_to_the_line_nearest_even():
+    g = 2026020083
+    # Novig's 7.5 holds 0.42%, its 5.5 0.51%: a tie within tolerance, and 5.5 is nearer 50/50.
+    rows = (_rows("Novig", g, "total", "close", 5.5, 5.5, -182.0, 178.0)
+            + _alt(_rows("Novig", g, "total", "close", 7.5, 7.5, 208.0, -212.0))
+            + _alt(_rows("Novig", g, "total", "close", 4.5, 4.5, -525.0, 466.0)))
+    assert D.consensus(_pairs(rows), "multiplicative")["line"].to_list() == [5.5]

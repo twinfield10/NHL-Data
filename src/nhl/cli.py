@@ -388,10 +388,10 @@ def cmd_grade_bets(args: argparse.Namespace) -> None:
     from nhl.storage.s3 import Store
 
     store = Store()
-    print(f"graded {ledger.grade(store)} bets")
+    print(f"graded {ledger.grade(store, regrade=args.regrade)} bets")
     print(ledger.summary(store))
     # Player props need the night's game logs, so the nightly job grades them after `nhl update`.
-    print(f"graded {props_ledger.grade(store)} prop bets")
+    print(f"graded {props_ledger.grade(store, regrade=args.regrade)} prop bets")
     print(props_ledger.summary(store))
 
 
@@ -687,10 +687,12 @@ def cmd_poll(args: argparse.Namespace) -> None:
 
                 results[target] = f"lowvig {dst.poll(store, games)}"
             elif target == "novig":
-                # Novig exchange lines and props: one order-book request per market (minutes), so its own job.
+                # Novig exchange lines and props: one websocket snapshot (seconds) with the read key. Polled
+                # with the other books, its slow REST fallback gets a short budget so it can't hold their lock.
                 from nhl.sources import novig
 
-                odds_n, props_n = novig.poll(store, games)
+                budget = novig.SHARED_BUDGET_S if "odds" in targets else novig.TIME_BUDGET_S
+                odds_n, props_n = novig.poll(store, games, budget_s=budget)
                 results[target] = f"odds {odds_n}, props {props_n}"
             elif target == "goalies":
                 from nhl.sources import dailyfaceoff
@@ -920,6 +922,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=cmd_record_bet)
 
     p = sub.add_parser("grade-bets", help="M6: grade finished bets and print the ledger summary")
+    p.add_argument("--regrade", action="store_true",
+                   help="regrade every final bet, not only ungraded ones (after a change to how the close is defined)")
     p.set_defaults(func=cmd_grade_bets)
 
     p = sub.add_parser("backfill-bet-info", help="Fill the info-at-placement snapshot on older paper bets")

@@ -8,11 +8,13 @@ same way on closing-line value (CLV) and result.
   ``book``, ``price`` (American), ``stake_units``, ``tier``;
 * the model's view when placed: ``p_model``, ``p_market``, ``p_blend``, ``edge``,
   ``pregame_stamp``;
-* grading (filled by :func:`grade` once the game is final): ``close_line``, ``close_price``
-  (the bet's book's last price before puck drop at the bet's line), ``p_close``
-  (devigged closing consensus for the side), ``clv`` (p_close × decimal − 1, only when the
-  close is at the bet's line), ``result`` (``win`` | ``loss`` | ``push``), ``pnl_units``,
-  ``graded_at``.
+* grading (filled by :func:`grade` once the game is final): ``close_line`` (the market's
+  closing primary line, the lowest-hold line most books agree on, for reference),
+  ``close_price`` (the bet's book's last price before puck drop at the bet's line),
+  ``p_close`` (devigged closing consensus for the side **at the bet's own line**, over the
+  books quoting that line, alternate rungs included), ``clv`` (p_close × decimal − 1; null
+  only when no book quoted the bet's line at the close), ``result`` (``win`` | ``loss`` |
+  ``push``), ``pnl_units``, ``graded_at``.
 
 A paper bet is recorded the first time a (game, market, side) is flagged and never re-added,
 so the ledger reflects the price available when the model first liked it.
@@ -145,7 +147,7 @@ def fill_close_prices(store: Store) -> int:
     if todo.is_empty():
         return 0
     seasons = sorted({int(g) // 1_000_000 for g in todo["game_id"].to_list()})
-    lines = pl.concat([lines_mod.build(store, int(f"{y}{y + 1}")) for y in seasons])
+    lines = pl.concat([lines_mod.build(store, int(f"{y}{y + 1}"), alternates=True) for y in seasons])
     todo = todo.with_columns(_close_prices(todo, lines).alias("close_price"))
     filled = todo.filter(pl.col("close_price").is_not_null())
     if filled.height:
@@ -154,10 +156,11 @@ def fill_close_prices(store: Store) -> int:
     return filled.height
 
 
-def grade(store: Store) -> int:
-    """Grade every ungraded bet whose game is final. Returns bets graded."""
+def grade(store: Store, regrade: bool = False) -> int:
+    """Grade every ungraded bet whose game is final (every final bet with ``regrade``, e.g.
+    after the close definition changes). Returns bets graded."""
     led = load(store)
-    todo = led.filter(pl.col("graded_at").is_null())
+    todo = led if regrade else led.filter(pl.col("graded_at").is_null())
     if todo.is_empty():
         return 0
     games = store.read_parquet_required(keys.GAMES).filter(pl.col("is_final") & pl.col("game_id").is_in(todo["game_id"].implode()))
@@ -165,21 +168,23 @@ def grade(store: Store) -> int:
     if todo.is_empty():
         return 0
     seasons = sorted({int(g) // 1_000_000 for g in todo["game_id"].to_list()})
-    lines = pl.concat([lines_mod.build(store, int(f"{y}{y + 1}")) for y in seasons])
-    close = pl.concat([
-        devig.consensus(lines.filter(pl.col("market") == m), method, ("close",)) for m, method in evaluate.METHOD.items()
-    ]).select("game_id", "market", pl.col("line").alias("close_line"), pl.col("p_fair").alias("close_p1"))
+    lines = pl.concat([lines_mod.build(store, int(f"{y}{y + 1}"), alternates=True) for y in seasons])
+    per_market = [(lines.filter(pl.col("market") == m), method) for m, method in evaluate.METHOD.items()]
+    primary = pl.concat([devig.consensus(ls, method, ("close",)) for ls, method in per_market]).select(
+        "game_id", "market", pl.col("line").alias("close_line"))
+    at_line = pl.concat([devig.consensus_by_line(ls, method, ("close",)) for ls, method in per_market]).select(
+        "game_id", "market", "line", pl.col("p_fair").alias("close_p1"))
     scores = games.select("game_id", "home_score", "away_score")
     todo = todo.with_columns(_close_prices(todo, lines).alias("close_price"))
     g = lines_mod.grade(todo.drop("close_line", "p_close", "clv", "result", "pnl_units", "graded_at"), scores)
-    g = g.join(close, on=["game_id", "market"], how="left")
+    g = (g.join(primary, on=["game_id", "market"], how="left")
+         .join(at_line, on=["game_id", "market", "line"], how="left", nulls_equal=True))
     dec = pl.when(pl.col("price") < 0).then(1 + 100 / -pl.col("price")).otherwise(1 + pl.col("price") / 100)
     won = pl.when(pl.col("side") == 1).then(pl.col("y")).otherwise(1 - pl.col("y"))
-    same = (pl.col("close_line") == pl.col("line")) | (pl.col("close_line").is_null() & pl.col("line").is_null())
     p_close = pl.when(pl.col("side") == 1).then(pl.col("close_p1")).otherwise(1 - pl.col("close_p1"))
     g = g.with_columns(
-        pl.when(same).then(p_close).alias("p_close"),
-        pl.when(same).then(p_close * dec - 1).alias("clv"),
+        p_close.alias("p_close"),
+        (p_close * dec - 1).alias("clv"),
         pl.when(pl.col("y").is_null()).then(pl.lit("push")).when(won == 1).then(pl.lit("win")).otherwise(pl.lit("loss")).alias("result"),
         pl.when(pl.col("y").is_null()).then(0.0).when(won == 1).then(pl.col("stake_units") * (dec - 1))
         .otherwise(-pl.col("stake_units")).alias("pnl_units"),

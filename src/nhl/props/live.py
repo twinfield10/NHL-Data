@@ -38,13 +38,15 @@ from __future__ import annotations
 import fcntl
 import logging
 from contextlib import contextmanager
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 import polars as pl
 
 from nhl.betting.edges import _games, last_pregame_prices
+from nhl.odds.props import SEEN_KEY as PROP_SEEN_KEY
 from nhl.odds.props import load_props
+from nhl.odds.store import load_seen, still_listed
 from nhl.props import project, rates, volume
 from nhl.sources.common import stamp
 from nhl.storage import keys
@@ -266,6 +268,26 @@ def latest_quotes(store: Store, season: int, game_ids: list[int], cutoff: dateti
     else:
         props = props.filter(pl.col("captured_at") <= cutoff)
     return props.sort("captured_at").group_by("book", "game_id", "player_id", "prop_type", "line", "side").last()
+
+
+#: A book's closing prop price counts only if it listed the prop this close to the start.
+#: FanDuel, DraftKings (via ESPN), 4Casters and Novig props poll every 5 minutes in the last
+#: 90; LowVig's headless walk every 5-10, so 20 minutes allows one missed LowVig poll.
+PROP_CLOSE_MAX_GAP = timedelta(minutes=20)
+
+
+def closing_quotes(store: Store, season: int, starts: dict[int, datetime]) -> pl.DataFrame:
+    """Each book's closing price per prop side: the last before each game's ``starts`` time,
+    kept only if the book still listed that prop within :data:`PROP_CLOSE_MAX_GAP` of it
+    (:func:`nhl.odds.store.still_listed`); a prop pulled earlier has no close."""
+    quotes = latest_quotes(store, season, list(starts), starts)
+    if quotes.is_empty():
+        return quotes
+    limits = pl.DataFrame({"game_id": list(starts), "start_time": list(starts.values())},
+                          schema={"game_id": pl.Int64, "start_time": pl.Datetime("us", "UTC")})
+    quotes = quotes.drop("start_time", strict=False).join(limits, on="game_id")
+    seen = load_seen(store, keys.props_seen_prefix(season), PROP_SEEN_KEY)
+    return still_listed(quotes, seen, PROP_SEEN_KEY, PROP_CLOSE_MAX_GAP)
 
 
 def _model_over(proj: pl.DataFrame) -> pl.DataFrame:
