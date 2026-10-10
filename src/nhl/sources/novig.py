@@ -8,10 +8,16 @@ catalog on 2026-10-09:
   ``/v3/public/...``, throttled at the edge to ~2 requests/s per IP (3/s draws 429s). With
   ``NOVIG_KEY_ID`` / ``NOVIG_PEM`` set (a ``trading::read`` key: it can read the catalog and
   nothing else), :class:`NovigClient` signs every request with NOVIG-V3 and gets the
-  ``read`` bucket (16/s, burst 64). A poll is one catalog pass plus **one book request per
-  market**, ~200 markets per game, so the public route cannot finish a full slate; books are
-  fetched in priority order (game lines, then props, soonest game first) until
-  :data:`TIME_BUDGET_S` runs out, and the rest wait for the next poll.
+  ``read`` bucket (16/s, burst 64). There are ~250 markets per game.
+* **Books in one message when signed.** A signed client opens the websocket (``/v3/ws``) and
+  sends one ``snapshot`` naming every event on ``book``: the whole slate (3,671 books, full
+  depth, ~2 MB) arrives in well under a second. The ``stream`` throttle charges a request at
+  most its 512-token capacity, so one big snapshot costs no more than a small one; a
+  connection may watch at most :data:`MAX_WS_MARKETS` markets, so larger slates are split.
+  Any market the snapshot misses (or every market, without a key or when the websocket
+  fails) is read over REST, **one request per market**, in priority order (game lines, then
+  props, soonest game first) until :data:`TIME_BUDGET_S` runs out; the rest wait for the
+  next poll. The public route manages ~750 books per poll this way.
 * **Every order buys.** A market's book is ``{outcomeId: [resting bids]}``. A bid at ``q`` on
   one outcome is liquidity for the other: a taker buys the other outcome at ``1 - q``. So the
   price to bet a side is read off the *opposite* outcome's bids (:func:`take`).
@@ -41,6 +47,7 @@ catalog on 2026-10-09:
 from __future__ import annotations
 
 import base64
+import json
 import hashlib
 import logging
 import re
@@ -82,6 +89,10 @@ HORIZON_HOURS: float = 24.0
 #: Wall-clock budget for book requests in one poll; markets not reached wait for the next.
 TIME_BUDGET_S: float = 420.0
 PAGE_LIMIT = 100
+#: Markets one websocket connection may watch (``MAX_WATCHED_MARKETS``), with headroom.
+MAX_WS_MARKETS = 8000
+#: Seconds to wait for a websocket snapshot reply.
+WS_TIMEOUT_S = 30.0
 BOOK_DEPTH = 20
 
 #: ``marketType`` -> odds-table market.
@@ -180,11 +191,12 @@ class NovigClient:
     """
 
     def __init__(self, host: str = config.NOVIG_HOST, signer: Signer | None = None, rps: float | None = None,
-                 timeout: float = 20.0) -> None:
+                 timeout: float = 20.0, ws_connect: Any = None) -> None:
         self.host, self.signer, self.timeout, self.rps = host.rstrip("/"), signer, timeout, rps
         self.limiter = RateLimiter(rps or (SIGNED_RPS if signer else PUBLIC_RPS))
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": BROWSER_UA, "Accept": "application/json"})
+        self.ws_connect = ws_connect  # injected for tests; websocket.create_connection otherwise
 
     @property
     def signed(self) -> bool:
@@ -243,6 +255,77 @@ def make_client() -> NovigClient:
     return NovigClient(config.NOVIG_HOST)
 
 
+def snapshot_books(client: NovigClient, markets: list[dict[str, Any]]) -> dict[str, Any]:
+    """Every book of ``markets``' events from websocket ``snapshot`` requests (signed only).
+
+    Events are grouped so one snapshot names at most :data:`MAX_WS_MARKETS` markets; a
+    snapshot over the ``stream`` capacity passes only with a full bucket (refill 32/s), so a
+    throttled reply waits and retries.
+
+    Returns:
+        Market id -> book (``{"seq", "orders"}``), the same shape as the REST book.
+
+    Raises:
+        SourceUnavailable: No signer, or the exchange refused the upgrade or the snapshot.
+    """
+    if client.signer is None:
+        raise SourceUnavailable(f"{SOURCE}: the websocket needs a key")
+    counts: dict[str, int] = {}
+    for m in markets:
+        counts[m["eventId"]] = counts.get(m["eventId"], 0) + 1
+    chunks: list[list[str]] = [[]]
+    size = 0
+    for event_id, n in counts.items():
+        if chunks[-1] and size + n > MAX_WS_MARKETS:
+            chunks.append([])
+            size = 0
+        chunks[-1].append(event_id)
+        size += n
+    connect = client.ws_connect
+    if connect is None:
+        import websocket
+
+        connect = websocket.create_connection
+    url = client.host.replace("https://", "wss://", 1) + "/v3/ws"
+    headers = [f"{k}: {v}" for k, v in client.signer.headers("GET", "/v3/ws").items()]
+    try:
+        ws = connect(url, header=headers, timeout=WS_TIMEOUT_S)
+    except Exception as exc:  # noqa: BLE001 - any refused or failed upgrade means "use REST"
+        raise SourceUnavailable(f"{SOURCE}: websocket upgrade failed ({exc})") from exc
+    books: dict[str, Any] = {}
+    nonce = 0
+    try:
+        for chunk in [c for c in chunks if c]:
+            for attempt in range(4):
+                nonce += 1
+                ws.send(json.dumps({"nonce": nonce, "snapshot": {"events": {e: "book" for e in chunk}}}))
+                reply = _await_reply(ws, nonce)
+                if "snapshot" in reply:
+                    break
+                if "RATE_LIMIT" not in json.dumps(reply) or attempt == 3:
+                    raise SourceUnavailable(f"{SOURCE}: snapshot refused: {json.dumps(reply)[:200]}")
+                time.sleep(16.0)  # an over-capacity request needs a full bucket: 512 / 32 per s
+            books.update({mid: entry["book"] for mid, entry in (reply.get("snapshot") or {}).items()
+                          if isinstance(entry, dict) and entry.get("book")})
+    finally:
+        ws.close()
+    return books
+
+
+def _await_reply(ws: Any, nonce: int) -> dict[str, Any]:
+    """The reply to ``nonce``, or an error frame (throttled frames come back without a nonce)."""
+    deadline = time.monotonic() + WS_TIMEOUT_S
+    while time.monotonic() < deadline:
+        message = ws.recv()
+        if isinstance(message, bytes):
+            message = message.decode()
+        reply = json.loads(message) if message else {}
+        if reply.get("nonce") == nonce or (reply.get("nonce") is None and ("code" in reply or "error" in reply)):
+            return reply
+        # Anything else (a heartbeat) is skipped.
+    raise SourceUnavailable(f"{SOURCE}: no snapshot reply within {WS_TIMEOUT_S:.0f}s")
+
+
 def _priority(market: dict[str, Any]) -> tuple[int, int, int]:
     """Book-fetch order: game lines before props, then soonest game, then :data:`PRIORITY`."""
     kind = market.get("marketType")
@@ -287,8 +370,15 @@ def fetch(
                if m.get("eventId") in ids and m.get("status") == OPEN
                and (m.get("marketType") in GAME_MARKETS or m.get("marketType") in PROP_TYPES)]
     books: dict[str, Any] = {}
+    wanted = {m["marketId"] for m in markets}
+    if client.signed and markets:
+        try:
+            books = {mid: b for mid, b in snapshot_books(client, markets).items() if mid in wanted}
+            logger.info("[novig] websocket snapshot: %d of %d book(s)", len(books), len(markets))
+        except (SourceUnavailable, OSError, ValueError) as exc:
+            logger.warning("[novig] websocket snapshot failed, reading books over REST: %s", exc)
     deadline = time.monotonic() + budget_s
-    for market in sorted(markets, key=_priority):
+    for market in sorted((m for m in markets if m["marketId"] not in books), key=_priority):
         if time.monotonic() > deadline:
             break
         try:
@@ -564,4 +654,5 @@ def poll(
 
 
 __all__ = ["BOOK", "GAME_MIN_STAKE", "NovigClient", "PROP_MIN_STAKE", "Signer", "canonical_query", "event_rows",
-           "event_teams", "fetch", "make_client", "normalize", "player_name", "poll", "string_to_sign", "take"]
+           "event_teams", "fetch", "make_client", "normalize", "player_name", "poll", "snapshot_books", "string_to_sign",
+           "take"]
