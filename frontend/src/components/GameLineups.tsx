@@ -12,6 +12,7 @@ import { heat } from "@/lib/heat";
 import { team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import ArchetypeBadge from "./ArchetypeBadge";
+import LineupChanges from "./LineupChanges";
 import TeamLogo from "./TeamLogo";
 import { Badge, Card, ErrorState, Loading, Pills, SectionTitle } from "./ui";
 
@@ -437,6 +438,12 @@ export default function GameLineups({ gameId, away, home }: { gameId: string; aw
         goalie stops beyond average. Team PP% and PK% are regular season only. Cell colors are scaled across the whole league (green better, red worse). Type is the
         forward archetype: SW skill winger, BW balanced winger, PF power forward, OC offensive centre, 2C two-way centre.
       </p>
+      <div className="mt-6">
+        <SectionTitle right={<span className="text-xs text-muted-foreground">Each pricing run vs. the one before; win % is {away}&apos;s</span>}>
+          Lineup Changes
+        </SectionTitle>
+        <LineupChanges changes={d.changes ?? []} away={away} home={home} />
+      </div>
     </div>
   );
 }
