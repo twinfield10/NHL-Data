@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import SortTable, { type Column } from "@/components/SortTable";
 import { TeamTag } from "@/components/TeamLogo";
 import { Badge, Card, Empty, Signed } from "@/components/ui";
 import { american, dateTimeET, pct, signedPct, timeET, units } from "@/lib/format";
@@ -17,6 +18,8 @@ export interface LedgerRow {
   away: string | null;
   home: string | null;
   bet: ReactNode;
+  /** What the Bet column sorts by. */
+  betSort: string;
   book: string;
   price: number;
   stake: number;
@@ -47,6 +50,7 @@ const STATUS: Record<Exclude<BetStatus, "graded">, { label: string; tone: "pos" 
 };
 const GRADE_TONE = { A: "pos", B: "warn", C: "neg" } as const;
 export const WINDOW_LABEL: Record<BetWindow, string> = { open: "Open", pre: "Pre", post: "Post" };
+const WINDOW_RANK: Record<BetWindow, number> = { open: 0, pre: 1, post: 2 };
 
 /** A CLV value in green / red, or a dash. */
 export function ClvCell({ v, title }: { v: number | null | undefined; title?: string }) {
@@ -128,117 +132,130 @@ function PriceNow({ r }: { r: LedgerRow }) {
   );
 }
 
-const COLS: Record<LedgerView, { h: string; right?: boolean; title?: string }[]> = {
+const TIMING_TITLE = "Open = the day's first edges run; Post = the last 30 minutes before puck drop";
+const INFO_TITLE = "What the model knew at placement: A = starters confirmed and lineups projected; C = a starter or lineup from the model alone, or a stale input. Dots: away, home goalie.";
+const GRADE_RANK = { A: 0, B: 1, C: 2 } as const;
+const STATUS_RANK: Record<BetStatus, number> = { value: 0, faded: 1, gone: 2, closed: 3, graded: 4 };
+
+/** Columns both views share, through Edge. */
+const LEAD_COLS: Column<LedgerRow>[] = [
+  { key: "placed", label: "Placed (ET)", sort: (r) => r.placedAt, className: "text-muted-foreground", render: (r) => dateTimeET(r.placedAt) },
+  {
+    key: "timing", label: "Timing", title: TIMING_TITLE, sort: (r) => r.leadMinutes,
+    render: (r) => <TimingCell window={r.window} leadMinutes={r.leadMinutes} />,
+  },
+  {
+    key: "game", label: "Game", sort: (r) => (r.away && r.home ? `${r.away}@${r.home}` : String(r.gameId)),
+    render: (r) => (
+      <Link href={r.gameHref} className="hover:text-accent">
+        {r.away && r.home ? (
+          <span className="inline-flex items-center gap-1.5"><TeamTag abbr={r.away} /> @ <TeamTag abbr={r.home} /></span>
+        ) : r.gameId}
+      </Link>
+    ),
+  },
+  { key: "bet", label: "Bet", sort: (r) => r.betSort, render: (r) => r.bet },
+  { key: "book", label: "Book", sort: (r) => r.book, className: "text-muted-foreground", render: (r) => r.book },
+  { key: "price", label: "Price", align: "right", sort: (r) => r.price, className: "font-medium", render: (r) => american(r.price) },
+  { key: "stake", label: "Stake", align: "right", sort: (r) => r.stake, render: (r) => `${r.stake.toFixed(2)}u` },
+  { key: "edge", label: "Edge", align: "right", sort: (r) => r.edge, render: (r) => signedPct(r.edge) },
+];
+
+const INFO_COL: Column<LedgerRow> = {
+  key: "info", label: "Info", title: INFO_TITLE, sort: (r) => (r.info.info_grade ? GRADE_RANK[r.info.info_grade] : null),
+  render: (r) => <InfoCell info={r.info} />,
+};
+
+const COLS: Record<LedgerView, Column<LedgerRow>[]> = {
   pending: [
-    { h: "Placed (ET)" }, { h: "Timing", title: "Open = the day's first edges run; Post = the last 30 minutes before puck drop" },
-    { h: "Game" }, { h: "Bet" }, { h: "Book" }, { h: "Price", right: true }, { h: "Stake", right: true },
-    { h: "Edge", right: true }, { h: "Now", right: true }, { h: "Fair CLV", right: true, title: "vs. the devigged market consensus now" },
-    { h: "Price CLV", right: true, title: "vs. the same book's price now (positive = it shortened since the bet)" },
-    { h: "Info", title: "What the model knew at placement: A = starters confirmed and lineups projected; C = a starter or lineup from the model alone, or a stale input. Dots: away, home goalie." },
-    { h: "Status" },
+    ...LEAD_COLS,
+    { key: "now", label: "Now", align: "right", sort: (r) => r.nowPrice, render: (r) => <PriceNow r={r} /> },
+    {
+      key: "clv", label: "Fair CLV", title: "vs. the devigged market consensus now", align: "right", sort: (r) => r.clvNow, className: "italic",
+      render: (r) => <Signed value={r.clvNow}>{signedPct(r.clvNow, 2)}</Signed>,
+    },
+    {
+      key: "price_clv", label: "Price CLV", title: "vs. the same book's price now (positive = it shortened since the bet)", align: "right",
+      sort: (r) => r.priceClv, className: "italic",
+      render: (r) => (
+        <span title={r.bookNow != null ? `${r.book} now ${american(r.bookNow)}` : undefined}>
+          <Signed value={r.priceClv}>{signedPct(r.priceClv, 2)}</Signed>
+        </span>
+      ),
+    },
+    INFO_COL,
+    {
+      key: "status", label: "Status", sort: (r) => STATUS_RANK[r.status],
+      render: (r) => r.status !== "graded" && (
+        <span title={STATUS[r.status].title}><Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge></span>
+      ),
+    },
   ],
   graded: [
-    { h: "Placed (ET)" }, { h: "Timing", title: "Open = the day's first edges run; Post = the last 30 minutes before puck drop" },
-    { h: "Game" }, { h: "Bet" }, { h: "Book" }, { h: "Price", right: true }, { h: "Stake", right: true },
-    { h: "Edge", right: true }, { h: "Close", right: true, title: "The same book's last price before puck drop" }, { h: "Fair CLV", right: true, title: "vs. the devigged closing consensus" },
-    { h: "Price CLV", right: true, title: "vs. the same book's closing price" },
-    { h: "Info", title: "What the model knew at placement: A = starters confirmed and lineups projected; C = a starter or lineup from the model alone, or a stale input. Dots: away, home goalie." },
-    { h: "Result" }, { h: "Units", right: true },
+    ...LEAD_COLS,
+    {
+      key: "close", label: "Close", title: "The same book's last price before puck drop", align: "right", sort: (r) => r.closePrice,
+      className: "text-muted-foreground", render: (r) => american(r.closePrice),
+    },
+    {
+      key: "clv", label: "Fair CLV", title: "vs. the devigged closing consensus", align: "right", sort: (r) => r.clv,
+      render: (r) => <Signed value={r.clv}>{signedPct(r.clv, 2)}</Signed>,
+    },
+    {
+      key: "price_clv", label: "Price CLV", title: "vs. the same book's closing price", align: "right", sort: (r) => r.priceClv,
+      render: (r) => <Signed value={r.priceClv}>{signedPct(r.priceClv, 2)}</Signed>,
+    },
+    INFO_COL,
+    {
+      key: "result", label: "Result", sort: (r) => r.result, className: "capitalize",
+      render: (r) => r.result && <Badge tone={RESULT_TONE[r.result] ?? "muted"}>{r.result}</Badge>,
+    },
+    { key: "pnl", label: "Units", align: "right", sort: (r) => r.pnl, render: (r) => <Signed value={r.pnl}>{units(r.pnl)}</Signed> },
   ],
 };
 
-/** The standard ledger: when, where and at what price each bet was taken, and how it's doing. */
+/** The standard ledger: when, where and at what price each bet was taken, and how it's doing.
+ *  Every column sorts; newest first by default. */
 export function LedgerTable({ rows, view }: { rows: LedgerRow[]; view: LedgerView }) {
   if (!rows.length) return <Empty>{view === "pending" ? "No pending bets." : "No graded bets yet."}</Empty>;
-  const cols = COLS[view];
   return (
-    <Card className="overflow-x-auto">
-      <table className="w-full text-sm tabular">
-        <thead className="text-left text-xs text-muted-foreground">
-          <tr className="border-b border-border">
-            {cols.map((c) => (
-              <th key={c.h} title={c.title} className={cn("whitespace-nowrap px-3 py-2 font-medium", c.right && "text-right")}>{c.h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.id} className="border-b border-border last:border-0">
-              <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{dateTimeET(r.placedAt)}</td>
-              <td className="whitespace-nowrap px-3 py-2"><TimingCell window={r.window} leadMinutes={r.leadMinutes} /></td>
-              <td className="whitespace-nowrap px-3 py-2">
-                <Link href={r.gameHref} className="hover:text-accent">
-                  {r.away && r.home ? (
-                    <span className="inline-flex items-center gap-1.5"><TeamTag abbr={r.away} /> @ <TeamTag abbr={r.home} /></span>
-                  ) : r.gameId}
-                </Link>
-              </td>
-              <td className="whitespace-nowrap px-3 py-2">{r.bet}</td>
-              <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{r.book}</td>
-              <td className="px-3 py-2 text-right font-medium">{american(r.price)}</td>
-              <td className="px-3 py-2 text-right">{r.stake.toFixed(2)}u</td>
-              <td className="px-3 py-2 text-right">{signedPct(r.edge)}</td>
-              {view === "pending" ? (
-                <>
-                  <td className="whitespace-nowrap px-3 py-2 text-right"><PriceNow r={r} /></td>
-                  <td className="px-3 py-2 text-right italic"><Signed value={r.clvNow}>{signedPct(r.clvNow, 2)}</Signed></td>
-                  <td className="px-3 py-2 text-right italic" title={r.bookNow != null ? `${r.book} now ${american(r.bookNow)}` : undefined}>
-                    <Signed value={r.priceClv}>{signedPct(r.priceClv, 2)}</Signed>
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2"><InfoCell info={r.info} /></td>
-                  <td className="whitespace-nowrap px-3 py-2">
-                    {r.status !== "graded" && (
-                      <span title={STATUS[r.status].title}><Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge></span>
-                    )}
-                  </td>
-                </>
-              ) : (
-                <>
-                  <td className="px-3 py-2 text-right text-muted-foreground">{american(r.closePrice)}</td>
-                  <td className="px-3 py-2 text-right"><Signed value={r.clv}>{signedPct(r.clv, 2)}</Signed></td>
-                  <td className="px-3 py-2 text-right"><Signed value={r.priceClv}>{signedPct(r.priceClv, 2)}</Signed></td>
-                  <td className="whitespace-nowrap px-3 py-2"><InfoCell info={r.info} /></td>
-                  <td className="px-3 py-2 capitalize">{r.result && <Badge tone={RESULT_TONE[r.result] ?? "muted"}>{r.result}</Badge>}</td>
-                  <td className="px-3 py-2 text-right"><Signed value={r.pnl}>{units(r.pnl)}</Signed></td>
-                </>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <Card className="overflow-hidden">
+      <SortTable rows={rows} columns={COLS[view]} rowKey={(r) => r.id} initialSort={{ key: "placed", desc: true }} rank={false} />
     </Card>
   );
 }
 
 type Metrics = Omit<BetTotals, "bets"> & { bets: number };
 
-/** A breakdown of graded bets: label columns, then count, staked, units, ROI, CLV, beat close. */
-export function BreakdownTable<T extends Metrics>({ rows, labels }: { rows: T[]; labels: { h: string; cell: (r: T) => ReactNode }[] }) {
+/** A label column of a breakdown: header, cell and what it sorts by. */
+export interface BreakdownLabel<T> {
+  h: string;
+  cell: (r: T) => ReactNode;
+  sort: (r: T) => number | string | null | undefined;
+}
+
+/** A breakdown of graded bets: label columns, then count, staked, units, ROI, CLV, beat close.
+ *  Every column sorts; rows start in the order given. */
+export function BreakdownTable<T extends Metrics>({ rows, labels }: { rows: T[]; labels: BreakdownLabel<T>[] }) {
+  const columns: Column<T>[] = [
+    ...labels.map((l) => ({ key: `label-${l.h}`, label: l.h, render: l.cell, sort: l.sort })),
+    { key: "bets", label: "Bets", align: "right", sort: (r) => r.bets, render: (r) => r.bets },
+    { key: "staked", label: "Staked", align: "right", sort: (r) => r.staked, render: (r) => `${r.staked.toFixed(2)}u` },
+    { key: "pnl", label: "Units", align: "right", sort: (r) => r.pnl, render: (r) => <Signed value={r.pnl}>{units(r.pnl)}</Signed> },
+    { key: "roi", label: "ROI", align: "right", sort: (r) => r.roi, render: (r) => <Signed value={r.roi}>{signedPct(r.roi)}</Signed> },
+    {
+      key: "clv", label: "Fair CLV", align: "right", sort: (r) => r.mean_clv,
+      render: (r) => <Signed value={r.mean_clv}>{signedPct(r.mean_clv, 2)}</Signed>,
+    },
+    {
+      key: "price_clv", label: "Price CLV", align: "right", sort: (r) => r.mean_price_clv,
+      render: (r) => <Signed value={r.mean_price_clv}>{signedPct(r.mean_price_clv, 2)}</Signed>,
+    },
+    { key: "beat", label: "Beat fair close", align: "right", sort: (r) => r.beat_close, render: (r) => pct(r.beat_close, 0) },
+  ];
   return (
-    <Card className="overflow-x-auto">
-      <table className="w-full text-sm tabular">
-        <thead className="text-left text-xs text-muted-foreground">
-          <tr className="border-b border-border">
-            {[...labels.map((l) => l.h), "Bets", "Staked", "Units", "ROI", "Fair CLV", "Price CLV", "Beat fair close"].map((h, i) => (
-              <th key={h} className={cn("px-3 py-2 font-medium", i >= labels.length && "text-right")}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr key={i} className="border-b border-border last:border-0">
-              {labels.map((l) => <td key={l.h} className="px-3 py-2">{l.cell(r)}</td>)}
-              <td className="px-3 py-2 text-right">{r.bets}</td>
-              <td className="px-3 py-2 text-right">{r.staked.toFixed(2)}u</td>
-              <td className="px-3 py-2 text-right"><Signed value={r.pnl}>{units(r.pnl)}</Signed></td>
-              <td className="px-3 py-2 text-right"><Signed value={r.roi}>{signedPct(r.roi)}</Signed></td>
-              <td className="px-3 py-2 text-right"><Signed value={r.mean_clv}>{signedPct(r.mean_clv, 2)}</Signed></td>
-              <td className="px-3 py-2 text-right"><Signed value={r.mean_price_clv}>{signedPct(r.mean_price_clv, 2)}</Signed></td>
-              <td className="px-3 py-2 text-right">{pct(r.beat_close, 0)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <Card className="overflow-hidden">
+      <SortTable rows={rows} columns={columns} rowKey={(r) => rows.indexOf(r)} rank={false} />
     </Card>
   );
 }
@@ -249,9 +266,15 @@ export function InfoBreakdown({ rows }: { rows: BetInfoBreakdown[] }) {
     <BreakdownTable
       rows={rows}
       labels={[
-        { h: "Timing", cell: (r) => (r.window ? WINDOW_LABEL[r.window] : <span className="text-muted-foreground">–</span>) },
-        { h: "Info", cell: (r) => (r.info_grade ? <Badge tone={GRADE_TONE[r.info_grade]}>{r.info_grade}</Badge>
-          : <span className="text-muted-foreground">No snapshot</span>) },
+        {
+          h: "Timing", sort: (r) => (r.window ? WINDOW_RANK[r.window] : null),
+          cell: (r) => (r.window ? WINDOW_LABEL[r.window] : <span className="text-muted-foreground">–</span>),
+        },
+        {
+          h: "Info", sort: (r) => (r.info_grade ? GRADE_RANK[r.info_grade] : null),
+          cell: (r) => (r.info_grade ? <Badge tone={GRADE_TONE[r.info_grade]}>{r.info_grade}</Badge>
+            : <span className="text-muted-foreground">No snapshot</span>),
+        },
       ]}
     />
   );

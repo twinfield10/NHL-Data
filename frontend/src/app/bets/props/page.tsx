@@ -7,7 +7,7 @@ import PropTable from "@/components/PropTable";
 import { Card, Empty, ErrorState, Loading, Stat } from "@/components/ui";
 import { useProps } from "@/lib/api";
 import { dateTimeET, stampToIso, todayET } from "@/lib/format";
-import { isPlay, MAX_PRICE, PROP_LABEL, playStake } from "@/lib/props";
+import { isPlay, MAX_PRICE, PROP_FILTERS, playStake } from "@/lib/props";
 import type { PropType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +17,6 @@ const VIEWS = [
   { key: "all", label: "All" },
 ] as const;
 type View = (typeof VIEWS)[number]["key"];
-const STATS: (PropType | "all")[] = ["all", "goals", "assists", "points", "shots", "blocks", "saves"];
 
 function Toggle<T extends string>({ options, value, onChange }: { options: { key: T; label: string }[]; value: T; onChange: (v: T) => void }) {
   return (
@@ -62,7 +61,7 @@ function Props() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold">Props</h1>
+        <h1 className="text-xl font-semibold">Prop Markets</h1>
         <DateNav date={date} />
       </div>
 
@@ -81,7 +80,7 @@ function Props() {
 
           <div className="flex flex-wrap items-center gap-3">
             <Toggle options={[...VIEWS]} value={view} onChange={setView} />
-            <Toggle options={STATS.map((s) => ({ key: s, label: s === "all" ? "All Stats" : PROP_LABEL[s] }))} value={stat} onChange={setStat} />
+            <Toggle options={PROP_FILTERS} value={stat} onChange={setStat} />
             <select
               value={book}
               onChange={(e) => setBook(e.target.value)}

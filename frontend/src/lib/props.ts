@@ -4,6 +4,12 @@ export const PROP_LABEL: Record<PropType, string> = {
   goals: "Goals", assists: "Assists", points: "Points", shots: "Shots", blocks: "Blocks", saves: "Saves",
 };
 
+/** Prop-type filter options: All, then each stat. */
+export const PROP_FILTERS: { key: PropType | "all"; label: string }[] = [
+  { key: "all", label: "All Stats" },
+  ...(Object.keys(PROP_LABEL) as PropType[]).map((k) => ({ key: k, label: PROP_LABEL[k] })),
+];
+
 /** Projection column stem per prop type (the API says "ast" for assists). */
 export const PROP_STEM: Record<PropType, string> = {
   goals: "goals", assists: "ast", points: "points", shots: "shots", blocks: "blocks", saves: "saves",

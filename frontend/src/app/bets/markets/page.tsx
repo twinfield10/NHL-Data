@@ -4,10 +4,10 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import DateNav from "@/components/DateNav";
 import EdgeTable from "@/components/EdgeTable";
-import { Card, Empty, ErrorState, Loading, Stat } from "@/components/ui";
+import { Card, Empty, ErrorState, Loading, Pills, Stat } from "@/components/ui";
 import { useEdges } from "@/lib/api";
 import { dateTimeET, stampToIso, todayET } from "@/lib/format";
-import { cn } from "@/lib/utils";
+import { MARKET_FILTERS, type MarketFilter } from "@/lib/markets";
 
 const FILTERS = [
   { key: "flagged", label: "Flagged" },
@@ -19,9 +19,10 @@ const FILTERS = [
 function GameMarkets() {
   const date = useSearchParams().get("date") ?? todayET();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("positive");
+  const [market, setMarket] = useState<MarketFilter>("all");
   const { data, isLoading, error } = useEdges(date);
 
-  const all = data?.edges ?? [];
+  const all = (data?.edges ?? []).filter((e) => market === "all" || e.market === market);
   const flagged = all.filter((e) => e.flagged);
   const placed = all.filter((e) => e.bet_price != null);
   const shown = filter === "flagged" ? flagged : filter === "placed" ? placed
@@ -45,19 +46,10 @@ function GameMarkets() {
             <Stat label="Snapshot (ET)" value={<span className="text-base">{dateTimeET(data.stamp ? stampToIso(data.stamp) : null)}</span>} />
           </div>
 
-          <div className="flex gap-1">
-            {FILTERS.map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key)}
-                className={cn(
-                  "rounded-md px-3 py-1 text-sm",
-                  filter === f.key ? "bg-muted font-medium" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-3">
+            <Pills options={FILTERS} value={filter} onChange={setFilter} />
+            <span className="h-5 w-px bg-border" />
+            <Pills options={MARKET_FILTERS} value={market} onChange={setMarket} />
           </div>
 
           {shown.length ? (
@@ -65,7 +57,7 @@ function GameMarkets() {
               <EdgeTable edges={shown} />
             </Card>
           ) : (
-            <Empty>{all.length ? "Nothing matches this filter." : "No edges for this date (no snapshot, no odds, or all games started)."}</Empty>
+            <Empty>{data.edges.length ? "Nothing matches these filters." : "No edges for this date (no snapshot, no odds, or all games started)."}</Empty>
           )}
         </>
       )}

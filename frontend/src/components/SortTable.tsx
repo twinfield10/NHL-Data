@@ -18,7 +18,8 @@ export interface Column<T> {
   style?: (row: T) => CSSProperties | undefined;
 }
 
-/** Click a header to sort (numbers start descending); the first column is a rank in the current order. */
+/** Click a header to sort (numbers start descending); unless ``rank`` is false, the first column is
+ *  a rank in the current order. */
 export default function SortTable<T>({
   rows,
   columns,
@@ -27,6 +28,7 @@ export default function SortTable<T>({
   rowClassName,
   onRowClick,
   expanded,
+  rank = true,
 }: {
   rows: T[];
   columns: Column<T>[];
@@ -36,6 +38,7 @@ export default function SortTable<T>({
   onRowClick?: (row: T) => void;
   /** Content shown under a row (e.g. details for the clicked one). */
   expanded?: (row: T) => ReactNode;
+  rank?: boolean;
 }) {
   const [sort, setSort] = useState(initialSort);
   const col = columns.find((c) => c.key === sort?.key);
@@ -64,7 +67,7 @@ export default function SortTable<T>({
       <table className="w-full text-sm">
         <thead className="text-xs text-muted-foreground">
           <tr className="border-b border-border">
-            <th className="w-10 px-3 py-2 text-right font-medium">#</th>
+            {rank && <th className="w-10 px-3 py-2 text-right font-medium">#</th>}
             {columns.map((c) => (
               <th
                 key={c.key}
@@ -94,7 +97,7 @@ export default function SortTable<T>({
                 onClick={onRowClick ? () => onRowClick(r) : undefined}
                 className={cn("border-b border-border last:border-0", onRowClick && "cursor-pointer hover:bg-muted/60", rowClassName?.(r))}
               >
-                <td className="px-3 py-2 text-right text-muted-foreground">{i + 1}</td>
+                {rank && <td className="px-3 py-2 text-right text-muted-foreground">{i + 1}</td>}
                 {columns.map((c) => (
                   <td key={c.key} style={c.style?.(r)} className={cn("whitespace-nowrap px-3 py-2", c.align === "right" && "text-right", c.className)}>
                     {c.render(r)}
@@ -103,7 +106,7 @@ export default function SortTable<T>({
               </tr>,
               extra ? (
                 <tr key={`${rowKey(r)}-x`} className="border-b border-border bg-muted/40">
-                  <td colSpan={columns.length + 1} className="px-3 py-3">
+                  <td colSpan={columns.length + (rank ? 1 : 0)} className="px-3 py-3">
                     {extra}
                   </td>
                 </tr>
