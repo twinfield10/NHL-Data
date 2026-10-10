@@ -605,7 +605,7 @@ def cmd_update(args: argparse.Namespace) -> None:
     cmd_archetypes(argparse.Namespace(seasons=year, fit=False, version=None))
 
 
-POLL_TARGETS = ("odds", "props", "props_lowvig", "goalies", "lines", "injuries", "transactions", "officials")
+POLL_TARGETS = ("odds", "props", "props_lowvig", "novig", "goalies", "lines", "injuries", "transactions", "officials")
 #: Targets whose changes move pregame prices (odds don't: the model never reads them).
 REPRICE_TARGETS = ("goalies", "lines", "injuries", "transactions", "officials")
 
@@ -686,6 +686,12 @@ def cmd_poll(args: argparse.Namespace) -> None:
                 from nhl.sources import dst
 
                 results[target] = f"lowvig {dst.poll(store, games)}"
+            elif target == "novig":
+                # Novig exchange lines and props: one order-book request per market (minutes), so its own job.
+                from nhl.sources import novig
+
+                odds_n, props_n = novig.poll(store, games)
+                results[target] = f"odds {odds_n}, props {props_n}"
             elif target == "goalies":
                 from nhl.sources import dailyfaceoff
 
@@ -727,8 +733,9 @@ def cmd_poll(args: argparse.Namespace) -> None:
         except Exception:  # noqa: BLE001 - a failed reprice is reported, polls already stored
             logging.exception("reprice failed")
             failed = True
-    odds_moved = "odds" in results and any(int(n) > 0 for n in re.findall(r"\b(\d+)\b", results["odds"]))
-    props_moved = any(int(n) > 0 for t in ("props", "props_lowvig") for n in re.findall(r"\b(\d+)\b", results.get(t, "")))
+    odds_moved = any(int(n) > 0 for t in ("odds", "novig") for n in re.findall(r"\b(\d+)\b", results.get(t, "")))
+    props_moved = any(int(n) > 0 for t in ("props", "props_lowvig", "novig")
+                      for n in re.findall(r"\b(\d+)\b", results.get(t, "")))
     if args.edges and (repriced or odds_moved or props_moved):
         from nhl.props import live as props_live
 

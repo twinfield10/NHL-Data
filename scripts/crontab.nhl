@@ -21,4 +21,6 @@
 4,19,34,49 9-23 * * *           /Users/tommywinfield/GitRepos/NHL-Data/scripts/poll.sh props_lowvig --window 960 --edges >> /Users/tommywinfield/GitRepos/NHL-Data/logs/poll_props.log 2>&1
 # ...and in between within 90 min of a puck drop (about every 7 min with the above).
 9,24,39,54 * * * *              /Users/tommywinfield/GitRepos/NHL-Data/scripts/poll.sh props_lowvig --window 90 --edges >> /Users/tommywinfield/GitRepos/NHL-Data/logs/poll_props.log 2>&1
+# Novig exchange (one order-book request per market, ~3-7 min): every 15 min when a game is within 24 h.
+14,29,44,59 * * * *             /Users/tommywinfield/GitRepos/NHL-Data/scripts/poll.sh novig --window 1440 --edges >> /Users/tommywinfield/GitRepos/NHL-Data/logs/poll_novig.log 2>&1
 # END NHL-Data

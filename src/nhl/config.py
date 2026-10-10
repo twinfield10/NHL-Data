@@ -20,6 +20,14 @@ API_RPS: float = float(os.getenv("NHL_API_RPS", "8"))
 CAST4_USER: str | None = os.getenv("CAST4_USER") or None
 CAST4_PASS: str | None = os.getenv("CAST4_PASS") or None
 
+#: Novig exchange. The NHL catalog and order books are public, but the public routes are
+#: throttled to ~2 requests/s per IP. With a ``trading::read`` key (its UUID and the path to
+#: its PKCS#8 PEM) requests are signed and get the 16/s ``read`` bucket instead. Never point
+#: this at the management key: it can move money and create keys.
+NOVIG_HOST: str = os.getenv("NOVIG_HOST", "https://api.novig.com")
+NOVIG_KEY_ID: str | None = os.getenv("NOVIG_KEY_ID") or None
+NOVIG_PEM: str | None = os.getenv("NOVIG_PEM") or None
+
 #: First season (by start year) with usable play-by-play coordinates and shift charts.
 FIRST_SEASON: int = 2010
 
