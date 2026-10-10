@@ -137,11 +137,12 @@ class _Mem:
 
 
 def _edges(rows):
-    from datetime import date, datetime, timezone
+    from datetime import date, datetime, timedelta, timezone
 
     base = {"game_date": date(2026, 10, 6), "line": None, "book": "LowVig", "price": -110.0, "p_model_side": 0.6,
             "p_market_side": 0.5, "p": 0.55, "pregame_stamp": "S", "as_of": datetime(2026, 10, 6, 18, tzinfo=timezone.utc),
             "tier": "unvalidated", "edge": 0.05}
+    base["start_utc"] = base["as_of"] + timedelta(hours=1)  # the full-size ("late") tier unless a row says otherwise
     return pl.DataFrame([{**base, **r} for r in rows])
 
 
@@ -183,7 +184,8 @@ def test_stakes_keep_placed_bets_and_count_them_against_the_caps():
 
     def bet(game_id, market, side, stake):
         return {c: None for c in ledger.SCHEMA} | {"bet_id": f"{game_id}{market}", "kind": "paper", "game_id": game_id,
-                                                   "game_date": day, "market": market, "side": side, "stake_units": stake}
+                                                   "game_date": day, "market": market, "side": side, "stake_units": stake,
+                                                   "ladder": "late"}  # this tier already filled
 
     prior = pl.DataFrame([bet(1, "moneyline", 1, 1.2), bet(1, "puckline", 2, 1.3), bet(7, "total", 1, 6.5)],
                          schema=ledger.SCHEMA)
@@ -203,7 +205,7 @@ def test_ledger_paper_once_then_grade_clv_and_result():
 
     store = _Mem({keys.GAMES: pl.DataFrame({"game_id": [2026020044], "season": [20262027], "is_final": [True],
                                             "game_date": [date(2026, 10, 6)], "home_score": [3], "away_score": [2]})})
-    e = _edges([{"game_id": 2026020044, "market": "moneyline", "side": 1, "price": 110.0, "stake_units": 1.0, "edge": 0.05}])
+    e = _edges([{"game_id": 2026020044, "market": "moneyline", "side": 1, "price": 110.0, "fill_units": 1.0, "ladder": "late", "edge": 0.05}])
     assert ledger.add_paper(store, e) == 1 and ledger.add_paper(store, e) == 0  # same game/market/side: once
     # Closing consensus: home 55% fair, captured live.
     t = datetime(2026, 10, 6, 22, tzinfo=timezone.utc)
@@ -449,3 +451,68 @@ def test_stakes_block_the_other_side_of_a_placed_market():
     got = {(r["market"], r["side"]): (r["blocked"], r["stake_units"]) for r in out.iter_rows(named=True)}
     assert got[("moneyline", 2)] == (True, 0.0)
     assert got[("total", 1)] == (False, 1.0) and got[("total", 2)] == (True, 0.0)
+
+
+def _ladder_run(store, hours_out, kelly, side=1, edge=0.05):
+    """One edges run on game 1's moneyline ``hours_out`` before puck drop."""
+    from datetime import timedelta
+
+    from nhl.betting import edges as E
+
+    e = _edges([{"game_id": 1, "market": "moneyline", "side": side, "kelly": kelly, "flagged": True, "edge": edge}])
+    e = e.with_columns((pl.col("as_of") + timedelta(hours=hours_out)).alias("start_utc"))
+    return E._stakes(e, store, e["game_date"][0])
+
+
+def test_ladder_fills_each_tier_once_up_to_its_ceiling():
+    from nhl.betting import ledger
+
+    store = _Mem()
+    out = _ladder_run(store, 30, 0.05)  # early: 25% of 2 u
+    assert out["ladder"][0] == "early" and out["fill_new"][0] and out["fill_units"][0] == 0.5
+    ledger.add_paper(store, out.filter(pl.col("fill_new")))
+    again = _ladder_run(store, 28, 0.05)  # still early: the tier is filled
+    assert not again["fill_new"][0] and again["stake_units"][0] == 0.5
+    day = _ladder_run(store, 10, 0.05)  # day: 50% -> tops up to 1 u
+    assert day["ladder"][0] == "day" and day["fill_units"][0] == 0.5 and day["stake_units"][0] == 1.0
+    ledger.add_paper(store, day.filter(pl.col("fill_new")))
+    late = _ladder_run(store, 2, 0.008)  # late, but Kelly now says 0.8 u: never shrinks, no fill
+    assert not late["fill_new"][0] and late["stake_units"][0] == 1.0
+    led = ledger.load(store).sort("fill")
+    assert led["fill"].to_list() == [1, 2] and led["ladder"].to_list() == ["early", "day"]
+    assert led["stake_units"].to_list() == [0.5, 0.5] and led["bet_id"].n_unique() == 2
+
+
+def test_ladder_skips_small_top_ups_and_blocks_the_other_side():
+    from nhl.betting import ledger
+
+    store = _Mem()
+    ledger.add_paper(store, _ladder_run(store, 30, 0.05).filter(pl.col("fill_new")))  # 0.5 u early
+    small = _ladder_run(store, 10, 0.0055)  # day target 0.55 u: a 0.05 u top-up is skipped
+    assert not small["fill_new"][0] and small["fill_units"][0] == 0.0
+    other = _ladder_run(store, 2, 0.05, side=2)
+    assert other["blocked"][0] and not other["fill_new"][0]
+
+
+def test_positions_roll_fills_up():
+    from datetime import datetime, timezone
+
+    from nhl.betting import ledger
+
+    t = datetime(2026, 10, 6, 18, tzinfo=timezone.utc)
+    base = {c: None for c in ledger.SCHEMA} | {"kind": "paper", "game_id": 1, "market": "moneyline", "side": 1, "line": None}
+    fills = pl.DataFrame([
+        base | {"bet_id": "a", "fill": 1, "ladder": "early", "placed_at": t, "price": 100.0, "stake_units": 0.5,
+                "clv": 0.04, "pnl_units": 0.5, "result": "win", "graded_at": t},
+        base | {"bet_id": "b", "fill": 2, "ladder": "late", "placed_at": t.replace(hour=22), "price": -150.0,
+                "stake_units": 1.5, "clv": 0.0, "pnl_units": 1.0, "result": "win", "graded_at": t},
+        base | {"bet_id": "r", "kind": "real", "fill": 1, "placed_at": t, "price": 120.0, "stake_units": 1.0},
+    ], schema=ledger.SCHEMA)
+    pos = ledger.positions(fills).sort("bet_id")
+    assert pos.height == 2
+    p = pos.row(0, named=True)
+    assert p["bet_id"] == "a" and p["n_fills"] == 2 and p["stake_units"] == 2.0 and p["pnl_units"] == 1.5
+    assert p["result"] == "win" and abs(p["clv"] - 0.01) < 1e-9 and p["ladder"] == "early"
+    # Unit-weighted decimal odds: (0.5 x 2.0 + 1.5 x 1.667) / 2 = 1.75 -> -133
+    assert p["price"] == -133.0 and len(p["fills"]) == 2
+    assert pos.row(1, named=True)["n_fills"] == 1 and pos.row(1, named=True)["graded_at"] is None

@@ -77,7 +77,7 @@ def test_grades_and_windows() -> None:
 def test_add_paper_records_snapshot_and_old_ledgers_load() -> None:
     store = _store({"A": _slate()})
     e = pl.DataFrame([{"game_id": 1, "game_date": DAY, "market": "moneyline", "side": 1, "line": None, "book": "X",
-                       "price": 110.0, "stake_units": 1.0, "tier": "t", "p_model_side": 0.6, "p_market_side": 0.5,
+                       "price": 110.0, "fill_units": 1.0, "ladder": "late", "tier": "t", "p_model_side": 0.6, "p_market_side": 0.5,
                        "p": 0.55, "edge": 0.05, "pregame_stamp": "A",
                        "as_of": datetime(2026, 10, 9, 12, 0, tzinfo=timezone.utc)}], schema_overrides={"line": pl.Float64})
     assert ledger.add_paper(store, e) == 1  # type: ignore[arg-type]

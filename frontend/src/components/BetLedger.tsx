@@ -4,7 +4,7 @@ import SortTable, { type Column } from "@/components/SortTable";
 import { TeamTag } from "@/components/TeamLogo";
 import { Badge, Card, Empty, Signed } from "@/components/ui";
 import { american, dateTimeET, pct, signedPct, timeET, units } from "@/lib/format";
-import type { BetInfo, BetInfoBreakdown, BetStatus, BetTotals, BetWindow } from "@/lib/types";
+import type { BetFill, BetInfo, BetInfoBreakdown, BetStatus, BetTotals, BetWindow, LadderTier } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 /** One ledger bet, game market or prop, in the shape the shared table shows. */
@@ -23,6 +23,8 @@ export interface LedgerRow {
   book: string;
   price: number;
   stake: number;
+  /** A paper position's fills (laddered stakes), oldest first; one entry for a single fill. */
+  fills?: BetFill[];
   edge: number | null;
   nowPrice: number | null;
   nowBook: string | null;
@@ -62,14 +64,34 @@ export function ClvCell({ v, title }: { v: number | null | undefined; title?: st
   );
 }
 
-/** A paper bet already placed: price taken, book and time (ET). */
-export function PlacedBet({ price, book, stake, at }: { price: number | null | undefined; book: string | null | undefined;
-  stake: number | null | undefined; at: string | null | undefined }) {
+/** A paper position already held: price taken (the average over its fills), first book and time (ET). */
+export function PlacedBet({ price, book, stake, at, fills }: { price: number | null | undefined; book: string | null | undefined;
+  stake: number | null | undefined; at: string | null | undefined; fills?: number | null }) {
   if (price == null) return null;
+  const many = fills != null && fills > 1;
   return (
-    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs" title={`placed ${american(price)} at ${book}, ${stake?.toFixed(2)}u`}>
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs"
+      title={`${many ? `${fills} fills, average` : "placed"} ${american(price)}${many ? "" : ` at ${book}`}, ${stake?.toFixed(2)}u`}>
       <span className="font-medium">{american(price)}</span>
-      <span className="text-muted-foreground">{book} · {timeET(at)}</span>
+      <span className="text-muted-foreground">{book} · {timeET(at)}{many ? ` · ${fills} Fills` : ""}</span>
+    </span>
+  );
+}
+
+export const LADDER_LABEL: Record<LadderTier, string> = { early: "Early", day: "Day", late: "Late" };
+
+/** "Early 4:12 PM · −110 LowVig · 0.50u" per fill, for a tooltip. */
+const fillsDetail = (fills: BetFill[]) => fills.map((f) =>
+  `${f.ladder ? LADDER_LABEL[f.ladder] : "Fill"} ${timeET(f.placed_at)} · ${american(f.price)} ${f.book}${f.line != null ? ` (${f.line})` : ""} · ${f.stake_units.toFixed(2)}u`,
+).join("\n");
+
+/** Units on a position; laddered positions show their fill count, with each fill on hover. */
+function StakeCell({ r }: { r: LedgerRow }) {
+  const many = (r.fills?.length ?? 0) > 1;
+  return (
+    <span className="whitespace-nowrap" title={r.fills?.length ? fillsDetail(r.fills) : undefined}>
+      {r.stake.toFixed(2)}u
+      {many && <span className="ml-1 text-xs text-muted-foreground">· {r.fills!.length} Fills</span>}
     </span>
   );
 }
@@ -157,7 +179,8 @@ const LEAD_COLS: Column<LedgerRow>[] = [
   { key: "bet", label: "Bet", sort: (r) => r.betSort, render: (r) => r.bet },
   { key: "book", label: "Book", sort: (r) => r.book, className: "text-muted-foreground", render: (r) => r.book },
   { key: "price", label: "Price", align: "right", sort: (r) => r.price, className: "font-medium", render: (r) => american(r.price) },
-  { key: "stake", label: "Stake", align: "right", sort: (r) => r.stake, render: (r) => `${r.stake.toFixed(2)}u` },
+  { key: "stake", label: "Stake", title: "Units on the position (laddered paper bets fill up to three times; hover for each fill)",
+    align: "right", sort: (r) => r.stake, render: (r) => <StakeCell r={r} /> },
   { key: "edge", label: "Edge", align: "right", sort: (r) => r.edge, render: (r) => signedPct(r.edge) },
 ];
 

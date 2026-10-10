@@ -54,7 +54,7 @@ def _spec(kind: str):
     """(ledger module, ledger key, snapshot prefix, stakes function, which rows to add, bet key)."""
     if kind == "game":
         return (game_ledger, keys.BETS_LEDGER, info.game_prefix, game_edges._stakes,
-                pl.col("flagged") & ~pl.col("blocked"), ["game_id", "market", "side"])
+                pl.col("fill_new"), ["game_id", "market", "side"])
     if kind == "props":
         from nhl.props import ledger as props_ledger
         from nhl.props import live
@@ -92,7 +92,7 @@ def rebuild(store: Store, kind: str, days: list[date] | None = None) -> tuple[pl
             snap = store.get_parquet(snap_key)
             if snap is None or snap.is_empty() or "flagged" not in snap.columns:
                 continue
-            snap = snap.drop("stake_units", "blocked", strict=False)
+            snap = snap.drop("stake_units", "blocked", "ladder", "fill_units", "fill_new", strict=False)
             snap = snap.join(live.cast({c: snap.schema[c] for c in match}), on=match, how="left", nulls_equal=True)
             snap = snap.with_columns((pl.col("flagged").fill_null(False) | pl.col("_live").fill_null(False)).alias("flagged")).drop("_live")
             e = stakes(snap, mem, day)

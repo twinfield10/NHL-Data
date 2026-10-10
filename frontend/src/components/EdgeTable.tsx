@@ -58,8 +58,9 @@ export default function EdgeTable({ edges, showGame = true }: { edges: Edge[]; s
       render: (e) => (e.stake_units > 0 ? `${e.stake_units.toFixed(2)}u` : ""),
     },
     ...(withBets ? [{
-      key: "placed", label: "Placed", title: "Paper bet already placed: price, book, time (ET)", sort: (e: Edge) => e.placed_at ?? null,
-      render: (e: Edge) => <PlacedBet price={e.bet_price} book={e.bet_book} stake={e.bet_stake} at={e.placed_at} />,
+      key: "placed", label: "Placed", title: "Paper position already held: price (average over its fills), first book and time (ET)",
+      sort: (e: Edge) => e.placed_at ?? null,
+      render: (e: Edge) => <PlacedBet price={e.bet_price} book={e.bet_book} stake={e.bet_stake} at={e.placed_at} fills={e.bet_fills} />,
     }] : []),
   ];
   return (
