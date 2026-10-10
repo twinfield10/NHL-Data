@@ -141,11 +141,11 @@ def _edges(rows):
 
     base = {"game_date": date(2026, 10, 6), "line": None, "book": "LowVig", "price": -110.0, "p_model_side": 0.6,
             "p_market_side": 0.5, "p": 0.55, "pregame_stamp": "S", "as_of": datetime(2026, 10, 6, 18, tzinfo=timezone.utc),
-            "tier": "unvalidated"}
+            "tier": "unvalidated", "edge": 0.05}
     return pl.DataFrame([{**base, **r} for r in rows])
 
 
-def test_stakes_respect_bet_game_and_day_caps():
+def test_stakes_respect_bet_and_game_caps_with_no_day_cap():
     from nhl.betting import edges as E
 
     e = _edges([
@@ -159,14 +159,14 @@ def test_stakes_respect_bet_game_and_day_caps():
     st = dict(zip(zip(out["game_id"], out["market"]), out["stake_units"]))
     assert out.height == 4
     assert st[(1, "moneyline")] == 1.5 and st[(1, "puckline")] == 1.5 and st[(2, "moneyline")] == 1.0 and st[(3, "total")] == 2.0
-    # Day cap: 8 u already in the ledger leaves 2 u for these 6 u.
+    # No day cap: 8 u already in the ledger doesn't shrink these 6 u.
     from nhl.betting import ledger
     from nhl.storage import keys
     row = {c: None for c in ledger.SCHEMA} | {"bet_id": "x", "kind": "paper", "game_id": 9, "game_date": e["game_date"][0],
                                               "market": "moneyline", "side": 1, "stake_units": 8.0, "tier": "unvalidated"}
     prior = pl.DataFrame([row], schema=ledger.SCHEMA)
     capped = E._stakes(e, _Mem({keys.BETS_LEDGER: prior}), e["game_date"][0])
-    assert abs(capped["stake_units"].sum() - 2.0) < 0.02
+    assert abs(capped["stake_units"].sum() - 6.0) < 0.02
 
 
 def test_stakes_keep_placed_bets_and_count_them_against_the_caps():
@@ -190,9 +190,9 @@ def test_stakes_keep_placed_bets_and_count_them_against_the_caps():
     out = E._stakes(e, _Mem({keys.BETS_LEDGER: prior}), day)
     st = dict(zip(zip(out["game_id"], out["market"]), out["stake_units"]))
     assert st[(1, "moneyline")] == 1.2  # as placed, not resized
-    # Game 1 has 2.5 u of its 3 u placed, so its new total gets 0.5 u; game 2's gets 2 u. The day has
-    # 9 u placed, leaving 1 u for those 2.5 u, scaled together.
-    assert st[(1, "total")] == 0.2 and st[(2, "moneyline")] == 0.8
+    # Game 1 has 2.5 u of its 3 u placed, so its new total gets 0.5 u; game 2's gets 2 u. The 9 u
+    # already placed that day don't shrink either (no day cap).
+    assert st[(1, "total")] == 0.5 and st[(2, "moneyline")] == 2.0
 
 
 def test_ledger_paper_once_then_grade_clv_and_result():
@@ -430,3 +430,22 @@ def test_book_rows_compare_each_book_with_the_consensus_at_its_own_line():
           for f in (False, True)}
     assert lv[False]["p_market"] == pytest.approx(lv[False]["p_book"])  # compared with itself only
     assert lv[True]["cons_books"] == 2 and lv[True]["p_market"] != pytest.approx(lv[True]["p_book"])
+
+
+def test_stakes_block_the_other_side_of_a_placed_market():
+    from nhl.betting import edges as E
+    from nhl.betting import ledger
+    from nhl.storage import keys
+
+    e = _edges([
+        {"game_id": 1, "market": "moneyline", "side": 2, "kelly": 0.01, "flagged": True, "edge": 0.04},  # home already bet
+        {"game_id": 1, "market": "total", "side": 1, "kelly": 0.01, "flagged": True, "edge": 0.05},      # both sides flag:
+        {"game_id": 1, "market": "total", "side": 2, "kelly": 0.01, "flagged": True, "edge": 0.03},      # bigger edge wins
+    ])
+    day = e["game_date"][0]
+    row = {c: None for c in ledger.SCHEMA} | {"bet_id": "x", "kind": "paper", "game_id": 1, "game_date": day,
+                                              "market": "moneyline", "side": 1, "stake_units": 1.0, "tier": "unvalidated"}
+    out = E._stakes(e, _Mem({keys.BETS_LEDGER: pl.DataFrame([row], schema=ledger.SCHEMA)}), day)
+    got = {(r["market"], r["side"]): (r["blocked"], r["stake_units"]) for r in out.iter_rows(named=True)}
+    assert got[("moneyline", 2)] == (True, 0.0)
+    assert got[("total", 1)] == (False, 1.0) and got[("total", 2)] == (True, 0.0)

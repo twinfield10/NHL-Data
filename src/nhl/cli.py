@@ -381,6 +381,27 @@ def cmd_record_bet(args: argparse.Namespace) -> None:
     publish.publish_quietly(store, parts=["markets"])  # the slate lists the day's bets
 
 
+def cmd_replay_ledger(args: argparse.Namespace) -> None:
+    """Rebuild the official paper ledgers from the edges snapshots under the current staking rules."""
+    from datetime import date
+
+    import polars as pl
+
+    from nhl.betting import replay
+    from nhl.storage.s3 import Store
+
+    store = Store()
+    days = [date.fromisoformat(d) for d in args.dates.split(",")] if args.dates else None
+    pl.Config.set_tbl_rows(100)
+    for kind in args.what.split(","):
+        if args.apply:
+            print(kind, "(written)", replay.apply(store, kind, days), sep="\n")
+        else:
+            print(kind, "(dry run; --apply to write)", replay.diff(*replay.rebuild(store, kind, days)), sep="\n")
+    if args.apply:
+        print("run `nhl grade-bets` to grade rebuilt bets on finished games")
+
+
 def cmd_grade_bets(args: argparse.Namespace) -> None:
     """M6: grade finished bets (CLV against our captured close, result, units) and summarise."""
     from nhl.betting import ledger
@@ -943,6 +964,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--line", type=float, help="puck line (home handicap, e.g. -1.5) or total")
     p.add_argument("--note")
     p.set_defaults(func=cmd_record_bet)
+
+    p = sub.add_parser("replay-ledger", help="M6: rebuild the official paper ledgers from the edges snapshots")
+    p.add_argument("--what", default="game,props", help="comma list of ledgers: game, props")
+    p.add_argument("--dates", default=None, help="comma list of YYYY-MM-DD (default: every date with a snapshot)")
+    p.add_argument("--apply", action="store_true", help="write the rebuilt ledgers (default: dry run)")
+    p.set_defaults(func=cmd_replay_ledger)
 
     p = sub.add_parser("grade-bets", help="M6: grade finished bets and print the ledger summary")
     p.add_argument("--regrade", action="store_true",
