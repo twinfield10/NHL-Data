@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { Edge, GameResponse, MarketKey, SideKey } from "@/lib/types";
 import { american, dateTimeET, fairAmerican, pct, signedPct, timeET } from "@/lib/format";
 import { DRAW_COLOR, OVER_COLOR, UNDER_COLOR } from "@/lib/teams";
 import { cn } from "@/lib/utils";
-import EdgeTable from "./EdgeTable";
+import { MarginChart, TeamGoalsChart, TotalGoalsChart } from "./GoalDistributionChart";
 import LineHistoryChart, { type ChartSide } from "./LineHistoryChart";
 import MarketBar, { type BarSide } from "./MarketBar";
 import { WARN_EDGE } from "./GameCard";
@@ -13,9 +13,9 @@ import { Card, Pills, SectionTitle, Signed, Stat } from "./ui";
 
 const MARKETS = [
   { key: "moneyline", label: "Moneyline" },
-  { key: "moneyline_3way", label: "3-Way (Regulation)" },
-  { key: "puckline", label: "Puck Line" },
   { key: "total", label: "Total" },
+  { key: "puckline", label: "Puck Line" },
+  { key: "moneyline_3way", label: "3-Way (Regulation)" },
 ] as const satisfies readonly { key: MarketKey; label: string }[];
 
 /** Edge-table side number for a market side (1 = home / over). */
@@ -51,6 +51,57 @@ function Price({ price, best }: { price: number | null | undefined; best?: boole
   );
 }
 
+/** One side of the market with the model's and the market's view of it. */
+interface SideRow extends ChartSide {
+  pModel: number | null;
+  pMarket: number | null;
+  pBlend: number | null;
+  price: number | null;
+  book: string | null;
+  edge: number | null;
+  stake: number | null;
+  play: boolean;
+  warn: boolean;
+}
+
+interface Metric {
+  label: string;
+  cell: (r: SideRow) => ReactNode;
+}
+
+/** Away (or over) on the left, the metric in the middle, home (or under) on the right. A three-way
+ *  market puts the draw (OT) under each metric's label in the middle column. */
+function MirrorTable({ rows, metrics }: { rows: SideRow[]; metrics: Metric[] }) {
+  const left = rows[0];
+  const right = rows[rows.length - 1];
+  const mid = rows.length === 3 ? rows[1] : null;
+  return (
+    <div className="mt-4 overflow-x-auto">
+      <table className="w-full text-sm tabular">
+        <thead className="text-xs">
+          <tr className="border-b border-border">
+            <th className="w-[38%] py-2 text-left font-semibold" style={{ color: left.color }}>{left.label}</th>
+            <th className="py-2 text-center font-semibold" style={mid ? { color: mid.color } : undefined}>{mid?.label}</th>
+            <th className="w-[38%] py-2 text-right font-semibold" style={{ color: right.color }}>{right.label}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {metrics.map((m) => (
+            <tr key={m.label} className="border-b border-border last:border-0">
+              <td className="py-2 text-left">{m.cell(left)}</td>
+              <td className="px-2 py-2 text-center">
+                <div className="text-xs text-muted-foreground">{m.label}</div>
+                {mid && <div>{m.cell(mid)}</div>}
+              </td>
+              <td className="py-2 text-right">{m.cell(right)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function MarketTab({ data, colors }: { data: GameResponse; colors: { away: string; home: string } }) {
   const [market, setMarket] = useState<MarketKey>("moneyline");
   const { game, pregame: p, markets: mv } = data;
@@ -65,7 +116,7 @@ export default function MarketTab({ data, colors }: { data: GameResponse; colors
     data.edges.find((e) => e.market === market && e.side === SIDE_NUM[s] && (market === "moneyline" || e.line === line));
   const threeWay = market === "moneyline_3way" ? mv.three_way : null;
 
-  const rows = sides.map((s) => {
+  const rows: SideRow[] = sides.map((s) => {
     const e = market === "moneyline_3way" ? undefined : edgeFor(s.key);
     const tw = threeWay?.sides.find((x) => x.side === s.key);
     const best = cons?.best[s.key];
@@ -112,40 +163,21 @@ export default function MarketTab({ data, colors }: { data: GameResponse; colors
             <>
               <MarketBar title={MARKETS.find((m) => m.key === market)!.label} sides={bar} closed={closing} neutralEdges={market === "moneyline_3way"}
                 basis={rows.some((r) => r.pModel != null) ? "model" : "market"} />
-              <div className="mt-4 overflow-x-auto">
-                <table className="w-full text-sm tabular">
-                  <thead className="text-xs text-muted-foreground">
-                    <tr className="border-b border-border">
-                      <th className="py-2 text-left font-medium" />
-                      {rows.map((r) => (
-                        <th key={r.key} className="py-2 text-right font-semibold" style={{ color: r.color }}>{r.label}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      { label: "Model", cell: (r: (typeof rows)[number]) => r.pModel != null ? <>{pct(r.pModel)} <span className="text-muted-foreground">{fairAmerican(r.pModel)}</span></> : "–" },
-                      { label: "Market (No Vig)", cell: (r: (typeof rows)[number]) => r.pMarket != null ? <>{pct(r.pMarket)} <span className="text-muted-foreground">{fairAmerican(r.pMarket)}</span></> : "–" },
-                      { label: "Blend", cell: (r: (typeof rows)[number]) => pct(r.pBlend) },
-                      { label: "Model − Market", cell: (r: (typeof rows)[number]) => r.pModel != null && r.pMarket != null
-                        ? <Signed value={r.pModel - r.pMarket}>{signedPct(r.pModel - r.pMarket)}</Signed> : "–" },
-                      { label: "Best Price", cell: (r: (typeof rows)[number]) => r.price != null ? <>{american(r.price)} <span className="text-muted-foreground">{r.book}</span></> : "–" },
-                      { label: "Edge", cell: (r: (typeof rows)[number]) => r.edge != null ? (
-                        <span className="inline-flex items-center gap-1.5">
-                          {r.play && <span className="rounded bg-emerald-600 px-1.5 text-[10px] font-bold text-white">PLAY</span>}
-                          {r.warn && <span className="rounded bg-red-600 px-1.5 text-[10px] font-bold text-white">WARN</span>}
-                          <Signed value={r.edge}>{signedPct(r.edge, 2)}</Signed>
-                        </span>) : "–" },
-                      ...(market === "moneyline_3way" ? [] : [{ label: "Stake", cell: (r: (typeof rows)[number]) => r.stake ? `${r.stake.toFixed(2)}u` : "–" }]),
-                    ].map((row) => (
-                      <tr key={row.label} className="border-b border-border last:border-0">
-                        <td className="py-2 text-muted-foreground">{row.label}</td>
-                        {rows.map((r) => <td key={r.key} className="py-2 text-right">{row.cell(r)}</td>)}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <MirrorTable rows={rows} metrics={[
+                { label: "Model", cell: (r) => r.pModel != null ? <>{pct(r.pModel)} <span className="text-muted-foreground">{fairAmerican(r.pModel)}</span></> : "–" },
+                { label: "Market (No Vig)", cell: (r) => r.pMarket != null ? <>{pct(r.pMarket)} <span className="text-muted-foreground">{fairAmerican(r.pMarket)}</span></> : "–" },
+                { label: "Blend", cell: (r) => pct(r.pBlend) },
+                { label: "Model − Market", cell: (r) => r.pModel != null && r.pMarket != null
+                  ? <Signed value={r.pModel - r.pMarket}>{signedPct(r.pModel - r.pMarket)}</Signed> : "–" },
+                { label: "Best Price", cell: (r) => r.price != null ? <>{american(r.price)} <span className="text-muted-foreground">{r.book}</span></> : "–" },
+                { label: "Edge", cell: (r) => r.edge != null ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    {r.play && <span className="rounded bg-emerald-600 px-1.5 text-[10px] font-bold text-white">PLAY</span>}
+                    {r.warn && <span className="rounded bg-red-600 px-1.5 text-[10px] font-bold text-white">WARN</span>}
+                    <Signed value={r.edge}>{signedPct(r.edge, 2)}</Signed>
+                  </span>) : "–" },
+                ...(market === "moneyline_3way" ? [] : [{ label: "Stake", cell: (r: SideRow) => r.stake ? `${r.stake.toFixed(2)}u` : "–" }]),
+              ]} />
               {market === "moneyline_3way" && (
                 <p className="mt-3 text-xs text-muted-foreground">
                   Settles after 60 minutes: OT is any game that goes to overtime. The blend is the moneyline blend split by the
@@ -155,6 +187,41 @@ export default function MarketTab({ data, colors }: { data: GameResponse; colors
             </>
           ) : (
             <div className="py-6 text-center text-sm text-muted-foreground">No model or market price for this market yet</div>
+          )}
+        </Card>
+      </div>
+
+      {mv.goals && market !== "moneyline_3way" && (
+        <div>
+          <SectionTitle right={<span className="text-xs text-muted-foreground">Model, as of the last pricing</span>}>
+            {market === "moneyline" ? "Goals by Team" : market === "total" ? "Total Goals" : `Margin (${game.home_abbr} − ${game.away_abbr})`}
+          </SectionTitle>
+          <Card className="p-4">
+            {market === "moneyline" && <TeamGoalsChart goals={mv.goals} away={sides[0]} home={sides[1]} />}
+            {market === "total" && <TotalGoalsChart goals={mv.goals} line={line} over={sides[0]} under={sides[1]} />}
+            {market === "puckline" && <MarginChart goals={mv.goals} line={line} away={sides[0]} home={sides[1]} />}
+            <p className="mt-2 text-xs text-muted-foreground">
+              Final scores as books grade them: overtime goals count and a shootout win adds one goal, so a game is never tied
+              {market === "total" ? " and odd totals are more likely than their neighbours" : ""}.
+            </p>
+          </Card>
+        </div>
+      )}
+
+      <div>
+        <SectionTitle>Line History</SectionTitle>
+        <Card className="p-4">
+          <LineHistoryChart
+            history={mv.history.filter((h) => h.market === market)}
+            model={model}
+            sides={sides}
+            start={mv.start}
+            lineLabel={market === "puckline" || market === "total" ? lineText : undefined}
+          />
+          {(market === "puckline" || market === "total") && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              The model is priced at the current main line ({line != null ? lineText(line) : "–"}); hover the chart for the line in effect at each moment.
+            </p>
           )}
         </Card>
       </div>
@@ -216,32 +283,6 @@ export default function MarketTab({ data, colors }: { data: GameResponse; colors
         </Card>
       </div>
 
-      <div>
-        <SectionTitle>Line History</SectionTitle>
-        <Card className="p-4">
-          <LineHistoryChart
-            history={mv.history.filter((h) => h.market === market)}
-            model={model}
-            sides={sides}
-            start={mv.start}
-            lineLabel={market === "puckline" || market === "total" ? lineText : undefined}
-          />
-          {(market === "puckline" || market === "total") && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              The model is priced at the current main line ({line != null ? lineText(line) : "–"}); hover the chart for the line in effect at each moment.
-            </p>
-          )}
-        </Card>
-      </div>
-
-      {data.edges.length > 0 && (
-        <div>
-          <SectionTitle>{closing ? "All Edges at the Close" : "All Edges"}</SectionTitle>
-          <Card>
-            <EdgeTable edges={data.edges} showGame={false} />
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

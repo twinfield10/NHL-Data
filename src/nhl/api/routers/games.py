@@ -58,8 +58,8 @@ def _goalies(df: pl.DataFrame | None, team_id: int, names: dict[int, str]) -> li
 
 
 def market_view(data: SiteData, game: dict) -> dict:
-    """Every book's current line, the consensus and the model through the day, and the
-    regulation three-way, per market (see :mod:`nhl.api.markets`)."""
+    """Every book's current line, the consensus and the model through the day, the regulation
+    three-way, per market, and the model's latest goal distributions (see :mod:`nhl.api.markets`)."""
     start = mk.start_utc(game)
     try:
         quotes = mk.game_quotes(data.live_odds(int(game["season"])), game["game_id"], start)
@@ -75,6 +75,7 @@ def market_view(data: SiteData, game: dict) -> dict:
     books = {m: sorted(({"book": b, **v} for b, v in bs.items()), key=lambda r: r["book"]) for m, bs in state.items()}
     return {
         "start": start, "history": history, "model": model, "books": books, "consensus": now,
+        "goals": mk.goal_distributions(matrix),
         "three_way": mk.three_way_card(matrix, now.get("moneyline_3way"), now.get("moneyline"), blend_model,
                                        blend.segment_of(game["game_date"])),
     }
