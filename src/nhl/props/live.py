@@ -27,7 +27,9 @@ over/unders and N+ ladders from every captured book (DraftKings via ESPN, FanDue
    confidence, or the goalie at least :data:`MIN_P_START` likely to start.
 6. **Stake**: ¼ Kelly on the 100-unit bankroll, at most :data:`MAX_BET_UNITS` per bet,
    and :data:`MAX_PLAYER_UNITS` per player-game, counting bets already in the props ledger.
-   No daily cap while paper bets are being tracked (owner, 2026-10-10).
+   No daily cap while paper bets are being tracked (owner, 2026-10-10). A side is ``blocked``
+   when the player's same stat already has the other side in the ledger, at any line: the
+   official ledger never hedges itself (owner, 2026-10-10).
 
 Every evaluated quote is snapshotted at ``pregame/props_edges/{date}/{stamp}.parquet``, and
 newly flagged bets go to the props paper ledger (:mod:`nhl.props.ledger`).
@@ -348,13 +350,23 @@ def price_quotes(probs: pl.DataFrame, proj: pl.DataFrame) -> pl.DataFrame:
 
 def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:
     """Units per flagged quote. A bet already in the ledger keeps its placed stake and uses up
-    room; only new bets are sized, within what's left of the per-player cap."""
+    room; only new bets are sized, within what's left of the per-player cap. A flagged side is
+    ``blocked`` when the other side of the player's stat (any line) is in the ledger, or flags
+    on the same run with a bigger edge."""
     from nhl.props import ledger
 
     key = ledger.BET_KEY
     placed = ledger.load(store).filter((pl.col("kind") == "paper") & (pl.col("game_date") == day))
-    e = edges.join(placed.select(*key, pl.col("stake_units").alias("_placed")), on=key, how="left").with_columns(
-        pl.when(pl.col("flagged") & pl.col("_placed").is_null())
+    stat = ["game_id", "player_id", "prop_type"]
+    taken = placed.group_by(stat).agg(pl.col("side").first().alias("_taken"))
+    e = edges.join(placed.select(*key, pl.col("stake_units").alias("_placed")), on=key, how="left").join(
+        taken, on=stat, how="left")
+    fresh = pl.col("flagged") & pl.col("_placed").is_null()
+    best = pl.when(fresh).then(pl.col("edge")).max().over(*stat, "side")
+    rival = pl.when(fresh).then(pl.col("edge")).max().over(stat)
+    e = e.with_columns((fresh & pl.when(pl.col("_taken").is_null()).then(best < rival)
+                        .otherwise(pl.col("_taken") != pl.col("side"))).alias("blocked")).with_columns(
+        pl.when(fresh & ~pl.col("blocked"))
         .then((pl.col("kelly") * BANKROLL_UNITS).clip(0, MAX_BET_UNITS)).otherwise(0.0).alias("_new"))
     player_used = placed.group_by("game_id", "player_id").agg(pl.col("stake_units").sum().alias("_used"))
     e = e.join(player_used, on=["game_id", "player_id"], how="left").with_columns(
@@ -363,7 +375,7 @@ def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:
     e = e.with_columns(pl.when(new_total > pl.col("_room")).then(pl.col("_new") * pl.col("_room") / new_total)
                        .otherwise(pl.col("_new")).alias("_new"))
     return e.with_columns(pl.coalesce("_placed", pl.col("_new").round(2)).alias("stake_units")).drop(
-        "_placed", "_new", "_used", "_room")
+        "_placed", "_new", "_used", "_room", "_taken")
 
 
 def compute(store: Store, day: date | None = None, now: datetime | None = None, write: bool = True) -> pl.DataFrame:
@@ -410,7 +422,7 @@ def run(store: Store, day: date | None = None, write: bool = True) -> pl.DataFra
         st = stamp(now)
         store.put_parquet(keys.props_edges(day, st), e.filter(pl.col("edge") >= SNAPSHOT_MIN_EDGE).with_columns(
             pl.lit(st).alias("stamp")))
-        new = ledger.add_paper(store, e.filter(pl.col("flagged") & (pl.col("stake_units") > 0)))
+        new = ledger.add_paper(store, e.filter(pl.col("flagged") & ~pl.col("blocked") & (pl.col("stake_units") > 0)))
         logger.info("props edges %s: %d quotes, %d flagged (%.2f u), %d new paper bets", day, e.height,
                     e.filter(pl.col("flagged")).height, float(e["stake_units"].sum()), new)
         return e

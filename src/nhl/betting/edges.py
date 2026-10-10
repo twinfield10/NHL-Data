@@ -14,6 +14,8 @@ For every game on a date that hasn't started, every captured book and every main
    at most 2 u per bet and 3 u per game (moneyline and puck line on a game are correlated),
    counting bets already in the ledger. No daily cap while paper bets are being tracked
    (owner, 2026-10-10): every flagged edge is recorded at full size.
+   A side whose market already has the other side in the ledger is ``blocked`` (no stake, no
+   paper bet): the official ledger never hedges itself when the model flips (owner, 2026-10-10).
 6. **Flag** when the edge clears :data:`MIN_EDGE`.
 
 **Tiers** say how much history stands behind a bet (all are staked the same, by the owner's
@@ -225,14 +227,23 @@ def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:
     """Units per flagged bet after the per-bet and per-game caps (no daily cap).
 
     A (game, market, side) already in the paper ledger keeps its placed stake and uses up its
-    game's room; only new bets are sized, within what's left. (Resizing placed
+    game's room; only new bets are sized, within what's left. A flagged side is ``blocked`` when
+    the other side of its (game, market) is in the ledger, or flags on the same run with a
+    bigger edge. (Resizing placed
     bets and counting only new ones let a day's ledger pass the cap as later runs added bets.)
     """
     key = ["game_id", "market", "side"]
     placed = ledger.load(store).filter((pl.col("kind") == "paper") & (pl.col("game_date") == day))
     led = placed.select(*key, pl.col("stake_units").alias("_placed")).unique(key).cast({"side": pl.Int64})
-    e = edges.with_columns(pl.col("side").cast(pl.Int64)).join(led, on=key, how="left").with_columns(
-        pl.when(pl.col("flagged") & pl.col("_placed").is_null())
+    taken = placed.group_by("game_id", "market").agg(pl.col("side").cast(pl.Int64).first().alias("_taken"))
+    e = edges.with_columns(pl.col("side").cast(pl.Int64)).join(led, on=key, how="left").join(
+        taken, on=["game_id", "market"], how="left")
+    fresh = pl.col("flagged") & pl.col("_placed").is_null()
+    best = pl.when(fresh).then(pl.col("edge")).max().over("game_id", "market", "side")
+    rival = pl.when(fresh).then(pl.col("edge")).max().over("game_id", "market")
+    e = e.with_columns((fresh & pl.when(pl.col("_taken").is_null()).then(best < rival)
+                        .otherwise(pl.col("_taken") != pl.col("side"))).alias("blocked")).with_columns(
+        pl.when(fresh & ~pl.col("blocked"))
         .then((pl.col("kelly") * BANKROLL_UNITS).clip(0, MAX_BET_UNITS)).otherwise(0.0).alias("_new"))
     game_used = placed.group_by("game_id").agg(pl.col("stake_units").sum().alias("_used"))
     e = e.join(game_used, on="game_id", how="left").with_columns(
@@ -241,7 +252,7 @@ def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:
     e = e.with_columns(pl.when(new_game > pl.col("_room")).then(pl.col("_new") * pl.col("_room") / new_game)
                        .otherwise(pl.col("_new")).alias("_new"))
     return e.with_columns(pl.coalesce("_placed", pl.col("_new").round(2)).alias("stake_units")).drop(
-        "_placed", "_new", "_used", "_room")
+        "_placed", "_new", "_used", "_room", "_taken")
 
 
 def run(store: Store, day: date | None = None, write: bool = True) -> pl.DataFrame:
@@ -254,7 +265,7 @@ def run(store: Store, day: date | None = None, write: bool = True) -> pl.DataFra
             return e
         st = stamp(now)
         store.put_parquet(keys.betting_edges(day, st), e.drop("score_matrix", strict=False).with_columns(pl.lit(st).alias("stamp")))
-        new = ledger.add_paper(store, e.filter(pl.col("flagged")))
+        new = ledger.add_paper(store, e.filter(pl.col("flagged") & ~pl.col("blocked")))
         logger.info("edges %s: %d flagged (%.1f u), %d new paper bets", day, e.filter(pl.col("flagged")).height,
                     float(e["stake_units"].sum()), new)
         return e

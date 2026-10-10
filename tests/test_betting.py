@@ -141,7 +141,7 @@ def _edges(rows):
 
     base = {"game_date": date(2026, 10, 6), "line": None, "book": "LowVig", "price": -110.0, "p_model_side": 0.6,
             "p_market_side": 0.5, "p": 0.55, "pregame_stamp": "S", "as_of": datetime(2026, 10, 6, 18, tzinfo=timezone.utc),
-            "tier": "unvalidated"}
+            "tier": "unvalidated", "edge": 0.05}
     return pl.DataFrame([{**base, **r} for r in rows])
 
 
@@ -430,3 +430,22 @@ def test_book_rows_compare_each_book_with_the_consensus_at_its_own_line():
           for f in (False, True)}
     assert lv[False]["p_market"] == pytest.approx(lv[False]["p_book"])  # compared with itself only
     assert lv[True]["cons_books"] == 2 and lv[True]["p_market"] != pytest.approx(lv[True]["p_book"])
+
+
+def test_stakes_block_the_other_side_of_a_placed_market():
+    from nhl.betting import edges as E
+    from nhl.betting import ledger
+    from nhl.storage import keys
+
+    e = _edges([
+        {"game_id": 1, "market": "moneyline", "side": 2, "kelly": 0.01, "flagged": True, "edge": 0.04},  # home already bet
+        {"game_id": 1, "market": "total", "side": 1, "kelly": 0.01, "flagged": True, "edge": 0.05},      # both sides flag:
+        {"game_id": 1, "market": "total", "side": 2, "kelly": 0.01, "flagged": True, "edge": 0.03},      # bigger edge wins
+    ])
+    day = e["game_date"][0]
+    row = {c: None for c in ledger.SCHEMA} | {"bet_id": "x", "kind": "paper", "game_id": 1, "game_date": day,
+                                              "market": "moneyline", "side": 1, "stake_units": 1.0, "tier": "unvalidated"}
+    out = E._stakes(e, _Mem({keys.BETS_LEDGER: pl.DataFrame([row], schema=ledger.SCHEMA)}), day)
+    got = {(r["market"], r["side"]): (r["blocked"], r["stake_units"]) for r in out.iter_rows(named=True)}
+    assert got[("moneyline", 2)] == (True, 0.0)
+    assert got[("total", 1)] == (False, 1.0) and got[("total", 2)] == (True, 0.0)

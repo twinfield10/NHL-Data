@@ -176,7 +176,7 @@ def test_stakes_count_placed_bets_against_the_caps() -> None:
 
     def row(player_id: int, prop: str = "points", line: float = 0.5) -> dict[str, Any]:
         return {"game_id": 2026020061, "player_id": player_id, "prop_type": prop, "line": line, "side": "over",
-                "flagged": True, "kelly": 0.01}  # 1 u at full size, capped at 0.5 u per bet
+                "flagged": True, "kelly": 0.01, "edge": 0.1}  # 1 u at full size, capped at 0.5 u per bet
 
     e = pl.DataFrame([row(1), row(20), row(20, "assists"), row(30)])
     out = {(r["player_id"], r["prop_type"]): r["stake_units"]
@@ -191,7 +191,7 @@ def test_stakes_player_cap_counts_placed() -> None:
     store = FakeStore()
     ledger.add_paper(store, pl.DataFrame([edge_row(player_id=20, prop_type="goals", stake_units=0.8)]))  # type: ignore[arg-type]
     e = pl.DataFrame([{"game_id": 2026020061, "player_id": 20, "prop_type": "points", "line": 0.5, "side": "over",
-                       "flagged": True, "kelly": 0.01}])
+                       "flagged": True, "kelly": 0.01, "edge": 0.1}])
     out = live._stakes(e, store, date(2026, 10, 8))  # type: ignore[arg-type]
     assert out["stake_units"][0] == pytest.approx(0.2)  # 1 u per player-game, 0.8 already in
 
@@ -318,3 +318,20 @@ def test_current_quotes_leave_out_props_missing_from_the_books_latest_poll() -> 
                        keys.props_seen(20262027, "x"): seen})
     q = current_quotes(store, 20262027, [2026020090], t2 + timedelta(minutes=5))  # type: ignore[arg-type]
     assert sorted(q["player_name"].unique().to_list()) == ["Kept", "Old"]
+
+
+def test_stakes_block_the_other_side_of_a_placed_stat_at_any_line() -> None:
+    store = FakeStore()
+    ledger.add_paper(store, pl.DataFrame([edge_row(player_id=20, prop_type="shots", line=2.5, side="over", stake_units=0.3)]))  # type: ignore[arg-type]
+
+    def row(player_id: int, line: float, side: str, edge: float) -> dict[str, Any]:
+        return {"game_id": 2026020061, "player_id": player_id, "prop_type": "shots", "line": line, "side": side,
+                "flagged": True, "kelly": 0.002, "edge": edge}
+
+    e = pl.DataFrame([row(20, 3.5, "under", 0.08), row(20, 3.5, "over", 0.06),
+                      row(30, 2.5, "over", 0.06), row(30, 3.5, "under", 0.09)])
+    out = {(r["player_id"], r["line"], r["side"]): (r["blocked"], r["stake_units"])
+           for r in live._stakes(e, store, date(2026, 10, 8)).iter_rows(named=True)}  # type: ignore[arg-type]
+    assert out[(20, 3.5, "under")] == (True, 0.0)   # over already in at 2.5
+    assert out[(20, 3.5, "over")] == (False, 0.2)   # same side, another line: allowed
+    assert out[(30, 3.5, "under")] == (False, 0.2) and out[(30, 2.5, "over")] == (True, 0.0)  # bigger edge wins
