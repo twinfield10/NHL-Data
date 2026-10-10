@@ -77,13 +77,14 @@ first and then prices with everything captured so far.
 | Odds, closing | `8,13,23,28,38,43,53,58 * * * *` | `poll.sh odds,props --window 90` | game within 90 min | `odds,props` | `logs/poll_odds.log` | same |
 | LowVig props, game day | `4,19,34,49 9-23 * * *` | `poll.sh props_lowvig --window 960 --edges` | game within 16 h | `props_lowvig` | `logs/poll_props.log` | ~75 s (headless Chromium) |
 | LowVig props, pregame | `9,24,39,54 * * * *` | same, `--window 90 --edges` | game within 90 min | `props_lowvig` | `logs/poll_props.log` | same |
-| Novig | `14,29,44,59 * * * *` | `poll.sh novig --window 1440 --edges` | game within 24 h | `novig` | `logs/poll_novig.log` | ~3-4 min signed; capped at 7 min public (`TIME_BUDGET_S`) ² |
+| Novig | `14,29,44,59 * * * *` | `poll.sh novig --window 1440 --edges` | game within 24 h | `novig` | `logs/poll_novig.log` | ~5 s signed (one websocket snapshot); up to 7 min public (`TIME_BUDGET_S`) ² |
 
 ¹ 40 s early in the season; a few minutes later on. See [Timing](#timing).
 
-² One order-book request per market (~200 per game). Without a `trading::read` key the public
-routes allow ~2 requests/s, so a poll reads game lines first, then props for the soonest
-games, and leaves the rest for the next poll. See `src/nhl/sources/novig.py`.
+² With the `trading::read` key, every order book arrives in one websocket snapshot. Without
+it (or if the websocket fails) books are read over REST, one request per market (~250 per
+game) at ~2 requests/s on the public routes, so a poll reads game lines first, then props for
+the soonest games, and leaves the rest for the next poll. See `src/nhl/sources/novig.py`.
 
 **Minute map.** Each job type has its own residue mod 5, so NHL jobs never start on the
 same minute as each other or as any other job on this machine:

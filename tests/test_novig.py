@@ -195,11 +195,55 @@ class FakeResponse:
         assert self.status_code < 400
 
 
-def client_for(raw: dict, signer: novig.Signer | None = None, throttle: int = 0) -> tuple[novig.NovigClient, FakeSession]:
-    client = novig.NovigClient("https://api.novig.com", signer, rps=1000)
+def no_websocket(url: str, header: list, timeout: float) -> Any:
+    raise ConnectionRefusedError("no websocket in tests")
+
+
+def client_for(raw: dict, signer: novig.Signer | None = None, throttle: int = 0,
+               ws_connect: Any = no_websocket) -> tuple[novig.NovigClient, FakeSession]:
+    client = novig.NovigClient("https://api.novig.com", signer, rps=1000, ws_connect=ws_connect)
     session = FakeSession(raw, throttle)
     client.session = session  # type: ignore[assignment]
     return client, session
+
+
+class FakeWebSocket:
+    """Answers ``snapshot`` frames from the fixture's books; ``replies`` queue frames first."""
+
+    def __init__(self, raw: dict, skip: set[str] | None = None, replies: list[dict] | None = None) -> None:
+        self.raw, self.skip, self.queued = raw, skip or set(), list(replies or [])
+        self.sent: list[dict] = []
+        self.pending: list[str] = []
+        self.closed = False
+        self.header: list[str] = []
+        self.url = ""
+
+    def __call__(self, url: str, header: list, timeout: float) -> FakeWebSocket:
+        self.url, self.header = url, header
+        return self
+
+    def send(self, text: str) -> None:
+        frame = json.loads(text)
+        self.sent.append(frame)
+        self.pending.append(json.dumps({"ts": 1}))  # a heartbeat-like frame to skip
+        if self.queued:
+            self.pending.append(json.dumps(self.queued.pop(0)))
+            return
+        events = set(frame["snapshot"]["events"])
+        snap = {m["marketId"]: {"eventId": m["eventId"], "book": self.raw["books"][m["marketId"]],
+                                "lifecycle": {"seq": 1, "status": "OPEN"}}
+                for m in self.raw["markets"] if m["eventId"] in events and m["marketId"] not in self.skip}
+        self.pending.append(json.dumps({"nonce": frame["nonce"], "snapshot": snap}))
+
+    def recv(self) -> str:
+        return self.pending.pop(0)
+
+    def close(self) -> None:
+        self.closed = True
+
+
+def signer() -> novig.Signer:
+    return novig.Signer("kid", VECTORS["keypairs"]["ed25519-test-1"]["private_key_pkcs8_pem"].encode())
 
 
 def test_public_fetch_uses_public_routes_and_waits_out_429(raw: dict) -> None:
@@ -229,6 +273,55 @@ def test_refused_key_falls_back_to_public(raw: dict) -> None:
     session.locked = True
     got, _ = novig.fetch(client, now=CAPTURED)
     assert len(got["books"]) == len(raw["markets"])
+
+
+def test_signed_fetch_reads_books_in_one_snapshot(raw: dict) -> None:
+    ws = FakeWebSocket(raw)
+    client, session = client_for(raw, signer(), ws_connect=ws)
+    got, _ = novig.fetch(client, now=CAPTURED)
+    assert len(got["books"]) == len(raw["markets"])
+    assert not any("/book" in u for u in session.urls)  # no REST book reads
+    assert len(ws.sent) == 1 and ws.sent[0]["snapshot"]["events"] == {raw["events"][0]["eventId"]: "book"}
+    assert ws.url == "wss://api.novig.com/v3/ws" and any(h.startswith("Novig-Signature: ") for h in ws.header)
+    assert ws.closed
+    assert novig.normalize(got, CAPTURED)[0].height == 29
+
+
+def test_snapshot_gaps_filled_over_rest(raw: dict) -> None:
+    missing = {m["marketId"] for m in raw["markets"][:3]}
+    client, session = client_for(raw, signer(), ws_connect=FakeWebSocket(raw, skip=missing))
+    got, _ = novig.fetch(client, now=CAPTURED)
+    assert len(got["books"]) == len(raw["markets"])
+    assert {u.split("/")[-2] for u in session.urls if "/book" in u} == missing
+
+
+def test_snapshot_refused_falls_back_to_rest(raw: dict) -> None:
+    ws = FakeWebSocket(raw, replies=[{"nonce": 1, "code": "SCOPE_INSUFFICIENT"}])
+    client, session = client_for(raw, signer(), ws_connect=ws)
+    got, _ = novig.fetch(client, now=CAPTURED)
+    assert len(got["books"]) == len(raw["markets"])
+    assert sum("/book" in u for u in session.urls) == len(raw["markets"])
+
+
+def test_throttled_snapshot_waits_and_retries(raw: dict, monkeypatch: pytest.MonkeyPatch) -> None:
+    waits: list[float] = []
+    monkeypatch.setattr(novig.time, "sleep", waits.append)
+    ws = FakeWebSocket(raw, replies=[{"code": "RATE_LIMIT_EXCEEDED"}])
+    client, _ = client_for(raw, signer(), ws_connect=ws)
+    books = novig.snapshot_books(client, raw["markets"])
+    assert len(books) == len(raw["markets"]) and waits == [16.0]
+    assert [f["nonce"] for f in ws.sent] == [1, 2]
+
+
+def test_large_slates_split_across_snapshots(raw: dict, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(novig, "MAX_WS_MARKETS", 10)
+    other = dict(raw["markets"][0], eventId="other-event", marketId="other-market")
+    raw["books"]["other-market"] = raw["books"][raw["markets"][0]["marketId"]]
+    raw["markets"].append(other)
+    ws = FakeWebSocket(raw)
+    client, _ = client_for(raw, signer(), ws_connect=ws)
+    books = novig.snapshot_books(client, raw["markets"])
+    assert len(ws.sent) == 2 and len(books) == len(raw["markets"])
 
 
 def test_budget_stops_book_reads(raw: dict) -> None:
