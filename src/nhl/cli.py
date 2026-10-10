@@ -334,36 +334,46 @@ def cmd_fit_blend(args: argparse.Namespace) -> None:
             print(f"{market:9s} {seg:7s} market {f['coef'][1]:.3f}  model {f['coef'][2]:.3f}  (n={f['n']})")
 
 
-def cmd_edges(args: argparse.Namespace) -> None:
-    """M6: edges and stakes for today's games from the latest pregame snapshot and odds."""
-    from datetime import date
+def _days(store, date_arg: str | None) -> list[date]:
+    """``--date`` if given, else the pricing horizon (today plus every later date a book has
+    quoted; see :mod:`nhl.pregame.horizon`)."""
+    if date_arg:
+        return [date.fromisoformat(date_arg)]
+    from nhl.pregame import horizon
 
+    return horizon.dates(store)
+
+
+def cmd_edges(args: argparse.Namespace) -> None:
+    """M6: edges and stakes from the latest pregame snapshot and odds, for every date in the
+    horizon (or ``--date``)."""
     from nhl.betting import edges
     from nhl.storage.s3 import Store
 
-    store, day = Store(), date.fromisoformat(args.date) if args.date else None
-    e = edges.run(store, day, write=not args.no_write)
-    print(edges.render(e))
-    if not args.no_write:
-        from nhl.site import publish
+    store = Store()
+    for day in _days(store, args.date):
+        e = edges.run(store, day, write=not args.no_write)
+        print(f"== {day}\n{edges.render(e)}")
+        if not args.no_write:
+            from nhl.site import publish
 
-        publish.publish_quietly(store, day, parts=["markets"])
+            publish.publish_quietly(store, day, parts=["markets"])
 
 
 def cmd_props_edges(args: argparse.Namespace) -> None:
-    """M9: player-prop edges and stakes for today's games (adds new paper prop bets)."""
-    from datetime import date
-
+    """M9: player-prop edges and stakes for every date in the horizon (or ``--date``); adds new
+    paper prop bets."""
     from nhl.props import live
     from nhl.storage.s3 import Store
 
-    store, day = Store(), date.fromisoformat(args.date) if args.date else None
-    e = live.run(store, day, write=not args.no_write)
-    print(live.render(e))
-    if not args.no_write:
-        from nhl.site import publish
+    store = Store()
+    for day in _days(store, args.date):
+        e = live.run(store, day, write=not args.no_write)
+        print(f"== {day}\n{live.render(e)}")
+        if not args.no_write:
+            from nhl.site import publish
 
-        publish.publish_quietly(store, day, parts=["props"])
+            publish.publish_quietly(store, day, parts=["props"])
 
 
 def cmd_record_bet(args: argparse.Namespace) -> None:
@@ -478,22 +488,22 @@ def cmd_site_views(args: argparse.Namespace) -> None:
 
 
 def cmd_pregame(args: argparse.Namespace) -> None:
-    """M5: project lineups and starters, price today's games, write pregame snapshots."""
-    from datetime import date
-
+    """M5: project lineups and starters, price every date in the horizon (or ``--date``), write
+    pregame snapshots."""
     from nhl.pregame import price
     from nhl.storage.s3 import Store
 
     from nhl.pregame import slate
 
-    store, day = Store(), date.fromisoformat(args.date) if args.date else None
-    out = price.run(store, day, n_sims=args.sims, write=not args.no_write)
-    if out is not None:
-        print(slate.render(out.slate, out.freshness))
-    if out is not None and not args.no_write:
-        from nhl.site import publish
+    store = Store()
+    for day in _days(store, args.date):
+        out = price.run(store, day, n_sims=args.sims, write=not args.no_write)
+        if out is not None:
+            print(f"== {day}\n{slate.render(out.slate, out.freshness)}")
+        if out is not None and not args.no_write:
+            from nhl.site import publish
 
-        publish.publish_quietly(store, day)
+            publish.publish_quietly(store, day)
 
 
 def cmd_evaluate_deployment(args: argparse.Namespace) -> None:
@@ -695,7 +705,9 @@ def cmd_poll(args: argparse.Namespace) -> None:
     With ``--window N`` the poll only runs when a game starts within N minutes, so cron
     can fire every few minutes and the pollers only work near puck drop. With
     ``--reprice``, any change to a source in :data:`REPRICE_TARGETS` reruns ``nhl pregame``
-    for today's games in the same run.
+    for every date in the pricing horizon in the same run. With ``--edges``, an odds poll
+    also prices any horizon date that has no pregame snapshot yet (a game the books just
+    listed), then edges run for every horizon date.
     """
     from nhl.ingest.http import SourceUnavailable
     from nhl.storage import keys
@@ -768,44 +780,56 @@ def cmd_poll(args: argparse.Namespace) -> None:
             failed = True
     print(" | ".join(f"{k}: {v}" for k, v in results.items()))
     changed = [k for k in REPRICE_TARGETS if results.get(k, "").isdigit() and int(results[k]) > 0]
-    repriced = False
-    if args.reprice and changed:
-        from nhl.pregame import price
-
-        try:
-            out = price.run(store)
-            repriced = out is not None
-            print(f"repriced after {', '.join(changed)}: {0 if out is None else out.prices.height} games")
-        except Exception:  # noqa: BLE001 - a failed reprice is reported, polls already stored
-            logging.exception("reprice failed")
-            failed = True
     odds_moved = any(int(n) > 0 for t in ("odds", "novig") for n in re.findall(r"\b(\d+)\b", results.get(t, "")))
     props_moved = any(int(n) > 0 for t in ("props", "props_lowvig", "novig")
                       for n in re.findall(r"\b(\d+)\b", results.get(t, "")))
-    if args.edges and (repriced or odds_moved or props_moved):
-        from nhl.props import live as props_live
+    from nhl.pregame import horizon
 
-        try:
-            p = props_live.run(store)
-            print(f"prop edges: {0 if p.is_empty() else int(p['flagged'].sum())} flagged")
-        except Exception:  # noqa: BLE001 - reported; game-line edges still run
-            logging.exception("prop edges failed")
-            failed = True
-    if args.edges and (repriced or odds_moved):
-        from nhl.betting import edges
+    days = horizon.dates(store)
+    # Lineup news reprices the whole horizon; an odds poll prices dates the books just listed.
+    to_price = days if args.reprice and changed else []
+    if args.edges and any(t in targets for t in ("odds", "novig")):
+        to_price = to_price or horizon.unpriced(store, days)
+    repriced: list[date] = []
+    if to_price:
+        from nhl.pregame import price
 
-        try:
-            e = edges.run(store)
-            print(f"edges: {0 if e.is_empty() else int(e['flagged'].sum())} flagged")
-        except Exception:  # noqa: BLE001 - reported; polls and prices are already stored
-            logging.exception("edges failed")
-            failed = True
+        why = ", ".join(changed) if args.reprice and changed else "new odds"
+        for day in to_price:
+            try:
+                out = price.run(store, day)
+                if out is not None:
+                    repriced.append(day)
+                print(f"priced {day} after {why}: {0 if out is None else out.prices.height} games")
+            except Exception:  # noqa: BLE001 - a failed reprice is reported, polls already stored
+                logging.exception("pricing %s failed", day)
+                failed = True
+    for day in days:
+        if args.edges and (repriced or odds_moved or props_moved):
+            from nhl.props import live as props_live
+
+            try:
+                p = props_live.run(store, day)
+                print(f"prop edges {day}: {0 if p.is_empty() else int(p['flagged'].sum())} flagged")
+            except Exception:  # noqa: BLE001 - reported; game-line edges still run
+                logging.exception("prop edges %s failed", day)
+                failed = True
+        if args.edges and (repriced or odds_moved):
+            from nhl.betting import edges
+
+            try:
+                e = edges.run(store, day)
+                print(f"edges {day}: {0 if e.is_empty() else int(e['flagged'].sum())} flagged")
+            except Exception:  # noqa: BLE001 - reported; polls and prices are already stored
+                logging.exception("edges %s failed", day)
+                failed = True
     # Prebuilt site views: what changed, plus anything missing or gone stale (a game that just started).
     from nhl.site import publish
 
-    parts = (["markets", "lineups", "props"] if repriced else
-             (["markets"] if odds_moved else []) + (["props"] if props_moved else []))
-    publish.publish_quietly(store, parts=parts)
+    for day in days or [None]:
+        parts = (["markets", "lineups", "props"] if day in repriced else
+                 (["markets"] if odds_moved or repriced else []) + (["props"] if props_moved or repriced else []))
+        publish.publish_quietly(store, day, parts=parts)
     if failed:
         sys.exit(1)
 
@@ -944,13 +968,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--seasons", default="2016-2025")
     p.set_defaults(func=cmd_fit_blend)
 
-    p = sub.add_parser("edges", help="M6: edges and stakes for today's games (adds new paper bets)")
-    p.add_argument("--date", help="game date (default: today, Eastern)")
+    p = sub.add_parser("edges", help="M6: edges and stakes for the horizon's games (adds new paper bets)")
+    p.add_argument("--date", help="game date (default: every date in the pricing horizon)")
     p.add_argument("--no-write", action="store_true", help="don't snapshot or touch the ledger")
     p.set_defaults(func=cmd_edges)
 
-    p = sub.add_parser("props-edges", help="M9: player-prop edges and stakes for today's games (adds paper prop bets)")
-    p.add_argument("--date", help="game date (default: today, Eastern)")
+    p = sub.add_parser("props-edges", help="M9: player-prop edges and stakes for the horizon's games (adds paper prop bets)")
+    p.add_argument("--date", help="game date (default: every date in the pricing horizon)")
     p.add_argument("--no-write", action="store_true", help="don't cache projections, snapshot or touch the ledger")
     p.set_defaults(func=cmd_props_edges)
 
@@ -984,8 +1008,8 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("backfill-bet-info", help="Fill the info-at-placement snapshot on older paper bets")
     p.set_defaults(func=cmd_backfill_bet_info)
 
-    p = sub.add_parser("pregame", help="M5: project lineups/starters and price today's games (snapshots)")
-    p.add_argument("--date", help="game date (default: today, Eastern)")
+    p = sub.add_parser("pregame", help="M5: project lineups/starters and price the horizon's games (snapshots)")
+    p.add_argument("--date", help="game date (default: every date in the pricing horizon)")
     p.add_argument("--sims", type=int, default=4000)
     p.add_argument("--no-write", action="store_true", help="don't write snapshots")
     p.set_defaults(func=cmd_pregame)

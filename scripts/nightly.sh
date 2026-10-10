@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Nightly (04:19 ET): ingest last night's games and rebuild everything downstream (events,
 # xG, game state, a rating snapshot dated today), then refresh transactions and injuries so
-# the morning pregame run starts from current rosters, then grade yesterday's bets. See docs/scheduler.md.
+# pricing starts from current rosters, grade yesterday's bets, then price every date in the
+# horizon with the new snapshot (this replaced the 09:14 slate run). See docs/scheduler.md.
 # shellcheck source=./_common.sh
 . "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
@@ -19,6 +20,11 @@ run_with_timeout 600 nhl site-tables || echo "site tables failed (non-fatal)"
 # never polled, and logs how our captured closes compare with ESPN's.
 run_with_timeout 900 nhl odds-history || echo "ESPN odds history failed (non-fatal)"
 run_with_timeout 600 nhl grade-bets || echo "grading failed (non-fatal)"
+# The day's first prices: today plus every later date a book has quoted, from the new rating
+# snapshot, then edges (new flagged bets go to the paper ledgers).
+run_with_timeout "${PREGAME_TIMEOUT:-900}" nhl pregame || echo "pregame failed (non-fatal)"
+run_with_timeout 600 nhl edges || echo "edges failed (non-fatal)"
+run_with_timeout 600 nhl props-edges || echo "prop edges failed (non-fatal)"
 # Final scores and graded bets: rebuild yesterday's and today's prebuilt site views in full.
 run_with_timeout 600 nhl site-views --force --date "$(TZ=America/New_York date -v-1d +%F)" || echo "site views (yesterday) failed (non-fatal)"
 run_with_timeout 600 nhl site-views --force || echo "site views failed (non-fatal)"

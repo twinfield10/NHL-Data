@@ -14,9 +14,12 @@ local, and this machine runs on **America/New_York**, so every time below is ET.
    requests and writes nothing. That's why polling is dense near puck drop.
 2. **Poll only when it matters.** Every poll takes a `--window N`: it runs only if a game
    starts within N minutes. Off days and the offseason are quiet without editing cron.
-3. **Model prices follow the news.** A lineup, goalie, injury, transaction or referee change
-   reprices today's games in the same run (`--reprice`). Odds never reprice: the model
-   doesn't read them.
+3. **Model prices follow the news, from the moment a game is listed.** Pricing covers the
+   **horizon**: today plus every later date a book has quoted (`nhl.pregame.horizon`; books
+   post ~30-53 h ahead). A lineup, goalie, injury, transaction or referee change reprices the
+   whole horizon in the same run (`--reprice`), and an odds poll that sees a game on a date
+   with no pregame snapshot yet prices that date. Odds never *re*price: the model doesn't
+   read them.
 4. **Stay out of other jobs' way.** This machine runs ~80 other cron jobs, and between
    them every minute that is a multiple of 5 is taken (:00, :05, :10 … :55), plus a cluster
    from 05:35 to 07:15. NHL jobs use only the other minutes, one residue class per job type
@@ -26,11 +29,10 @@ local, and this machine runs on **America/New_York**, so every time below is ET.
 
 | Time (ET) | What runs | Why then |
 |---|---|---|
-| **04:19** | `nightly.sh`: `nhl update` (catalog → ingest last night's games → events, xG, freeze → game state → **rating snapshot dated today**), then a transactions + injuries poll, then **`nhl site-tables`** (the site's ratings boards from the new snapshot, so off days stay current, plus team matchup views and the archetype history), then **`nhl odds-history`** (ESPN's published open/close for last night's games: fills games we never polled, and logs our closes vs ESPN's), then **`nhl grade-bets`** (CLV against our captured closes, results, units), then **`nhl site-views --force`** for yesterday and today (final scores, graded bets) | The last West Coast games end ~01:30 and the NHL posts shift data soon after; done before the 05:35 cluster. The snapshot dated today uses only games before today, so it's point-in-time for tonight. |
+| **04:19** | `nightly.sh`: `nhl update` (catalog → ingest last night's games → events, xG, freeze → game state → **rating snapshot dated today**), then a transactions + injuries poll, then **`nhl site-tables`** (the site's ratings boards from the new snapshot, so off days stay current, plus team matchup views and the archetype history), then **`nhl odds-history`** (ESPN's published open/close for last night's games: fills games we never polled, and logs our closes vs ESPN's), then **`nhl grade-bets`** (CLV against our captured closes, results, units), then **`nhl pregame`**, **`nhl edges`** and **`nhl props-edges`** for every date in the horizon (the day's first prices from the new snapshot; this replaced the 09:14 slate run on 2026-10-10), then **`nhl site-views --force`** for yesterday and today (final scores, graded bets) | The last West Coast games end ~01:30 and the NHL posts shift data soon after; done before the 05:35 cluster. The snapshot dated today uses only games before today, so it's point-in-time for tonight. Every pregame run that writes today's prices also rebuilds the site's ratings boards under `site/ratings/` (~5 s, non-fatal; see `nhl.site.tables`). |
 | 00:00-24:00 | Odds (LowVig, 4Casters, ESPN books, Novig) and FanDuel props every 15 min (:03 :18 :33 :48) while a game is within 24 h; DraftKings props come with the ESPN odds, Novig props with Novig | Captures **opening lines** whenever books post them (often the evening before) and the drift through the day. |
 | **08:07** | First lineup poll (DailyFaceoff goalies, ESPN injuries, transactions, referee crews), then every 15 min (:07 :22 :37 :52) until 23:52 | News starts with morning reports. On an off day (no game within 16 h) it skips. |
 | **08:11** | DailyFaceoff line combinations, hourly at :11 until 23:11 | Lines change after practices and morning skates; 32 pages take ~65 s, so hourly is polite. |
-| **09:14** | `pregame.sh`: the **morning slate**, always, then **`nhl edges`** | The first full set of prices with the new ratings snapshot, even if no source changed overnight, and the first edges of the day against the morning odds. Every pregame run that writes (this one and each `--reprice`) also rebuilds the site's ratings boards under `site/ratings/` (~5 s, non-fatal; see `nhl.site.tables`). |
 | 10:00-12:00 | Morning skates: DailyFaceoff "Likely"/"Confirmed" starters arrive | Picked up by the 15-minute lineup polls; each change reprices. |
 | 10:30-15:30 | Scouting the Refs posts tonight's crews | Picked up by the officials part of the lineup poll; reprices with the crew's penalty factor. |
 | **T−90 min → puck drop** | Lineup poll every 5 min (:02 :12 :17 :27 :32 :42 :47 :57, plus the 15-min slots); odds every 5 min (:08 :13 :23 :28 :38 :43 :53 :58, plus the 15-min slots); lines at :26 :41 :56 | Confirmed starters, scratches from warmups, the **closing line**. |
@@ -39,7 +41,7 @@ local, and this machine runs on **America/New_York**, so every time below is ET.
 | After the last puck drop | Only odds (for tomorrow's openers) | Nothing else moves until morning. |
 
 **Edges** (`--edges` on every poll): after a reprice, or whenever an odds poll stores a
-change, `nhl edges` compares the latest prices with the latest odds from every book, sizes
+change, `nhl edges` (for every date in the horizon) compares the latest prices with the latest odds from every book, sizes
 stakes (¼ Kelly, 2 u per bet, 3 u per game, no daily cap while tracking; bankroll 100 u) and writes
 `pregame/edges/{date}/{stamp}`. A newly flagged bet (moneyline, puck line or total) goes into the paper ledger `bets/ledger.parquet` at the price available then.
 Real bets go in with `nhl record-bet`. See `src/nhl/betting/edges.py`.
@@ -58,7 +60,7 @@ goals / assists / points props, writes `pregame/props_edges/{date}/{stamp}` and 
 in `bets/props_ledger.parquet` (a tenth of ¼ Kelly; caps 0.05 u per bet, 0.1 u per player-game, all doubled for bets placed at least 4 h before puck drop; no daily cap while tracking). The
 nightly `nhl grade-bets` grades both ledgers. See `src/nhl/props/live.py`.
 
-**Each reprice** takes ~15 s and writes a new pregame snapshot: lineups, goalies, prices,
+**Each reprice** takes ~15-25 s per date in the horizon and writes a new pregame snapshot per date: lineups, goalies, prices,
 the one-row-per-game slate and input freshness, plus `pregame/latest/{date}.json`
 (see `src/nhl/pregame/slate.py`). One reprice runs at a time; a second waits for the
 first and then prices with everything captured so far.
@@ -67,8 +69,7 @@ first and then prices with everything captured so far.
 
 | Job | Cron | Script / command | Window | Lock | Log | Typical run |
 |---|---|---|---|---|---|---|
-| Nightly rebuild | `19 4 * * *` | `nightly.sh` → `nhl update`, `nhl poll --what transactions,injuries`, `nhl site-tables`, `nhl odds-history`, `nhl grade-bets`, `nhl site-views --force` (yesterday, today) | always | `nightly` | `logs/nightly.log` | 40 s - minutes ¹ |
-| Morning slate | `14 9 * * *` | `pregame.sh` → `nhl pregame` (+ site tables), `nhl edges` | always (no-op without games) | `pregame` + run lock | `logs/pregame.log` | ~20-35 s |
+| Nightly rebuild | `19 4 * * *` | `nightly.sh` → `nhl update`, `nhl poll --what transactions,injuries`, `nhl site-tables`, `nhl odds-history`, `nhl grade-bets`, `nhl pregame` / `nhl edges` / `nhl props-edges` (horizon), `nhl site-views --force` (yesterday, today) | always | `nightly` | `logs/nightly.log` | 40 s - minutes ¹ |
 | Lineups, game day | `7,22,37,52 8-23 * * *` | `poll.sh goalies,injuries,transactions,officials --window 960 --reprice` | game within 16 h | per source list | `logs/poll_lineups.log` | ~30-60 s (+15 s if repriced) |
 | Lineups, pregame | `2,12,17,27,32,42,47,57 * * * *` | same, `--window 90` | game within 90 min | same lock as above | `logs/poll_lineups.log` | same |
 | Lines, game day | `11 8-23 * * *` | `poll.sh lines --window 960 --reprice` | game within 16 h | `lines` | `logs/poll_lines.log` | ~65-80 s |
@@ -98,7 +99,7 @@ same minute as each other or as any other job on this machine:
 | 1 | NHL lines (:11 :26 :41 :56) |
 | 2 | NHL lineups (:02 :07 :12 … :57) |
 | 3 | NHL odds (:03 :08 :13 … :58) |
-| 4 | NHL nightly (04:19), morning slate (09:14), LowVig props (:04 :09 :19 :24 … :54) |
+| 4 | NHL nightly (04:19), LowVig props (:04 :09 :19 :24 … :54) |
 
 Other jobs that run every minute (`rebirtha-cfb/pool_lock_watch.sh`) or for minutes at a
 time (the NFL refreshes at :30) can still overlap in time; NHL polls are light (HTTP plus a
@@ -106,8 +107,8 @@ small S3 write), and only the nightly job is heavy.
 
 ## Off days and the offseason
 - **No game within the window:** the poll prints `no game within N min — skipping` and
-  exits 0. On an off day only the nightly job and the morning slate run (the slate finds
-  no games and exits).
+  exits 0. On an off day only the nightly job runs (its pricing step prices any later date
+  the books have already quoted).
 - **News on off days:** the nightly job polls transactions and injuries, so IR moves and
   recalls from an off day are in place before the next morning.
 - **Offseason (July-September):** the windows keep the pollers quiet. The nightly job still
@@ -185,3 +186,10 @@ At the end of the season, re-run the evaluations (`nhl backtest-pregame`,
 | Lineup poll + reprice | ~45 s (2026-10-06: 1 injury and 8 transactions changed, 9 games repriced) |
 | Pregame (no poll) | ~15 s |
 | Nightly | **40 s** on 2026-10-06 (4 new games, early season, first run by hand from a bare cron environment). Expect a few minutes late in the season as the season's game state and rating fits grow; the timeout is 90 min and the next busy slot on this machine is 05:35. |
+
+**Back-to-backs two days out.** A date after today is priced before the team's game in
+between (tonight, then tomorrow). The starter model's "started the previous game" and
+back-to-back terms need tonight's starter, so tomorrow's starter probabilities are a
+mixture: candidates built as if tonight's most likely starter played, then the backup,
+weighted by tonight's starter probabilities (DailyFaceoff included). See
+`nhl.pregame.price.chained_model_probs`.

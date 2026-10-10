@@ -2,10 +2,9 @@
 # Times are local = America/New_York. Every minute below avoids multiples of 5, which other
 # jobs on this machine already use. Why each job runs when it does: docs/scheduler.md.
 #
-# Nightly rebuild after the last West Coast games are final, before the 05:35-07:15 cluster.
+# Nightly rebuild after the last West Coast games are final, before the 05:35-07:15 cluster;
+# it ends by pricing every date in the horizon (this replaced the 09:14 slate run).
 19 4 * * *                      /Users/tommywinfield/GitRepos/NHL-Data/scripts/nightly.sh >> /Users/tommywinfield/GitRepos/NHL-Data/logs/nightly.log 2>&1
-# Morning slate: first pregame run of the day (then edges), whether or not anything changed.
-14 9 * * *                      /Users/tommywinfield/GitRepos/NHL-Data/scripts/pregame.sh >> /Users/tommywinfield/GitRepos/NHL-Data/logs/pregame.log 2>&1
 # Lineup news (DFO goalies, ESPN injuries, transactions, referees): every 15 min 08-23 on game days...
 7,22,37,52 8-23 * * *           /Users/tommywinfield/GitRepos/NHL-Data/scripts/poll.sh goalies,injuries,transactions,officials --window 960 --reprice --edges >> /Users/tommywinfield/GitRepos/NHL-Data/logs/poll_lineups.log 2>&1
 # ...and every 5 min within 90 min of a puck drop (confirmed starters, right-rail officials).
