@@ -247,14 +247,14 @@ def test_vwap_favourite_scales_target() -> None:
 
 
 def test_vwap_thin_is_none() -> None:
-    assert fourcasters.vwap([(150, 500)], unit_size=600) is None  # 500 < 95% of 600
-    assert fourcasters.vwap([(150, 580)], unit_size=600) is not None
+    assert fourcasters.vwap([(150, 590)], unit_size=600) is None  # the full 600 must fill, as on Novig
+    assert fourcasters.vwap([(150, 600)], unit_size=600) is not None
     assert fourcasters.vwap([]) is None
 
 
 def test_vwap_default_size_matches_novig_floor() -> None:
     assert fourcasters.UNIT_SIZE == novig.GAME_MIN_STAKE == 100
-    assert fourcasters.vwap([(150, 90)]) is None  # 90 < 95% of 100
+    assert fourcasters.vwap([(150, 99)]) is None  # less than the full 100
     assert fourcasters.vwap([(150, 100)])[1] == 100
     assert fourcasters.vwap([(-200, 150), (-210, 100)])[1] == 200  # a favourite bets to win 100
 
