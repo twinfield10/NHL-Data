@@ -78,8 +78,9 @@ RPS = 1.0
 #: Target exposure the VWAP walks to (dollars risked on a dog, to win on a favourite). $100,
 #: the same floor as Novig's game lines (:data:`nhl.sources.novig.GAME_MIN_STAKE`).
 UNIT_SIZE: float = 100.0
-#: Share of the target that must fill for a price to count.
-MIN_FILL_RATIO: float = 0.95
+#: Share of the target that must fill for a price to count: all of it, as on Novig
+#: (:func:`nhl.sources.novig.take`), so a price is only stored if the full size can be taken.
+MIN_FILL_RATIO: float = 1.0
 #: Vig added to the filled probability so exchange prices are comparable with a book's.
 EXCHANGE_VIG: float = 0.0075
 #: Exposure a prop price must fill. Prop books rest $25-$850 per side (median ~$150 on
@@ -248,7 +249,7 @@ def vwap(
             break
         weighted += take * implied_probability(odds)
         filled += take
-    if filled < target * MIN_FILL_RATIO:
+    if filled < target * MIN_FILL_RATIO - 1e-6:  # rounding in the running sum
         return None
     probability = min(weighted / filled + vig, 0.999)
     return american_price(probability), filled
