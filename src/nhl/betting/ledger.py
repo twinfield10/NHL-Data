@@ -174,10 +174,24 @@ def grade(store: Store, regrade: bool = False) -> int:
     todo = led if regrade else led.filter(pl.col("graded_at").is_null())
     if todo.is_empty():
         return 0
+    g = grade_frame(store, todo)
+    if g.is_empty():
+        return 0
+    g = g.cast(SCHEMA).select(list(SCHEMA))
+    out = pl.concat([led.join(g.select("bet_id"), on="bet_id", how="anti"), g]).sort("placed_at")
+    store.put_parquet(keys.BETS_LEDGER, out)
+    return g.height
+
+
+def grade_frame(store: Store, todo: pl.DataFrame) -> pl.DataFrame:
+    """``todo``'s rows on final games, graded: ``close_line``, ``close_price``, ``p_close``,
+    ``clv``, ``result``, ``pnl_units``, ``graded_at`` (other columns are kept as they are).
+    Needs ``bet_id`` (unique), ``game_id``, ``market``, ``side``, ``line``, ``book``, ``price``
+    and ``stake_units``."""
     games = store.read_parquet_required(keys.GAMES).filter(pl.col("is_final") & pl.col("game_id").is_in(todo["game_id"].implode()))
     todo = todo.filter(pl.col("game_id").is_in(games["game_id"].implode()))
     if todo.is_empty():
-        return 0
+        return todo
     seasons = sorted({int(g) // 1_000_000 for g in todo["game_id"].to_list()})
     lines = pl.concat([lines_mod.build(store, int(f"{y}{y + 1}"), alternates=True) for y in seasons])
     per_market = [(lines.filter(pl.col("market") == m), method) for m, method in evaluate.METHOD.items()]
@@ -187,7 +201,7 @@ def grade(store: Store, regrade: bool = False) -> int:
         "game_id", "market", "line", pl.col("p_fair").alias("close_p1"))
     scores = games.select("game_id", "home_score", "away_score")
     todo = todo.with_columns(_close_prices(todo, lines).alias("close_price"))
-    g = lines_mod.grade(todo.drop("close_line", "p_close", "clv", "result", "pnl_units", "graded_at"), scores)
+    g = lines_mod.grade(todo.drop("close_line", "p_close", "clv", "result", "pnl_units", "graded_at", strict=False), scores)
     g = (g.join(primary, on=["game_id", "market"], how="left")
          .join(at_line, on=["game_id", "market", "line"], how="left", nulls_equal=True))
     dec = pl.when(pl.col("price") < 0).then(1 + 100 / -pl.col("price")).otherwise(1 + pl.col("price") / 100)
@@ -200,10 +214,8 @@ def grade(store: Store, regrade: bool = False) -> int:
         pl.when(pl.col("y").is_null()).then(0.0).when(won == 1).then(pl.col("stake_units") * (dec - 1))
         .otherwise(-pl.col("stake_units")).alias("pnl_units"),
         pl.lit(datetime.now(timezone.utc)).alias("graded_at"),
-    ).drop("y", "close_p1").cast(SCHEMA).select(list(SCHEMA))
-    out = pl.concat([led.join(g.select("bet_id"), on="bet_id", how="anti"), g]).sort("placed_at")
-    store.put_parquet(keys.BETS_LEDGER, out)
-    return g.height
+    ).drop("y", "close_p1")
+    return g
 
 
 def _decimal(price: pl.Expr) -> pl.Expr:
