@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 import polars as pl
@@ -168,6 +168,11 @@ def test_grade(monkeypatch: pytest.MonkeyPatch) -> None:
     assert ledger.grade(store) == 0  # type: ignore[arg-type]
 
 
+def at(e: pl.DataFrame, hours_before: float) -> pl.DataFrame:
+    """``e`` as priced ``hours_before`` puck drop."""
+    return e.with_columns(pl.lit(NOW + timedelta(hours=hours_before)).alias("start_utc"), pl.lit(NOW).alias("as_of"))
+
+
 def test_stakes_count_placed_bets_against_the_caps() -> None:
     store = FakeStore()
     placed = [edge_row(player_id=p, line=0.5, stake_units=0.05) for p in range(1, 10)]  # 0.45 u on 9 players
@@ -180,7 +185,7 @@ def test_stakes_count_placed_bets_against_the_caps() -> None:
 
     e = pl.DataFrame([row(1), row(20), row(20, "assists"), row(30)])
     out = {(r["player_id"], r["prop_type"]): r["stake_units"]
-           for r in live._stakes(e, store, date(2026, 10, 8)).iter_rows(named=True)}  # type: ignore[arg-type]
+           for r in live._stakes(at(e, 1.0), store, date(2026, 10, 8)).iter_rows(named=True)}  # type: ignore[arg-type]
     assert out[(1, "points")] == 0.05  # already placed: keeps its stake, adds nothing
     # No day cap: what's already placed doesn't stop new bets. Player 20 has 0.05 u of its 0.1 u
     # left, split across two new bets; player 30 gets the full 0.05 u.
@@ -192,7 +197,7 @@ def test_stakes_player_cap_counts_placed() -> None:
     ledger.add_paper(store, pl.DataFrame([edge_row(player_id=20, prop_type="goals", stake_units=0.08)]))  # type: ignore[arg-type]
     e = pl.DataFrame([{"game_id": 2026020061, "player_id": 20, "prop_type": "points", "line": 0.5, "side": "over",
                        "flagged": True, "kelly": 0.01, "edge": 0.1}])
-    out = live._stakes(e, store, date(2026, 10, 8))  # type: ignore[arg-type]
+    out = live._stakes(at(e, 1.0), store, date(2026, 10, 8))  # type: ignore[arg-type]
     assert out["stake_units"][0] == pytest.approx(0.02)  # 0.1 u per player-game, 0.08 already in
 
 
@@ -331,7 +336,23 @@ def test_stakes_block_the_other_side_of_a_placed_stat_at_any_line() -> None:
     e = pl.DataFrame([row(20, 3.5, "under", 0.08), row(20, 3.5, "over", 0.06),
                       row(30, 2.5, "over", 0.06), row(30, 3.5, "under", 0.09)])
     out = {(r["player_id"], r["line"], r["side"]): (r["blocked"], r["stake_units"])
-           for r in live._stakes(e, store, date(2026, 10, 8)).iter_rows(named=True)}  # type: ignore[arg-type]
+           for r in live._stakes(at(e, 1.0), store, date(2026, 10, 8)).iter_rows(named=True)}  # type: ignore[arg-type]
     assert out[(20, 3.5, "under")] == (True, 0.0)   # over already in at 2.5
     assert out[(20, 3.5, "over")] == (False, 0.02)   # same side, another line: allowed
     assert out[(30, 3.5, "under")] == (False, 0.02) and out[(30, 2.5, "over")] == (True, 0.0)  # bigger edge wins
+
+
+def test_stakes_double_at_least_four_hours_out() -> None:
+    store = FakeStore()
+    ledger.add_paper(store, pl.DataFrame([edge_row(player_id=20, prop_type="goals", stake_units=0.1)]))  # type: ignore[arg-type]
+
+    def row(player_id: int, prop: str, kelly: float) -> dict[str, Any]:
+        return {"game_id": 2026020061, "player_id": player_id, "prop_type": prop, "line": 0.5, "side": "over",
+                "flagged": True, "kelly": kelly, "edge": 0.1}
+
+    e = pl.DataFrame([row(1, "points", 0.01), row(2, "points", 0.003), row(20, "points", 0.01)])
+    early = {r["player_id"]: r["stake_units"] for r in live._stakes(at(e, 4.0), store, date(2026, 10, 8)).iter_rows(named=True)}  # type: ignore[arg-type]
+    late = {r["player_id"]: r["stake_units"] for r in live._stakes(at(e, 3.9), store, date(2026, 10, 8)).iter_rows(named=True)}  # type: ignore[arg-type]
+    assert early[1] == 0.1 and late[1] == 0.05      # cap 0.05 u, doubled early
+    assert early[2] == 0.06 and late[2] == 0.03     # 0.3 u x 0.1, doubled early
+    assert early[20] == 0.1 and late[20] == 0.0     # player cap 0.1 u (0.2 u early) with 0.1 u placed
