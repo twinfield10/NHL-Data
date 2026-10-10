@@ -81,22 +81,47 @@ def latest_prices(store: Store, day: date) -> tuple[pl.DataFrame, str] | None:
     return (prices, st) if prices is not None else None
 
 
-def book_rows(store: Store, season: int, game_ids: list[int], point: str = "last") -> pl.DataFrame:
+#: Judge each book's price against the consensus at its own line (every book quoting that line,
+#: alternate rungs included) rather than at the market's primary line only.
+BY_LINE = True
+
+
+def book_rows(store: Store, season: int, game_ids: list[int], point: str = "last",
+              by_line: bool | None = None) -> pl.DataFrame:
     """Price per book, game and market at ``point`` (``last`` = now, ``close`` = the final
-    capture before puck drop), cleaned, with the market consensus at the same point."""
+    capture before puck drop), cleaned, with the market consensus at the same point.
+
+    Rows are each book's main line. With ``by_line`` (default :data:`BY_LINE`) the consensus a
+    row is compared with is the one at the row's own line, pooled over every book's main line
+    and alternate rungs there; otherwise it is the primary line's, and a book hanging another
+    line is compared with itself only.
+    """
+    by_line = BY_LINE if by_line is None else by_line
     live = lines_mod.clean(lines_mod.live_lines(store, season)).filter(
         (pl.col("point") == point) & pl.col("game_id").is_in(game_ids)
     )
     if live.is_empty():
         return live
-    cons = pl.concat([
-        devig.consensus(live.filter(pl.col("market") == m), method, (point,)) for m, method in evaluate.METHOD.items()
-    ]).select("game_id", "market", pl.col("line").alias("cons_line"), pl.col("p_fair").alias("p_cons"), pl.col("books").alias("cons_books"))
+    if by_line:
+        pool = lines_mod.clean(lines_mod.live_lines(store, season, alternates=True)).filter(
+            (pl.col("point") == point) & pl.col("game_id").is_in(game_ids))
+        at_line = pl.concat([devig.consensus_by_line(pool.filter(pl.col("market") == m), method, (point,))
+                             for m, method in evaluate.METHOD.items()])
+        cons = live.select("game_id", "market", "line").unique().join(at_line, on=["game_id", "market", "line"], how="left",
+                                                                       nulls_equal=True)
+        cons = cons.select("game_id", "market", "line", pl.col("line").alias("cons_line"), pl.col("p_fair").alias("p_cons"),
+                           pl.col("books").alias("cons_books"))
+        key = ["game_id", "market", "line"]
+    else:
+        cons = pl.concat([
+            devig.consensus(live.filter(pl.col("market") == m), method, (point,)) for m, method in evaluate.METHOD.items()
+        ]).select("game_id", "market", pl.col("line").alias("cons_line"), pl.col("p_fair").alias("p_cons"), pl.col("books").alias("cons_books"))
+        key = ["game_id", "market"]
     parts = []
     for (market,), part in live.partition_by("market", as_dict=True).items():
         parts.append(part.with_columns(pl.Series("p_book", devig.fair(part["price_1"].to_numpy(), part["price_2"].to_numpy(),
                                                                        evaluate.METHOD[market]))))
-    rows = pl.concat(parts).join(cons, on=["game_id", "market"], how="left")
+    rows = pl.concat(parts).join(cons, on=key, how="left", nulls_equal=True)
     same = (pl.col("line") == pl.col("cons_line")) | (pl.col("line").is_null() & pl.col("cons_line").is_null())
     return rows.with_columns(
         pl.when(same).then(pl.col("p_cons")).otherwise(pl.col("p_book")).alias("p_market"),
