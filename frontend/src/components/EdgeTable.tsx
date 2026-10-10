@@ -48,7 +48,6 @@ export default function EdgeTable({ edges, showGame = true }: { edges: Edge[]; s
     }] : []),
     { key: "model", label: "Model", align: "right", sort: (e) => e.p_model_side, render: (e) => pct(e.p_model_side) },
     { key: "market", label: "Market", align: "right", sort: (e) => e.p_market_side, render: (e) => pct(e.p_market_side) },
-    { key: "blend", label: "Blend", align: "right", sort: (e) => e.p, render: (e) => pct(e.p) },
     {
       key: "edge", label: "Edge", align: "right", sort: (e) => e.edge, className: "font-medium",
       render: (e) => <Signed value={e.edge}>{signedPct(e.edge)}</Signed>,

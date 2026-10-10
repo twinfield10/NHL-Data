@@ -20,7 +20,7 @@ type View = (typeof VIEWS)[number]["key"];
 
 function Toggle<T extends string>({ options, value, onChange }: { options: { key: T; label: string }[]; value: T; onChange: (v: T) => void }) {
   return (
-    <div className="inline-flex rounded-md border border-border bg-card p-0.5">
+    <div className="inline-flex max-w-full flex-wrap rounded-md border border-border bg-card p-0.5">
       {options.map((o) => (
         <button
           key={o.key}

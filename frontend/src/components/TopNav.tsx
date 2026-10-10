@@ -19,11 +19,11 @@ export default function TopNav() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-card/90 backdrop-blur">
-      <div className="mx-auto flex h-12 max-w-[1800px] items-center gap-6 px-4 md:px-8">
-        <Link href="/games" className="font-semibold tracking-tight">
+      <div className="mx-auto flex h-12 max-w-[1800px] items-center gap-3 px-4 sm:gap-6 md:px-8">
+        <Link href="/games" className="shrink-0 font-semibold tracking-tight">
           NHL<span className="text-accent">·</span>Data
         </Link>
-        <nav className="flex gap-1">
+        <nav className="flex min-w-0 gap-0.5 overflow-x-auto sm:gap-1">
           {NAV.map(({ href, label }) => {
             const active = pathname.startsWith(href);
             return (
@@ -31,7 +31,7 @@ export default function TopNav() {
                 key={href}
                 href={href}
                 className={cn(
-                  "rounded-md px-3 py-1.5 text-sm transition-colors",
+                  "shrink-0 rounded-md px-2 py-1.5 text-sm transition-colors sm:px-3",
                   active ? "bg-muted text-foreground font-medium" : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -42,7 +42,7 @@ export default function TopNav() {
         </nav>
         <button
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-          className="ml-auto rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="ml-auto shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
           aria-label="Toggle theme"
         >
           <Sun className="hidden h-4 w-4 dark:block" />
