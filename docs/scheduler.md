@@ -55,7 +55,7 @@ do costs one index read. See `src/nhl/site/views.py` and `src/nhl/site/publish.p
 **Prop edges** run alongside: after a reprice, an odds poll that stores a change (ESPN's
 DraftKings props come with it), or a props poll that stores one, `nhl props-edges` prices
 goals / assists / points props, writes `pregame/props_edges/{date}/{stamp}` and puts new flags
-in `bets/props_ledger.parquet` (caps 0.5 u per bet, 1 u per player-game; no daily cap while tracking). The
+in `bets/props_ledger.parquet` (a tenth of ¼ Kelly; caps 0.05 u per bet, 0.1 u per player-game; no daily cap while tracking). The
 nightly `nhl grade-bets` grades both ledgers. See `src/nhl/props/live.py`.
 
 **Each reprice** takes ~15 s and writes a new pregame snapshot: lineups, goalies, prices,

@@ -25,7 +25,8 @@ over/unders and N+ ladders from every captured book (DraftKings via ESPN, FanDue
    behind: price no longer than :data:`MAX_PRICE`, at least :data:`MIN_BOOKS` books in the
    market and :data:`MIN_TWO_WAY_BOOKS` of them quoting both sides, the skater projected to dress for certain (no game-time decision) with high lineup
    confidence, or the goalie at least :data:`MIN_P_START` likely to start.
-6. **Stake**: ¼ Kelly on the 100-unit bankroll, at most :data:`MAX_BET_UNITS` per bet,
+6. **Stake**: ¼ Kelly on the 100-unit bankroll scaled by :data:`UNIT_SCALE` (props are sized at a
+   tenth of game lines, owner 2026-10-10), at most :data:`MAX_BET_UNITS` per bet,
    and :data:`MAX_PLAYER_UNITS` per player-game, counting bets already in the props ledger.
    No daily cap while paper bets are being tracked (owner, 2026-10-10). A side is ``blocked``
    when the player's same stat already has the other side in the ledger, at any line: the
@@ -78,8 +79,10 @@ MIN_BOOKS = 2
 MIN_TWO_WAY_BOOKS = 2
 BANKROLL_UNITS = 100.0
 KELLY_FRACTION = 0.25
-MAX_BET_UNITS = 0.5
-MAX_PLAYER_UNITS = 1.0
+#: Props stake a tenth of what ¼ Kelly on the bankroll says; the caps below are already scaled.
+UNIT_SCALE = 0.1
+MAX_BET_UNITS = 0.05
+MAX_PLAYER_UNITS = 0.1
 #: Reporting floor for the edges snapshot: every best quote at or above it is kept.
 SNAPSHOT_MIN_EDGE = -1.0
 LOCK_PATH = "/tmp/nhl_data_props_edges.lock"
@@ -367,14 +370,14 @@ def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:
     e = e.with_columns((fresh & pl.when(pl.col("_taken").is_null()).then(best < rival)
                         .otherwise(pl.col("_taken") != pl.col("side"))).alias("blocked")).with_columns(
         pl.when(fresh & ~pl.col("blocked"))
-        .then((pl.col("kelly") * BANKROLL_UNITS).clip(0, MAX_BET_UNITS)).otherwise(0.0).alias("_new"))
+        .then((pl.col("kelly") * BANKROLL_UNITS * UNIT_SCALE).clip(0, MAX_BET_UNITS)).otherwise(0.0).alias("_new"))
     player_used = placed.group_by("game_id", "player_id").agg(pl.col("stake_units").sum().alias("_used"))
     e = e.join(player_used, on=["game_id", "player_id"], how="left").with_columns(
         (MAX_PLAYER_UNITS - pl.col("_used").fill_null(0.0)).clip(0, None).alias("_room"))
     new_total = pl.col("_new").sum().over("game_id", "player_id")
     e = e.with_columns(pl.when(new_total > pl.col("_room")).then(pl.col("_new") * pl.col("_room") / new_total)
                        .otherwise(pl.col("_new")).alias("_new"))
-    return e.with_columns(pl.coalesce("_placed", pl.col("_new").round(2)).alias("stake_units")).drop(
+    return e.with_columns(pl.coalesce("_placed", pl.col("_new").round(3)).alias("stake_units")).drop(
         "_placed", "_new", "_used", "_room", "_taken")
 
 
