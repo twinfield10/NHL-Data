@@ -405,3 +405,28 @@ def test_history_fills_only_games_we_never_polled_and_close_check_compares():
     chk = L.close_check(store, 20262027).row(0, named=True)
     assert (chk["book"], chk["market"], chk["games"], chk["same_line"], chk["identical"]) == ("DraftKings", "moneyline", 1, 1.0, 0.0)
     assert 0 < chk["mean_abs_dp"] < 0.02
+
+
+def test_book_rows_compare_each_book_with_the_consensus_at_its_own_line():
+    from datetime import timedelta
+
+    from nhl.betting import edges as E
+    from nhl.storage import keys
+
+    t = _START - timedelta(hours=2)
+    g = 2026020095
+
+    def total(book, line, over, under, alternate=False):
+        uid = f"game|total|game|{line if alternate else 'main'}"
+        base = {"book": book, "game_id": g, "captured_at": t, "start_time": _START, "period": "game", "market": "total",
+                "subject": "game", "line": line, "is_alternate": alternate, "market_uid": uid, "price_point": "live"}
+        return [{**base, "side": "over", "price": over}, {**base, "side": "under", "price": under}]
+
+    # Two books hang 6, LowVig hangs 6.5 as its main line; Novig also quotes 6.5 on its ladder.
+    odds = _odds(total("DraftKings", 6.0, -110.0, -110.0) + total("Novig", 6.0, -102.0, 102.0)
+                 + total("Novig", 6.5, 140.0, -140.0, alternate=True) + total("LowVig", 6.5, 120.0, -150.0))
+    store = _Mem({keys.odds(20262027, "x"): odds})
+    lv = {f: E.book_rows(store, 20262027, [g], by_line=f).filter(pl.col("book") == "LowVig").row(0, named=True)
+          for f in (False, True)}
+    assert lv[False]["p_market"] == pytest.approx(lv[False]["p_book"])  # compared with itself only
+    assert lv[True]["cons_books"] == 2 and lv[True]["p_market"] != pytest.approx(lv[True]["p_book"])
