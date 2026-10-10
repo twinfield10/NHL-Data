@@ -381,3 +381,27 @@ def test_live_close_drops_a_side_the_book_stopped_quoting():
     store = _Mem({keys.odds(20262027, "x"): odds, keys.odds_seen(20262027, "x"): seen})
     # Without both sides at the close there is no closing pair.
     assert L.live_lines(store, 20262027).filter(pl.col("point") == "close").is_empty()
+
+
+def test_history_fills_only_games_we_never_polled_and_close_check_compares():
+    from datetime import timedelta
+
+    from nhl.storage import keys
+
+    start = _START
+    polled, unpolled = 2026020060, 2026020061
+    live = _odds(_poll("DraftKings", polled, start - timedelta(minutes=5), -150.0, 130.0))
+    hist = pl.DataFrame([
+        {"book": "DraftKings", "game_id": g, "captured_at": start, "period": "game", "market": "moneyline", "side": side,
+         "line": None, "price": price, "is_alternate": False, "price_point": "close"}
+        for g, (home, away) in ((polled, (-155.0, 135.0)), (unpolled, (-120.0, 100.0)))
+        for side, price in (("home", home), ("away", away))
+    ], schema_overrides={"line": pl.Float64, "captured_at": pl.Datetime("us", "UTC")})
+    store = _Mem({keys.odds(20262027, "espn"): live, keys.odds_history(20262027): hist})
+    close = L.build(store, 20262027).filter(pl.col("point") == "close")
+    got = {(r["game_id"], r["source"]): r["price_1"] for r in close.iter_rows(named=True)}
+    # The polled game keeps only our live close; ESPN's close fills the game we never polled.
+    assert got == {(polled, "live"): -150.0, (unpolled, "espn_history"): -120.0}
+    chk = L.close_check(store, 20262027).row(0, named=True)
+    assert (chk["book"], chk["market"], chk["games"], chk["same_line"], chk["identical"]) == ("DraftKings", "moneyline", 1, 1.0, 0.0)
+    assert 0 < chk["mean_abs_dp"] < 0.02

@@ -186,8 +186,15 @@ def live_lines(store: Store, season: int, alternates: bool = False) -> pl.DataFr
 
 
 def build(store: Store, season: int, alternates: bool = False) -> pl.DataFrame:
-    """The season's cleaned lines table from every source (``alternates``: see :func:`live_lines`)."""
-    lines = pl.concat([history_lines(store, season), live_lines(store, season, alternates)])
+    """The season's cleaned lines table from every source (``alternates``: see :func:`live_lines`).
+
+    A game we polled uses our live captures only: backfilled history (ESPN's published
+    open/close) fills in just the games we never polled, so one book's close never enters a
+    consensus twice from two sources. :func:`close_check` compares the two where both exist.
+    """
+    live = live_lines(store, season, alternates)
+    history = history_lines(store, season).join(live.select("game_id").unique(), on="game_id", how="anti")
+    lines = pl.concat([history, live])
     return clean(lines).sort("game_id", "market", "book", "point")
 
 
@@ -223,3 +230,30 @@ def coverage(lines: pl.DataFrame) -> pl.DataFrame:
         pl.col("game_id").n_unique().alias("games"), pl.col("book").n_unique().alias("books"),
         pl.col("source").unique().sort().str.join(",").alias("sources"),
     ).sort("season", "market")
+
+
+def close_check(store: Store, season: int) -> pl.DataFrame:
+    """Our captured closes against the history source's published close for the same book.
+
+    Per (book, market), over games with both: ``games``, ``same_line`` (share at the same
+    line), ``identical`` (share with both prices equal) and ``mean_abs_dp`` / ``max_abs_dp``
+    (gap in devigged side-1 probability at the same line). ESPN publishes one close per book
+    (DraftKings this season), so this says whether our polls catch that book's real close.
+    """
+    from nhl.betting.devig import fair
+
+    hist = history_lines(store, season).filter(pl.col("point") == "close").select(
+        "game_id", "book", "market", pl.col("line").alias("h_line"), pl.col("price_1").alias("h1"), pl.col("price_2").alias("h2"))
+    live = clean(live_lines(store, season)).filter(pl.col("point") == "close")
+    j = live.join(hist, on=["game_id", "book", "market"], how="inner")
+    if j.is_empty():
+        return pl.DataFrame(schema={"book": pl.String, "market": pl.String, "games": pl.UInt32, "same_line": pl.Float64,
+                                    "identical": pl.Float64, "mean_abs_dp": pl.Float64, "max_abs_dp": pl.Float64})
+    gap = pl.Series(fair(j["price_1"].to_numpy(), j["price_2"].to_numpy()) - fair(j["h1"].to_numpy(), j["h2"].to_numpy())).abs()
+    same = (pl.col("line") == pl.col("h_line")) | (pl.col("line").is_null() & pl.col("h_line").is_null())
+    return j.with_columns(gap.alias("_gap"), same.alias("_same")).group_by("book", "market").agg(
+        pl.len().alias("games"), pl.col("_same").mean().alias("same_line"),
+        ((pl.col("price_1") == pl.col("h1")) & (pl.col("price_2") == pl.col("h2"))).mean().alias("identical"),
+        pl.col("_gap").filter(pl.col("_same")).mean().alias("mean_abs_dp"),
+        pl.col("_gap").filter(pl.col("_same")).max().alias("max_abs_dp"),
+    ).sort("book", "market")

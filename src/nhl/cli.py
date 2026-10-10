@@ -395,6 +395,29 @@ def cmd_grade_bets(args: argparse.Namespace) -> None:
     print(props_ledger.summary(store))
 
 
+def _current_start_year() -> int:
+    """Start year of the season containing today (September on counts as the new season)."""
+    today = date.today()
+    return today.year if today.month >= 9 else today.year - 1
+
+
+def cmd_odds_history(args: argparse.Namespace) -> None:
+    """Pull ESPN's published open/close for final games (cached per game, so a nightly run only
+    fetches last night's), then compare our captured closes with ESPN's."""
+    from nhl.betting import lines
+    from nhl.sources import espn_odds
+    from nhl.storage import keys
+    from nhl.storage.s3 import Store
+
+    store = Store()
+    years = config.parse_seasons(args.seasons) if args.seasons else [_current_start_year()]
+    games = store.read_parquet_required(keys.GAMES)
+    print(espn_odds.backfill_history(store, games, years, workers=args.workers))
+    for year in years:
+        print(f"{config.season_id(year)}: our closes vs ESPN's")
+        print(lines.close_check(store, config.season_id(year)))
+
+
 def cmd_backfill_bet_info(args: argparse.Namespace) -> None:
     """Fill what the model knew at placement (goalies, lineups, stale inputs, timing) on paper
     bets placed before the ledgers recorded it."""
@@ -925,6 +948,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--regrade", action="store_true",
                    help="regrade every final bet, not only ungraded ones (after a change to how the close is defined)")
     p.set_defaults(func=cmd_grade_bets)
+
+    p = sub.add_parser("odds-history", help="ESPN's published open/close for final games, and our closes vs it")
+    p.add_argument("--seasons", default=None, help='seasons, e.g. "2026" or "2023-2026" (default: the current one)')
+    p.add_argument("--workers", type=int, default=4, help="concurrent event fetches")
+    p.set_defaults(func=cmd_odds_history)
 
     p = sub.add_parser("backfill-bet-info", help="Fill the info-at-placement snapshot on older paper bets")
     p.set_defaults(func=cmd_backfill_bet_info)
