@@ -367,6 +367,9 @@ def pregame_history(season: int) -> str:
 # --- betting (M6) -------------------------------------------------------------------------
 
 BETS_LEDGER = "bets/ledger.parquet"
+#: Backend-only checkpoint ledgers (docs/plans/bet-timing.md phase C): every side at each checkpoint.
+BETS_CHECKPOINTS = "bets/checkpoints.parquet"
+PROPS_CHECKPOINTS = "bets/props_checkpoints.parquet"
 
 
 def blend_model() -> str:

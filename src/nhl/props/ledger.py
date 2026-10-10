@@ -113,19 +113,31 @@ def outcomes(store: Store, game_ids: list[int]) -> pl.DataFrame:
 def grade(store: Store, regrade: bool = False) -> int:
     """Grade every ungraded prop bet whose game is final and logged (every such bet with
     ``regrade``, e.g. after the close definition changes). Returns bets graded."""
-    from nhl.betting.edges import _games
-    from nhl.props.live import closing_quotes, market_probs
-
     led = load(store)
     todo = led if regrade else led.filter(pl.col("graded_at").is_null())
     if todo.is_empty():
         return 0
+    g = grade_frame(store, todo)
+    if g.is_empty():
+        return 0
+    g = g.cast(SCHEMA, strict=False).select(list(SCHEMA))
+    out = pl.concat([led.join(g.select("bet_id"), on="bet_id", how="anti"), g]).sort("placed_at")
+    store.put_parquet(keys.PROPS_LEDGER, out)
+    return g.height
+
+
+def grade_frame(store: Store, todo: pl.DataFrame) -> pl.DataFrame:
+    """``todo``'s prop rows on final, logged games, graded: ``close_price``, ``p_close``,
+    ``clv``, ``stat``, ``result``, ``pnl_units``, ``graded_at`` (other columns are kept)."""
+    from nhl.betting.edges import _games
+    from nhl.props.live import closing_quotes, market_probs
+
     games = _games(store, todo["game_id"].unique().to_list()).filter(pl.col("is_final"))
     res = outcomes(store, games["game_id"].to_list())
     logged = res["game_id"].unique().to_list()
     todo = todo.filter(pl.col("game_id").is_in(logged))
     if todo.is_empty():
-        return 0
+        return todo
     starts = dict(games.select("game_id", "start_utc").iter_rows())
     season = int(games["season"][0])
     quotes = closing_quotes(store, season, {g: starts[g] for g in logged})
@@ -134,7 +146,7 @@ def grade(store: Store, regrade: bool = False) -> int:
     consensus = close.group_by("game_id", "player_id", "prop_type", "line").agg(pl.col("p_market").first().alias("_p_close"))
     long = res.unpivot(index=["game_id", "player_id"], on=["goals", "assists", "points", "shots", "blocks", "saves"],
                        variable_name="prop_type", value_name="stat").drop_nulls("stat")
-    g = (todo.drop("close_price", "p_close", "clv", "stat", "result", "pnl_units", "graded_at")
+    g = (todo.drop("close_price", "p_close", "clv", "stat", "result", "pnl_units", "graded_at", strict=False)
          .join(close.drop("p_market"), on=["book", "game_id", "player_id", "prop_type", "line"], how="left")
          .join(consensus, on=["game_id", "player_id", "prop_type", "line"], how="left")
          .join(long, on=["game_id", "player_id", "prop_type"], how="left"))
@@ -150,10 +162,8 @@ def grade(store: Store, regrade: bool = False) -> int:
         pl.when(pl.col("stat").is_null()).then(0.0).when(won).then(pl.col("stake_units") * (dec - 1))
         .otherwise(-pl.col("stake_units")).alias("pnl_units"),
         pl.lit(datetime.now(timezone.utc)).alias("graded_at"),
-    ).cast(SCHEMA, strict=False).select(list(SCHEMA))
-    out = pl.concat([led.join(g.select("bet_id"), on="bet_id", how="anti"), g]).sort("placed_at")
-    store.put_parquet(keys.PROPS_LEDGER, out)
-    return g.height
+    ).drop("price_over", "price_under", "_p_close")
+    return g
 
 
 #: Upper bounds (hours before puck drop) of the timing buckets; the last is open-ended.

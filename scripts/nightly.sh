@@ -20,6 +20,9 @@ run_with_timeout 600 nhl site-tables || echo "site tables failed (non-fatal)"
 # never polled, and logs how our captured closes compare with ESPN's.
 run_with_timeout 900 nhl odds-history || echo "ESPN odds history failed (non-fatal)"
 run_with_timeout 600 nhl grade-bets || echo "grading failed (non-fatal)"
+# Backend checkpoint ledgers for yesterday: every side at fixed moments, staked all-in and
+# graded, to compare bet timings (nhl checkpoint-report).
+run_with_timeout 900 nhl checkpoints || echo "checkpoints failed (non-fatal)"
 # The day's first prices: today plus every later date a book has quoted, from the new rating
 # snapshot, then edges (new flagged bets go to the paper ledgers).
 run_with_timeout "${PREGAME_TIMEOUT:-900}" nhl pregame || echo "pregame failed (non-fatal)"

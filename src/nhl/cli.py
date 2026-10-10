@@ -412,6 +412,51 @@ def cmd_replay_ledger(args: argparse.Namespace) -> None:
         print("run `nhl grade-bets` to grade rebuilt bets on finished games")
 
 
+def cmd_checkpoints(args: argparse.Namespace) -> None:
+    """Rebuild the backend checkpoint ledgers (every side at fixed moments, graded) from the
+    edges snapshots: yesterday by default, ``--dates`` or ``--all``."""
+    from datetime import timedelta
+
+    import polars as pl
+
+    from nhl.api.serialize import today_et
+    from nhl.betting import checkpoints
+    from nhl.storage.s3 import Store
+
+    store = Store()
+    for name in args.what.split(","):
+        kind = checkpoints.KINDS[name]
+        if args.all:
+            days = checkpoints.snapshot_days(store, kind)
+        elif args.dates:
+            days = [date.fromisoformat(d) for d in args.dates.split(",")]
+        else:
+            days = [today_et() - timedelta(days=1)]
+        rows = checkpoints.build(store, kind, days, write=not args.no_write)
+        if rows.is_empty():
+            print(f"{name}: no snapshots for {', '.join(map(str, days))}")
+            continue
+        print(f"{name}:", rows.group_by("checkpoint").agg(
+            pl.len().alias("rows"), pl.col("flagged").sum().alias("flagged"), pl.col("stake_units").sum().round(2).alias("units"),
+            pl.col("graded_at").is_not_null().sum().alias("graded")).sort("checkpoint"), sep="\n")
+
+
+def cmd_checkpoint_report(args: argparse.Namespace) -> None:
+    """Official ledger vs all-in at each checkpoint (CLV ± SE, ROI), the official positions'
+    edge at each checkpoint, and CLV by ladder tier."""
+    import polars as pl
+
+    from nhl.betting import checkpoints
+    from nhl.storage.s3 import Store
+
+    store = Store()
+    pl.Config.set_tbl_rows(100)
+    pl.Config.set_tbl_cols(20)
+    for name in args.what.split(","):
+        for title, table in checkpoints.report(store, checkpoints.KINDS[name]).items():
+            print(f"== {name}: {title}", table, sep="\n")
+
+
 def cmd_grade_bets(args: argparse.Namespace) -> None:
     """M6: grade finished bets (CLV against our captured close, result, units) and summarise."""
     from nhl.betting import ledger
@@ -994,6 +1039,17 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--dates", default=None, help="comma list of YYYY-MM-DD (default: every date with a snapshot)")
     p.add_argument("--apply", action="store_true", help="write the rebuilt ledgers (default: dry run)")
     p.set_defaults(func=cmd_replay_ledger)
+
+    p = sub.add_parser("checkpoints", help="bet timing: rebuild the checkpoint ledgers from the edges snapshots")
+    p.add_argument("--what", default="game,props", help="comma list: game, props")
+    p.add_argument("--dates", default=None, help="comma list of YYYY-MM-DD (default: yesterday, Eastern)")
+    p.add_argument("--all", action="store_true", help="every date with a snapshot (the backfill)")
+    p.add_argument("--no-write", action="store_true", help="build and summarise without writing")
+    p.set_defaults(func=cmd_checkpoints)
+
+    p = sub.add_parser("checkpoint-report", help="bet timing: official ledger vs all-in at each checkpoint")
+    p.add_argument("--what", default="game,props", help="comma list: game, props")
+    p.set_defaults(func=cmd_checkpoint_report)
 
     p = sub.add_parser("grade-bets", help="M6: grade finished bets and print the ledger summary")
     p.add_argument("--regrade", action="store_true",
