@@ -127,6 +127,28 @@ def norm_name(name: str | None) -> str:
     return re.sub(r"[^a-z]", "", ascii_name.lower())
 
 
+#: Namesakes a book tells apart by a middle name or initial, by :func:`norm_name` key. The NHL
+#: lists both Vancouver players as "Elias Pettersson": the forward (#40, born Fredrik Elias)
+#: and the defenseman (#25, Elias Nils). FanDuel adds the sweater number instead
+#: ("Elias Pettersson #25"), which :func:`split_jersey` reads. Every book that lists the
+#: defenseman marks him, so the plain name is the forward: checked by price 2026-10-10 (goals
+#: over 0.5: plain +280/+286 at DraftKings/4Casters, like FanDuel's #40 at +350; the
+#: defenseman +1800/+2400). A new same-name pair has no entry here and stays unresolved.
+NAMESAKES = {
+    "eliaspettersson": 8480012, "fredrikeliaspettersson": 8480012, "fredrickeliaspettersson": 8480012,
+    "eliasnilspettersson": 8483678, "eliasnpettersson": 8483678,
+}
+_JERSEY_SUFFIX = re.compile(r"\s*#\s*(\d{1,2})\s*$")
+
+
+def split_jersey(name: str | None) -> tuple[str | None, int | None]:
+    """``("Elias Pettersson", 25)`` from ``"Elias Pettersson #25"``; names without a trailing
+    ``#NN`` come back unchanged with no jersey."""
+    if not name or not (m := _JERSEY_SUFFIX.search(name)):
+        return name, None
+    return name[:m.start()], int(m.group(1))
+
+
 def name_variants(name: str | None) -> list[str]:
     """Other keys a book may have meant: surname first ("Yurov Danila") and German
     transliterations ("Stuetzle" for "Stützle"). Used only after the exact keys fail."""
@@ -145,10 +167,13 @@ def name_variants(name: str | None) -> list[str]:
 class PlayerResolver:
     """Map third-party (team, name, jersey) to NHL ``player_id``.
 
-    Order: (team, jersey) on the NHL current roster confirmed by a name check; then
-    full-name match within the team roster; then unique last name + first initial within
+    Order: a known namesake spelling (:data:`NAMESAKES`); (team, jersey) on the NHL current
+    roster confirmed by a name check (a trailing ``#NN`` in the name counts as the jersey);
+    then full-name match within the team roster; then unique last name + first initial within
     the roster; then a full-name match across the league in ``processed/players.parquet``
-    (most recent player wins when names collide). Rosters are fetched once per instance.
+    (most recent player wins when names collide). Two players with the same name on one
+    roster, or both active in the latest season, are never guessed between: without a
+    jersey the name stays unresolved. Rosters are fetched once per instance.
 
     Args:
         players: Players table (player_id, player_name, last_season); optional.
@@ -166,6 +191,7 @@ class PlayerResolver:
         self._loader = roster_loader
         self._rosters: dict[str, list[dict[str, Any]]] = {}
         self._league: dict[str, int] = self._league_index(players)
+        self._league_namesakes: set[str] = self._active_namesakes(players)
         self.stats: Counter[str] = Counter()
         self.unresolved: set[tuple[str | None, str]] = set()
 
@@ -185,6 +211,17 @@ class PlayerResolver:
             if name:
                 index[norm_name(name)] = int(pid)  # later (more recent) rows overwrite
         return index
+
+    @staticmethod
+    def _active_namesakes(players: pl.DataFrame | None) -> set[str]:
+        """Name keys shared by two or more players whose last season is the latest for that name
+        (both still active), where "most recent wins" would be a coin flip."""
+        if players is None or players.is_empty() or "last_season" not in players.columns:
+            return set()
+        keyed = players.filter(pl.col("player_name").is_not_null()).with_columns(
+            pl.col("player_name").map_elements(norm_name, return_dtype=pl.Utf8).alias("_key"))
+        latest = keyed.filter(pl.col("last_season") == pl.col("last_season").max().over("_key"))
+        return set(latest.group_by("_key").agg(pl.len()).filter(pl.col("len") > 1)["_key"].to_list())
 
     def roster(self, team: str | None) -> list[dict[str, Any]]:
         """Current NHL roster for a tricode as ``[{player_id, first, last, number}]`` (cached)."""
@@ -220,10 +257,15 @@ class PlayerResolver:
             name: Player name as published.
             jersey: Sweater number as published, if any.
         """
+        name, suffix = split_jersey(name)
+        jersey = jersey if jersey is not None else suffix
         key = norm_name(name)
         if not key:
             return None
         roster = self.roster(team)
+        if key in NAMESAKES and jersey is None:
+            self.stats["resolved"] += 1
+            return NAMESAKES[key]
         pid = None
         if jersey is not None:
             # Confirm the jersey hit by last name + first initial: tolerates "Zack"/"Zachary"
@@ -232,13 +274,18 @@ class PlayerResolver:
                 if p["number"] == jersey and p["last"] and key.endswith(p["last"]) and p["first"][:1] == key[:1]:
                     pid = p["player_id"]
                     break
-        if pid is None:
-            pid = next((p["player_id"] for p in roster if p["first"] + p["last"] == key), None)
+        exact = [p["player_id"] for p in roster if p["first"] + p["last"] == key]
+        if pid is None and len(exact) > 1:  # namesakes on one roster and no jersey to tell them apart
+            self.stats["unresolved"] += 1
+            self.unresolved.add((team, name or ""))
+            return None
+        if pid is None and exact:
+            pid = exact[0]
         if pid is None:
             same_last = [p for p in roster if p["last"] and key.endswith(p["last"]) and p["first"][:1] == key[:1]]
             if len(same_last) == 1:
                 pid = same_last[0]["player_id"]
-        if pid is None:
+        if pid is None and key not in self._league_namesakes:
             pid = self._league.get(key)
         for alt in name_variants(name) if pid is None else []:
             pid = next((p["player_id"] for p in roster if p["first"] + p["last"] == alt), None) or self._league.get(alt)
