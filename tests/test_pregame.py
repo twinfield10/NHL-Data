@@ -364,3 +364,18 @@ def test_slate_is_one_row_per_game_and_writes_latest_pointer():
     slate.write(store, date(2026, 10, 6), "STAMP", rows, fresh)
     assert json.loads(store.bytes[keys.pregame_latest(date(2026, 10, 6))])["stamp"] == "STAMP"
     assert "TOR" in slate.render(rows, fresh) and "STALE INPUTS: odds" in slate.render(rows, fresh)
+
+
+def test_assume_treats_an_unplayed_game_as_played():
+    # A starts games 0-3; game 4 (tonight) is unplayed; game 5 (tomorrow) is the 2nd of a back-to-back.
+    tg, dressed, apps = _team([A, A, A, A, None, None], b2b_2nd={5})
+    tomorrow = lambda c: {r["player_id"]: r for r in c.filter(pl.col("game_id") == 2025020005).iter_rows(named=True)}  # noqa: E731
+    raw = tomorrow(G.candidate_features(tg, dressed, apps))
+    assert raw[A]["started_last"] == 0.0  # tonight unplayed: nobody "started last"
+    tonight = tg.filter(pl.col("game_id") == 2025020004)
+    assumed = pl.DataFrame({"game_id": [2025020004], "team_id": [1], "game_date": tonight["game_date"],
+                            "starter": [B], "backup": [A]})
+    after = tomorrow(G.candidate_features(*G.assume(tg, dressed, apps, assumed)))
+    assert after[B]["started_last"] == 1.0 and after[B]["b2b_2nd_x_last"] == 1.0 and after[B]["streak"] == 1.0
+    assert after[A]["started_last"] == 0.0 and after[A]["b2b_2nd_x_last"] == 0.0
+    assert after[B]["log_rest"] == np.log(2)  # B's assumed start tonight, two days before

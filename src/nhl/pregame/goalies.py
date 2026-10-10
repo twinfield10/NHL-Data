@@ -340,13 +340,51 @@ def evaluate(cand: pl.DataFrame, test: list[int]) -> pl.DataFrame:
     return pl.DataFrame(rows).sort("season", "log_loss")
 
 
-def build_candidates(store: Store, seasons: list[int], today: date | None = None) -> pl.DataFrame:
-    """Candidate features for ``seasons`` (plus the season before, for the lag windows)."""
+def build_candidates(store: Store, seasons: list[int], today: date | None = None,
+                     assumed: pl.DataFrame | None = None) -> pl.DataFrame:
+    """Candidate features for ``seasons`` (plus the season before, for the lag windows).
+
+    Args:
+        store: Where the schedule, rosters and goalie starts live.
+        seasons: Seasons to return candidates for.
+        today: Also include unplayed team-games on or after this date.
+        assumed: Unplayed team-games to treat as played (see :func:`assume`), so a later
+            game's features (started last, streak, rest, back-to-back) follow from them.
+    """
     first = int(str(min(seasons))[:4])
     span = sorted({int(f"{first - 1}{first}"), *seasons} & set(_available(store)))
-    tg = team_games(store, span, today)
-    cand = candidate_features(tg, dressed_goalies(store, span), appearances(store, span))
+    tg, dressed, apps = team_games(store, span, today), dressed_goalies(store, span), appearances(store, span)
+    if assumed is not None and assumed.height:
+        tg, dressed, apps = assume(tg, dressed, apps, assumed)
+    cand = candidate_features(tg, dressed, apps)
     return cand.filter(pl.col("season").is_in(seasons))
+
+
+def assume(tg: pl.DataFrame, dressed: pl.DataFrame, apps: pl.DataFrame,
+           assumed: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
+    """``tg``, ``dressed`` and ``apps`` as if each unplayed team-game in ``assumed``
+    (``game_id, team_id, game_date, starter, backup``) had been played: ``starter`` started
+    (with no GSAx evidence) and both goalies dressed.
+
+    Used to price a game when the team plays before it (tonight, then tomorrow): the
+    later game's starter is a mixture over who starts the earlier one.
+    """
+    a = assumed.select(pl.col("game_id").cast(pl.Int64), pl.col("team_id").cast(pl.Int64),
+                       pl.col("starter").cast(pl.Int64).alias("_assumed"))
+    tg = tg.with_columns(pl.col("game_id", "team_id").cast(pl.Int64)).join(a, on=["game_id", "team_id"], how="left")
+    prev_starter = pl.col("starter").shift(1).over("team_id")
+    prev_streak = pl.col("consecutive_starts").shift(1).over("team_id")
+    tg = tg.sort("team_id", "n").with_columns(
+        pl.coalesce("starter", "_assumed").alias("starter"),
+        pl.when(pl.col("_assumed").is_not_null())
+        .then(pl.when(prev_starter == pl.col("_assumed")).then(prev_streak.fill_null(0) + 1).otherwise(1))
+        .otherwise(pl.col("consecutive_starts")).alias("consecutive_starts"),
+    ).drop("_assumed")
+    both = pl.concat([assumed.select("game_id", "team_id", pl.col(c).alias("player_id")) for c in ("starter", "backup")])
+    dressed = pl.concat([dressed, both.drop_nulls("player_id").cast(dressed.schema)]).unique()
+    apps = pl.concat([apps, assumed.select(pl.col("starter").alias("player_id"), "game_date", pl.lit(True).alias("started"),
+                                           pl.lit(0.0).alias("gsax"), pl.lit(0.0).alias("xga")).cast(apps.schema)])
+    return tg, dressed, apps
 
 
 def _available(store: Store) -> list[int]:

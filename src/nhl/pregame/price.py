@@ -143,12 +143,74 @@ def drop_injured_goalies(probs: pl.DataFrame, events: pl.DataFrame, day: date, a
 
 def starter_probs(store: Store, season: int, day: date, games: pl.DataFrame, as_of: datetime,
                   events: pl.DataFrame | None = None) -> pl.DataFrame:
-    """``game_id, team_id, player_id, p_start, p_model, dfo_status, source`` for ``games``."""
-    cand = goalies.build_candidates(store, [season], today=day).filter(pl.col("game_id").is_in(games["game_id"].implode()))
-    probs = goalies.load(store, season).predict(cand).select("game_id", "team_id", "player_id", "p_start")
+    """``game_id, team_id, player_id, p_start, p_model, dfo_status, source`` for ``games``.
+
+    For a date after today, a team that plays in between (tonight, then tomorrow) gets a
+    mixture over who starts its last game before ``day``: see :func:`chained_model_probs`.
+    """
+    today = as_of.astimezone(EASTERN).date()
+    ids = games["game_id"].implode()
+    between = intervening_games(store, games, today, day) if day > today else pl.DataFrame()
+    if between.is_empty():
+        cand = goalies.build_candidates(store, [season], today=day).filter(pl.col("game_id").is_in(ids))
+        probs = goalies.load(store, season).predict(cand).select("game_id", "team_id", "player_id", "p_start")
+    else:
+        probs = chained_model_probs(store, season, games, between, as_of, events)
     if events is not None:
         probs = drop_injured_goalies(probs, events, day, as_of)
     return apply_dfo_goalies(probs, store, season, as_of)
+
+
+def intervening_games(store: Store, games: pl.DataFrame, today: date, day: date) -> pl.DataFrame:
+    """``game_id, team_id, game_date``: for each team in ``games``, its last unplayed game on or
+    after ``today`` and before ``day`` (none for a team that doesn't play in between)."""
+    teams = pl.concat([games.select(pl.col(f"{s}_team_id").cast(pl.Int64).alias("team_id")) for s in ("home", "away")])
+    sched = store.read_parquet_required(keys.GAMES).filter(
+        ~pl.col("is_final") & (pl.col("game_date") >= today) & (pl.col("game_date") < day))
+    sides = pl.concat([sched.select("game_id", "game_date", pl.col(f"{s}_team_id").cast(pl.Int64).alias("team_id"))
+                       for s in ("home", "away")])
+    return (sides.join(teams.unique(), on="team_id").sort("game_date", "game_id")
+            .group_by("team_id").last().select(pl.col("game_id").cast(pl.Int64), "team_id", "game_date"))
+
+
+def chained_model_probs(store: Store, season: int, games: pl.DataFrame, between: pl.DataFrame, as_of: datetime,
+                        events: pl.DataFrame | None) -> pl.DataFrame:
+    """Model starter probabilities for ``games`` when teams play the ``between`` games first.
+
+    The starters of the ``between`` games come from :func:`starter_probs` for their own dates
+    (DailyFaceoff and injuries included). Each team's two most likely starters there, with
+    their probabilities renormalised, are the two scenarios: ``games``' candidates are built
+    as if the first had started (the second dressed as backup), then the reverse, and the
+    two predictions are averaged with those weights. Teams are independent, so two
+    candidate builds cover every team at once. Only each team's last game before ``day`` is
+    assumed; an earlier unplayed one (pricing two days ahead) contributes nothing.
+    """
+    today = as_of.astimezone(EASTERN).date()
+    sched = store.read_parquet_required(keys.GAMES).select("game_id", "game_date", "home_team_id", "away_team_id")
+    prior = []
+    for (d,), part in between.partition_by("game_date", as_dict=True).items():
+        g = sched.filter(pl.col("game_id").is_in(part["game_id"].implode()))
+        prior.append(starter_probs(store, season, d, g, as_of, events).join(part.select("game_id", "team_id"),
+                                                                            on=["game_id", "team_id"]))
+    top = (pl.concat(prior, how="diagonal_relaxed").filter(pl.col("player_id").is_not_null())
+           .sort("p_start", descending=True).group_by("game_id", "team_id", maintain_order=True)
+           .agg(pl.col("player_id").head(2), pl.col("p_start").head(2))
+           .join(between, on=["game_id", "team_id"]))
+    model, ids = goalies.load(store, season), games["game_id"].implode()
+    preds = []
+    for k in (0, 1):
+        assumed = top.filter(pl.col("player_id").list.len() > k).select(
+            "game_id", "team_id", "game_date",
+            pl.col("player_id").list.get(k).alias("starter"),
+            pl.col("player_id").list.get(1 - k, null_on_oob=True).alias("backup"),
+            (pl.col("p_start").list.get(k) / pl.col("p_start").list.sum()).alias("w"))
+        cand = goalies.build_candidates(store, [season], today=today, assumed=assumed).filter(pl.col("game_id").is_in(ids))
+        p = model.predict(cand).select("game_id", "team_id", "player_id", "p_start")
+        weights = assumed.select("team_id", "w")
+        preds.append(p.join(weights, on="team_id", how="left").with_columns(
+            (pl.col("p_start") * pl.col("w").fill_null(1.0 if k == 0 else 0.0)).alias("p_start")).drop("w"))
+    return (pl.concat(preds).group_by("game_id", "team_id", "player_id").agg(pl.col("p_start").sum())
+            .filter(pl.col("p_start") > 0).sort("game_id", "team_id", "player_id", nulls_last=True))
 
 
 def price(store: Store, season: int, games: pl.DataFrame, dep: pl.DataFrame, probs: pl.DataFrame,
@@ -208,11 +270,13 @@ def run(store: Store, day: date | None = None, as_of: datetime | None = None, n_
     """
     with _run_lock():
         out = _run(store, day, as_of, n_sims, write)
-    if write and out is not None:
+    today = out.as_of.astimezone(EASTERN).date() if out is not None else None
+    if write and out is not None and (day or today) == today:
         from nhl.site import tables as site_tables
 
-        # Team boards use the same "now" lineup projection; refresh them with every run.
-        site_tables.rebuild_quietly(store, (day or out.as_of.astimezone(EASTERN).date()))
+        # Team boards use the same "now" lineup projection; refresh them with today's runs (a
+        # later date in the horizon would rebuild the same boards again).
+        site_tables.rebuild_quietly(store, today)
     return out
 
 
