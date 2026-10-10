@@ -215,6 +215,11 @@ class SiteData:
         df = self._parquet(keys.pregame_goalies(day, stamp)) if stamp else None
         return None if df is None else df.filter(pl.col("game_id") == game_id)
 
+    def lineup_changes(self, day: date, game_id: int) -> pl.DataFrame | None:
+        """One game's lineup / goalie changes between pregame runs (:mod:`nhl.pregame.changes`)."""
+        df = self._timed_get(f"changes/{day}", MUTABLE_TTL_SECONDS, lambda: self.store.get_parquet(keys.pregame_changes(day)))
+        return None if df is None else df.filter(pl.col("game_id") == game_id)
+
     def price_history(self, day: date, game_id: int) -> pl.DataFrame:
         """Model and market prices for one game across every pregame run on ``day``."""
         cols = ["stamp", "as_of", "p_home_win", "mkt_p_home_win", "mean_home_goals", "mean_away_goals",

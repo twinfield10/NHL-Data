@@ -120,7 +120,8 @@ def get_game(game_id: int, data: SiteData = Depends(get_data)) -> dict:
 def build_lineups(data: SiteData, game: dict) -> dict:
     """Projected lineups and starters with the stats behind them: skater ratings and on-ice 5v5
     results, each projected unit's record together, goalie workload and save talent (this season
-    and last), and the DailyFaceoff reports and source tweets they come from."""
+    and last), the DailyFaceoff reports and source tweets they come from, and the change log
+    (every lineup / goalie change between pregame runs with its price move, newest first)."""
     game_id, day, season = game["game_id"], game["game_date"], int(game["season"])
     names = data.player_names()
     hands = data.player_hands()
@@ -177,7 +178,14 @@ def build_lineups(data: SiteData, game: dict) -> dict:
         "rating": lineupstats.rating_scales(None if r is None else r["players"], None if r is None else r["goalies"]),
         **{k: t["scales"] for k, t in seasons.items()},
     }
-    return {"season": season, "scales": scales, **out}
+    try:
+        changes = data.lineup_changes(day, game_id)
+    except Exception:  # the change log is context; the lineups still show
+        logger.exception("lineup changes failed for game %s", game_id)
+        changes = None
+    return {"season": season, "scales": scales, **out,
+            "changes": rows(changes.sort("stamp", descending=True, maintain_order=True), drop=("game_id", "game_date"))
+            if changes is not None else []}
 
 
 @router.get("/{game_id}/lineups")

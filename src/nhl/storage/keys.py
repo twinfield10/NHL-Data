@@ -354,6 +354,11 @@ def pregame_freshness(day: date, stamp: str) -> str:
     return f"pregame/freshness/{day.isoformat()}/{stamp}.parquet"
 
 
+def pregame_changes(day: date) -> str:
+    """Lineup / goalie change ledger for a game date, updated after every pregame run (:mod:`nhl.pregame.changes`)."""
+    return f"pregame/changes/{day.isoformat()}.parquet"
+
+
 def pregame_latest(day: date) -> str:
     """Pointer to the newest pregame run for a date (JSON with its stamp)."""
     return f"pregame/latest/{day.isoformat()}.json"
