@@ -43,5 +43,5 @@ export const isPlay = (e: { bet_stake: number | null; flagged: boolean; stake_un
 export const playStake = (e: { bet_stake: number | null; stake_units: number }) => e.bet_stake ?? e.stake_units;
 
 /** Short book labels for tight cells. */
-export const BOOK_ABBR: Record<string, string> = { DraftKings: "DK", FanDuel: "FD", LowVig: "LV", "4Casters": "4C" };
+export const BOOK_ABBR: Record<string, string> = { DraftKings: "DK", FanDuel: "FD", LowVig: "LV", "4Casters": "4C", Novig: "NV" };
 export const bookAbbr = (book: string) => BOOK_ABBR[book] ?? book.slice(0, 2);

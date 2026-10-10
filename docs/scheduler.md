@@ -77,8 +77,13 @@ first and then prices with everything captured so far.
 | Odds, closing | `8,13,23,28,38,43,53,58 * * * *` | `poll.sh odds,props --window 90` | game within 90 min | `odds,props` | `logs/poll_odds.log` | same |
 | LowVig props, game day | `4,19,34,49 9-23 * * *` | `poll.sh props_lowvig --window 960 --edges` | game within 16 h | `props_lowvig` | `logs/poll_props.log` | ~75 s (headless Chromium) |
 | LowVig props, pregame | `9,24,39,54 * * * *` | same, `--window 90 --edges` | game within 90 min | `props_lowvig` | `logs/poll_props.log` | same |
+| Novig | `14,29,44,59 * * * *` | `poll.sh novig --window 1440 --edges` | game within 24 h | `novig` | `logs/poll_novig.log` | ~3-4 min signed; capped at 7 min public (`TIME_BUDGET_S`) ² |
 
 ¹ 40 s early in the season; a few minutes later on. See [Timing](#timing).
+
+² One order-book request per market (~200 per game). Without a `trading::read` key the public
+routes allow ~2 requests/s, so a poll reads game lines first, then props for the soonest
+games, and leaves the rest for the next poll. See `src/nhl/sources/novig.py`.
 
 **Minute map.** Each job type has its own residue mod 5, so NHL jobs never start on the
 same minute as each other or as any other job on this machine:
@@ -89,7 +94,7 @@ same minute as each other or as any other job on this machine:
 | 1 | NHL lines (:11 :26 :41 :56) |
 | 2 | NHL lineups (:02 :07 :12 … :57) |
 | 3 | NHL odds (:03 :08 :13 … :58) |
-| 4 | NHL nightly (04:19), morning slate (09:14), LowVig props (:04 :09 :19 :24 … :54) |
+| 4 | NHL nightly (04:19), morning slate (09:14), LowVig props (:04 :09 :19 :24 … :54), Novig (:14 :29 :44 :59) |
 
 Other jobs that run every minute (`rebirtha-cfb/pool_lock_watch.sh`) or for minutes at a
 time (the NFL refreshes at :30) can still overlap in time; NHL polls are light (HTTP plus a

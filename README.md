@@ -85,6 +85,7 @@ npm run dev                     # http://localhost:3000 (INTERNAL_API_URL overri
 |---|---|---|---|
 | LowVig (BetOnline) | `sources/lowvig.py` | moneyline, puck line, totals, team totals, alternates, 1st period, regulation 3-way | live captures |
 | 4Casters (exchange) | `sources/fourcasters.py` | the same markets, depth-weighted fill prices (VWAP), alternate rungs, player props | live captures |
+| Novig (exchange) | `sources/novig.py` | moneyline, every puck-line and total rung, team totals, player props (goals, assists, points, SOG, saves, PP points, first goal); VWAP at $100 stake (game lines) / $50 (props), thinner sides omitted | live captures |
 | ESPN (DraftKings, Caesars, MGM, ...) | `sources/espn_odds.py` | main lines, period markets, regulation 3-way, DraftKings player props | 2019-20 onward |
 | SBR archive (via the Wayback Machine) | `sources/sbr_archive.py` | consensus open/close moneyline and total; puck line from 2014-15 | 2010-11 to 2022-23 (2022-23 partial) |
 | DailyFaceoff | `sources/dailyfaceoff.py` | starting goalies (status, news, source tweet, post time); line combinations with lineup-shape validation | live captures |

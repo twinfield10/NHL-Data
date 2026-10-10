@@ -1,0 +1,2438 @@
+{
+ "captured_at": "2026-10-09T23:00:00Z",
+ "events": [
+  {
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "description": "Seattle Kraken @ Detroit Red Wings",
+   "sport": "ICE_HOCKEY",
+   "league": "NHL",
+   "status": "OPEN_PREGAME",
+   "startsTs": 1791586800000
+  }
+ ],
+ "markets": [
+  {
+   "marketId": "01a11c88-da6e-73a3-90cb-311d76e6c394",
+   "description": "SEA @ DET t2.5",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "TOTAL",
+   "strike": "2.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11c88-da6e-73a3-90cb-3120223cf699",
+     "name": "Over 2.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11c88-da6e-73a3-90cb-3135f0e07f9d",
+     "name": "Under 2.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11c5c-7593-7d53-b519-6e629abeaf77",
+   "description": "Detroit Red Wings 3.5 TEAM_TOTAL",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "TEAM_TOTAL",
+   "strike": "3.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11c5c-7593-7d53-b519-6e77690aafa8",
+     "name": "Over 3.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11c5c-7593-7d53-b519-6e8d79eda785",
+     "name": "Under 3.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11c5c-7593-7d53-b519-6e01a8c78352",
+   "description": "Seattle Kraken 2.5 TEAM_TOTAL",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "TEAM_TOTAL",
+   "strike": "2.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11c5c-7593-7d53-b519-6e1efc7efccb",
+     "name": "Over 2.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11c5c-7593-7d53-b519-6e282dd771f6",
+     "name": "Under 2.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11c41-1ea4-7ae2-9205-e38e583ed013",
+   "description": "DET +2.5",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "SPREAD",
+   "strike": "2.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11c41-1ea4-7ae2-9205-e39fc772ce27",
+     "name": "DET +2.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11c41-1ea4-7ae2-9205-e3a4bab99669",
+     "name": "SEA -2.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11c24-ca51-7c72-bd5e-2691133aa040",
+   "description": "DET +1.5",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "SPREAD",
+   "strike": "1.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11c24-ca51-7c72-bd5e-26aebcfc241c",
+     "name": "DET +1.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11c24-ca51-7c72-bd5e-26bb1489fa4e",
+     "name": "SEA -1.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11c24-ca51-7c72-bd5e-266b10e855f0",
+   "description": "DET -2.5",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "SPREAD",
+   "strike": "-2.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11c24-ca51-7c72-bd5e-26746da0b077",
+     "name": "DET -2.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11c24-ca51-7c72-bd5e-268d434cbb55",
+     "name": "SEA +2.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11c24-ca51-7c72-bd5e-2637719a09c5",
+   "description": "DET -3.5",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "SPREAD",
+   "strike": "-3.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11c24-ca51-7c72-bd5e-2640120024c1",
+     "name": "DET -3.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11c24-ca51-7c72-bd5e-26589054cf11",
+     "name": "SEA +3.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11c24-ca51-7c72-bd5e-260e30229cdd",
+   "description": "DET -4.5",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "SPREAD",
+   "strike": "-4.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11c24-ca51-7c72-bd5e-261d0431feee",
+     "name": "DET -4.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11c24-ca51-7c72-bd5e-26280703f604",
+     "name": "SEA +4.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11c24-ca51-7c72-bd5e-25d4f6cae512",
+   "description": "DET -1.5",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "SPREAD",
+   "strike": "-1.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11c24-ca51-7c72-bd5e-25e4d3352bee",
+     "name": "DET -1.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11c24-ca51-7c72-bd5e-25fe924136c2",
+     "name": "SEA +1.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11c0a-77a8-7ce1-82e2-91e529a4cd5d",
+   "description": "SEA @ DET t9.5",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "TOTAL",
+   "strike": "9.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11c0a-77a8-7ce1-82e2-91f149931953",
+     "name": "Over 9.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11c0a-77a8-7ce1-82e2-920b6f8df246",
+     "name": "Under 9.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11c0a-77a8-7ce1-82e2-91b0d0551317",
+   "description": "SEA @ DET t8.5",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "TOTAL",
+   "strike": "8.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11c0a-77a8-7ce1-82e2-91c93f395179",
+     "name": "Over 8.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11c0a-77a8-7ce1-82e2-91dc47589451",
+     "name": "Under 8.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11c0a-77a8-7ce1-82e2-91885e71e1d6",
+   "description": "SEA @ DET t7.5",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "TOTAL",
+   "strike": "7.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11c0a-77a8-7ce1-82e2-9191e6aeddee",
+     "name": "Over 7.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11c0a-77a8-7ce1-82e2-91acf73f4a49",
+     "name": "Under 7.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11c0a-77a8-7ce1-82e2-915f02063adb",
+   "description": "SEA @ DET t5.5",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "TOTAL",
+   "strike": "5.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11c0a-77a8-7ce1-82e2-9161e8a5ed65",
+     "name": "Over 5.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11c0a-77a8-7ce1-82e2-917f97f16902",
+     "name": "Under 5.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11c0a-77a7-7153-a353-91792ef7e86e",
+   "description": "SEA @ DET t4.5",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "TOTAL",
+   "strike": "4.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11c0a-77a7-7153-a353-9180e65c6650",
+     "name": "Over 4.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11c0a-77a7-7153-a353-9192a31d8290",
+     "name": "Under 4.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11c0a-77a7-7153-a353-91451c079e26",
+   "description": "SEA @ DET t3.5",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "TOTAL",
+   "strike": "3.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11c0a-77a7-7153-a353-915a1e6349f0",
+     "name": "Over 3.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11c0a-77a7-7153-a353-91681530dfd7",
+     "name": "Under 3.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11c0a-77a7-7153-a353-911556386116",
+   "description": "DET",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "MONEY",
+   "strike": "0",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11c0a-77a7-7153-a353-91274a17e2b2",
+     "name": "DET",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11c0a-77a7-7153-a353-9137d3147e8d",
+     "name": "SEA",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11c0a-77a7-7153-a353-90e6edb826bc",
+   "description": "SEA @ DET t6.5",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "TOTAL",
+   "strike": "6.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11c0a-77a7-7153-a353-90f8dfba9546",
+     "name": "Over 6.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11c0a-77a7-7153-a353-910eb9983cae",
+     "name": "Under 6.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a12144-2a13-7e03-bb87-4b178af2b32d",
+   "description": "Andrew Copp 2.5 SHOTS_ON_GOAL",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "SHOTS_ON_GOAL",
+   "strike": "2.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a12144-2a13-7e03-bb87-4b2b1ac066f7",
+     "name": "Over 2.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a12144-2a13-7e03-bb87-4b3de1f432cb",
+     "name": "Under 2.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a12126-0249-7aa2-bb57-d0edeea901e8",
+   "description": "Ryan Winterton 2.5 SHOTS_ON_GOAL",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "SHOTS_ON_GOAL",
+   "strike": "2.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a12126-0249-7aa2-bb57-d0f3784e3f55",
+     "name": "Over 2.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a12126-0249-7aa2-bb57-d10d05b1948f",
+     "name": "Under 2.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a12126-0248-7083-bd2c-1c1d1f5653ee",
+   "description": "Matty Beniers 2.5 SHOTS_ON_GOAL",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "SHOTS_ON_GOAL",
+   "strike": "2.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a12126-0248-7083-bd2c-1c2ca31e943e",
+     "name": "Over 2.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a12126-0248-7083-bd2c-1c38e6f9caef",
+     "name": "Under 2.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a122d3-60ec-7a13-98c2-76b75998b3bc",
+   "description": "Michael Brandsegg-Nygard 1.5 SHOTS_ON_GOAL",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "SHOTS_ON_GOAL",
+   "strike": "1.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a122d3-60ec-7a13-98c2-76c4a9359485",
+     "name": "Over 1.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a122d3-60ec-7a13-98c2-76dc1c2504d2",
+     "name": "Under 1.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11e9d-8be7-7ab1-95f3-465997790743",
+   "description": "Cale Fleury 0.5 PLAYER_GOALS",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "PLAYER_GOALS",
+   "strike": "0.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11e9d-8be7-7ab1-95f3-466d570eaf83",
+     "name": "Over 0.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11e9d-8be7-7ab1-95f3-467970bffec0",
+     "name": "Under 0.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11d8b-01bc-7931-96cf-56b04b82d3b1",
+   "description": "Jared McCann 0.5 PLAYER_GOALS",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "PLAYER_GOALS",
+   "strike": "0.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11d8b-01bc-7931-96cf-56ccf88cee21",
+     "name": "Over 0.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11d8b-01bc-7931-96cf-56d34f6bdd77",
+     "name": "Under 0.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11e9d-8bf1-7801-b72e-ead3338ac211",
+   "description": "Cale Fleury 2.5 PLAYER_GOALS",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "PLAYER_GOALS",
+   "strike": "2.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11e9d-8bf1-7801-b72e-eae6c2c75b69",
+     "name": "Over 2.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11e9d-8bf1-7801-b72e-eafd11f9391b",
+     "name": "Under 2.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a12120-87f6-7f81-a22a-f166718123e3",
+   "description": "Jordan Eberle 0.5 POINTS",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "POINTS",
+   "strike": "0.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a12120-87f6-7f81-a22a-f17ff89ef17f",
+     "name": "Over 0.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a12120-87f6-7f81-a22a-f185dd656987",
+     "name": "Under 0.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a1211f-0092-7510-96d8-0fa619781284",
+   "description": "Shane Wright 0.5 POINTS",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "POINTS",
+   "strike": "0.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a1211f-0092-7510-96d8-0fb4b520ddaa",
+     "name": "Over 0.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a1211f-0092-7510-96d8-0fc32a91dda7",
+     "name": "Under 0.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a1211f-0093-7a70-8dcc-f8c72dbabe6d",
+   "description": "Shane Wright 0.5 ASSISTS",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "ASSISTS",
+   "strike": "0.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a1211f-0093-7a70-8dcc-f8d25dc4e61f",
+     "name": "Over 0.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a1211f-0093-7a70-8dcc-f8e4ad232499",
+     "name": "Under 0.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a1228a-1e72-7c60-998c-d8873f076bb0",
+   "description": "John Gibson 22.5 SAVES",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "SAVES",
+   "strike": "22.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a1228a-1e72-7c60-998c-d8952e39b8c7",
+     "name": "Over 22.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a1228a-1e72-7c60-998c-d8a17f44fb74",
+     "name": "Under 22.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a12204-8a0a-7832-ae54-5933786dc7de",
+   "description": "John Gibson 23.5 SAVES",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "SAVES",
+   "strike": "23.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a12204-8a0a-7832-ae54-5942323d518e",
+     "name": "Over 23.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a12204-8a0a-7832-ae54-595e7a381c5a",
+     "name": "Under 23.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a121ee-6ae4-7a02-9745-bba45047f19d",
+   "description": "Viktor Arvidsson 0.5 POWER_PLAY_POINTS",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "POWER_PLAY_POINTS",
+   "strike": "0.5",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a121ee-6ae4-7a02-9745-bbb70a249ea8",
+     "name": "Over 0.5",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a121ee-6ae4-7a02-9745-bbccc18fb4d4",
+     "name": "Under 0.5",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11fcb-b81d-76e0-9f14-553b904019f3",
+   "description": "Cale Fleury FIRST_GOAL_SCORER",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "FIRST_GOAL_SCORER",
+   "strike": "0",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11fcb-b81d-76e0-9f14-55414b7a1875",
+     "name": "Yes",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11fcb-b81d-76e0-9f14-555e3db37ec4",
+     "name": "No",
+     "status": "TBD"
+    }
+   ]
+  },
+  {
+   "marketId": "01a11da6-1c2f-7832-a314-3fdfacb0fee2",
+   "description": "Ryker Evans FIRST_GOAL_SCORER",
+   "eventId": "01a11c0a-775e-7391-9128-e98157d708c3",
+   "marketType": "FIRST_GOAL_SCORER",
+   "strike": "0",
+   "status": "OPEN",
+   "voids": "FMV",
+   "startsTs": 1791586800000,
+   "fee": {
+    "coefficient": "0.06",
+    "makerCredit": "0.5",
+    "charged": "WHEN_LIVE"
+   },
+   "outcomes": [
+    {
+     "outcomeId": "01a11da6-1c2f-7832-a314-3fe3304123f9",
+     "name": "Yes",
+     "status": "TBD"
+    },
+    {
+     "outcomeId": "01a11da6-1c2f-7832-a314-3ff3e1ec28cc",
+     "name": "No",
+     "status": "TBD"
+    }
+   ]
+  }
+ ],
+ "books": {
+  "01a11c88-da6e-73a3-90cb-311d76e6c394": {
+   "marketId": "01a11c88-da6e-73a3-90cb-311d76e6c394",
+   "seq": 435,
+   "orders": {
+    "01a11c88-da6e-73a3-90cb-3120223cf699": [
+     {
+      "orderId": "01a122b1-f0df-7a61-9f9c-d9b9a797dd05",
+      "price": "0.951",
+      "qty": 25000
+     },
+     {
+      "orderId": "01a122b0-7219-73d1-ad2c-e3087312be71",
+      "price": "0.95",
+      "qty": 100
+     },
+     {
+      "orderId": "01a122d9-42e6-72d2-9209-05cf7c2e4d55",
+      "price": "0.95",
+      "qty": 15000
+     }
+    ]
+   }
+  },
+  "01a11c5c-7593-7d53-b519-6e629abeaf77": {
+   "marketId": "01a11c5c-7593-7d53-b519-6e629abeaf77",
+   "seq": 1134,
+   "orders": {
+    "01a11c5c-7593-7d53-b519-6e77690aafa8": [
+     {
+      "orderId": "01a122bb-c26c-7022-a354-69798c82847a",
+      "price": "0.415",
+      "qty": 15662
+     },
+     {
+      "orderId": "01a122d5-3a12-7923-b70b-ec2e476f38d6",
+      "price": "0.415",
+      "qty": 25000
+     },
+     {
+      "orderId": "01a122a3-c58f-7813-a375-a09efdf33c8c",
+      "price": "0.41",
+      "qty": 4000
+     },
+     {
+      "orderId": "01a122d7-fa10-71e0-b06d-d936b244885b",
+      "price": "0.41",
+      "qty": 10000
+     },
+     {
+      "orderId": "01a122d8-86c2-7220-9a13-89c345d411d3",
+      "price": "0.41",
+      "qty": 95000
+     },
+     {
+      "orderId": "01a122d3-d0ec-7763-af59-3d6b37d7886a",
+      "price": "0.40",
+      "qty": 30512
+     }
+    ],
+    "01a11c5c-7593-7d53-b519-6e8d79eda785": [
+     {
+      "orderId": "01a121d9-25b7-7e02-bac9-dbae871d5db6",
+      "price": "0.545",
+      "qty": 90645
+     },
+     {
+      "orderId": "01a122b8-7f0a-7a72-a202-cca365d9d0a5",
+      "price": "0.545",
+      "qty": 25000
+     },
+     {
+      "orderId": "01a122bc-b572-70a3-9c9b-95756aea05a7",
+      "price": "0.53",
+      "qty": 4000
+     },
+     {
+      "orderId": "01a122d7-fa04-7a13-9369-c0d81ff7ffd8",
+      "price": "0.53",
+      "qty": 10000
+     },
+     {
+      "orderId": "01a122d9-521a-78e1-8640-1e14b699f6aa",
+      "price": "0.525",
+      "qty": 100000
+     },
+     {
+      "orderId": "01a12242-d4ae-7990-b1f5-78cc8f4720f6",
+      "price": "0.52",
+      "qty": 3000
+     }
+    ]
+   }
+  },
+  "01a11c5c-7593-7d53-b519-6e01a8c78352": {
+   "marketId": "01a11c5c-7593-7d53-b519-6e01a8c78352",
+   "seq": 784,
+   "orders": {
+    "01a11c5c-7593-7d53-b519-6e1efc7efccb": [
+     {
+      "orderId": "01a1224f-76e5-7df1-91df-2fcd7e6aae23",
+      "price": "0.535",
+      "qty": 21495
+     },
+     {
+      "orderId": "01a12260-cb5f-7282-b0ba-6613c6a578d6",
+      "price": "0.535",
+      "qty": 25000
+     },
+     {
+      "orderId": "01a122b8-62b5-7552-bf3e-6bdbbce5ee6c",
+      "price": "0.53",
+      "qty": 10000
+     },
+     {
+      "orderId": "01a122ce-ec22-7781-8506-012a261c8020",
+      "price": "0.53",
+      "qty": 4000
+     },
+     {
+      "orderId": "01a122d8-86c2-7220-9a13-89d6fecaaaa5",
+      "price": "0.525",
+      "qty": 90000
+     },
+     {
+      "orderId": "01a12242-d4ae-7990-b1f5-7890ccecda9f",
+      "price": "0.51",
+      "qty": 3000
+     }
+    ],
+    "01a11c5c-7593-7d53-b519-6e282dd771f6": [
+     {
+      "orderId": "01a121d9-55e5-7cc2-80d6-4dbddbbe5353",
+      "price": "0.43",
+      "qty": 97860
+     },
+     {
+      "orderId": "01a121d9-55f8-7fa1-9e97-dd8bc1c42276",
+      "price": "0.43",
+      "qty": 25000
+     },
+     {
+      "orderId": "01a122d3-d612-79f0-a087-1e83090c47f1",
+      "price": "0.425",
+      "qty": 29964
+     },
+     {
+      "orderId": "01a122a3-b357-7e60-b3dc-64588252ab9b",
+      "price": "0.42",
+      "qty": 4000
+     },
+     {
+      "orderId": "01a122b8-62b5-7552-bf3e-6bcb7044f648",
+      "price": "0.41",
+      "qty": 10000
+     },
+     {
+      "orderId": "01a122d7-7b2e-76c1-9261-948a83465a81",
+      "price": "0.41",
+      "qty": 90000
+     }
+    ]
+   }
+  },
+  "01a11c41-1ea4-7ae2-9205-e38e583ed013": {
+   "marketId": "01a11c41-1ea4-7ae2-9205-e38e583ed013",
+   "seq": 782,
+   "orders": {
+    "01a11c41-1ea4-7ae2-9205-e39fc772ce27": [
+     {
+      "orderId": "01a122d5-5ff4-7382-ae86-987de8f16ab6",
+      "price": "0.855",
+      "qty": 348655
+     },
+     {
+      "orderId": "01a12279-c162-73d0-8597-062fe80b128c",
+      "price": "0.85",
+      "qty": 19200
+     },
+     {
+      "orderId": "01a1227a-4b33-7e71-aa75-c136665aef96",
+      "price": "0.85",
+      "qty": 341412
+     },
+     {
+      "orderId": "01a122d5-94f3-7de0-87af-c873cf65332e",
+      "price": "0.85",
+      "qty": 50000
+     },
+     {
+      "orderId": "01a122d8-d85d-7fb3-b5c1-ffc0a2d43e1b",
+      "price": "0.85",
+      "qty": 15000
+     },
+     {
+      "orderId": "01a122d8-f3c4-70b2-94a8-d89070b3f94f",
+      "price": "0.85",
+      "qty": 50000
+     }
+    ],
+    "01a11c41-1ea4-7ae2-9205-e3a4bab99669": [
+     {
+      "orderId": "01a120a8-c62e-7353-907d-eb84f65df4a7",
+      "price": "0.135",
+      "qty": 341482
+     },
+     {
+      "orderId": "01a122d3-b565-7bc0-800e-e8fec2ce2e7e",
+      "price": "0.135",
+      "qty": 4620
+     },
+     {
+      "orderId": "01a122d5-64b9-7612-b9c3-4d633afa170f",
+      "price": "0.135",
+      "qty": 25000
+     },
+     {
+      "orderId": "01a122c5-b1a1-7110-910b-e7f70dc9c782",
+      "price": "0.13",
+      "qty": 4000
+     },
+     {
+      "orderId": "01a122d5-301a-7900-afb8-1ed30ad31de0",
+      "price": "0.13",
+      "qty": 332300
+     },
+     {
+      "orderId": "01a122d5-301f-7443-ae61-6e348167b373",
+      "price": "0.13",
+      "qty": 326154
+     }
+    ]
+   }
+  },
+  "01a11c24-ca51-7c72-bd5e-2691133aa040": {
+   "marketId": "01a11c24-ca51-7c72-bd5e-2691133aa040",
+   "seq": 1810,
+   "orders": {
+    "01a11c24-ca51-7c72-bd5e-26aebcfc241c": [
+     {
+      "orderId": "01a122ca-a1c0-7251-8395-7f00847cf342",
+      "price": "0.765",
+      "qty": 308366
+     },
+     {
+      "orderId": "01a120a8-c644-7822-8db4-a8f37ce83c1c",
+      "price": "0.76",
+      "qty": 10735
+     },
+     {
+      "orderId": "01a12241-f016-7b62-ac95-a387a406fe76",
+      "price": "0.76",
+      "qty": 20000
+     },
+     {
+      "orderId": "01a12265-6ce1-7ce0-9f13-1a040cbfe099",
+      "price": "0.76",
+      "qty": 294079
+     },
+     {
+      "orderId": "01a1226b-e5d5-7cb2-a47a-b166e9ad2c04",
+      "price": "0.76",
+      "qty": 100
+     },
+     {
+      "orderId": "01a122d3-b0c0-75f0-a9d0-2f955176184e",
+      "price": "0.76",
+      "qty": 339100
+     }
+    ],
+    "01a11c24-ca51-7c72-bd5e-26bb1489fa4e": [
+     {
+      "orderId": "01a122d8-8a91-7a63-89fa-de6ebbba6a80",
+      "price": "0.225",
+      "qty": 50000
+     },
+     {
+      "orderId": "01a1213b-9a46-73f2-bc99-090cf1f549a1",
+      "price": "0.22",
+      "qty": 285454
+     },
+     {
+      "orderId": "01a122d8-e418-7291-a14c-3ebe24c85edb",
+      "price": "0.22",
+      "qty": 16700
+     },
+     {
+      "orderId": "01a122d8-f139-70f1-80f1-ff4b9b4692b0",
+      "price": "0.22",
+      "qty": 35000
+     },
+     {
+      "orderId": "01a122d3-d403-7ed1-ac7d-f0a525219cf8",
+      "price": "0.215",
+      "qty": 331200
+     },
+     {
+      "orderId": "01a122d5-5ff4-7382-ae86-98b233d4f586",
+      "price": "0.215",
+      "qty": 285581
+     }
+    ]
+   }
+  },
+  "01a11c24-ca51-7c72-bd5e-266b10e855f0": {
+   "marketId": "01a11c24-ca51-7c72-bd5e-266b10e855f0",
+   "seq": 1584,
+   "orders": {
+    "01a11c24-ca51-7c72-bd5e-26746da0b077": [
+     {
+      "orderId": "01a122d0-bd5c-7441-8121-394b7acd3476",
+      "price": "0.23",
+      "qty": 267224
+     },
+     {
+      "orderId": "01a12274-577c-75d0-b346-a4b52625c5c8",
+      "price": "0.225",
+      "qty": 252817
+     },
+     {
+      "orderId": "01a1228a-4616-7422-88c1-828854b98f4a",
+      "price": "0.225",
+      "qty": 2587
+     },
+     {
+      "orderId": "01a122d0-bd71-79a3-a71d-10077ca932dc",
+      "price": "0.225",
+      "qty": 10300
+     },
+     {
+      "orderId": "01a121fe-bd9e-7522-beac-8eb808341915",
+      "price": "0.22",
+      "qty": 20000
+     },
+     {
+      "orderId": "01a122d7-7b2e-76c1-9261-956f8566b9cf",
+      "price": "0.22",
+      "qty": 385000
+     }
+    ],
+    "01a11c24-ca51-7c72-bd5e-268d434cbb55": [
+     {
+      "orderId": "01a122d0-e66d-7da1-b83b-20a8110e93e0",
+      "price": "0.765",
+      "qty": 20000
+     },
+     {
+      "orderId": "01a122d5-6976-78f2-8b8a-d2de36a76369",
+      "price": "0.765",
+      "qty": 20100
+     },
+     {
+      "orderId": "01a122b3-9fab-7750-a05b-e57ed551fc9a",
+      "price": "0.76",
+      "qty": 65789
+     },
+     {
+      "orderId": "01a1227a-4b33-7e71-aa75-c159e42bcaf9",
+      "price": "0.755",
+      "qty": 303708
+     },
+     {
+      "orderId": "01a122d9-ddcc-7172-9755-a8bf4173c7d8",
+      "price": "0.755",
+      "qty": 50000
+     },
+     {
+      "orderId": "01a122a3-bf0f-7d32-a539-3ce62d76dcbf",
+      "price": "0.75",
+      "qty": 4000
+     }
+    ]
+   }
+  },
+  "01a11c24-ca51-7c72-bd5e-2637719a09c5": {
+   "marketId": "01a11c24-ca51-7c72-bd5e-2637719a09c5",
+   "seq": 605,
+   "orders": {
+    "01a11c24-ca51-7c72-bd5e-2640120024c1": [
+     {
+      "orderId": "01a12277-a0e3-79b3-b143-df12c7c5750a",
+      "price": "0.085",
+      "qty": 100
+     },
+     {
+      "orderId": "01a12292-c389-76d1-b70c-9ee2b936bfa9",
+      "price": "0.085",
+      "qty": 100000
+     },
+     {
+      "orderId": "01a122d7-3b96-74d0-aece-16ad045168cd",
+      "price": "0.07",
+      "qty": 15000
+     },
+     {
+      "orderId": "01a122d8-c342-7123-a56f-d89bfa077da8",
+      "price": "0.07",
+      "qty": 50000
+     },
+     {
+      "orderId": "01a122d9-521a-78e1-8640-1ebbe7a2f8f6",
+      "price": "0.055",
+      "qty": 135000
+     }
+    ],
+    "01a11c24-ca51-7c72-bd5e-26589054cf11": [
+     {
+      "orderId": "01a122d7-7b69-7d12-826c-d027d0cbc384",
+      "price": "0.87",
+      "qty": 15000
+     },
+     {
+      "orderId": "01a122d7-7b2e-76c1-9261-9587b44c618d",
+      "price": "0.865",
+      "qty": 130000
+     }
+    ]
+   }
+  },
+  "01a11c24-ca51-7c72-bd5e-260e30229cdd": {
+   "marketId": "01a11c24-ca51-7c72-bd5e-260e30229cdd",
+   "seq": 36,
+   "orders": {
+    "01a11c24-ca51-7c72-bd5e-261d0431feee": [
+     {
+      "orderId": "01a121b1-1c9e-7013-8298-f42a89784c38",
+      "price": "0.01",
+      "qty": 15000
+     }
+    ],
+    "01a11c24-ca51-7c72-bd5e-26280703f604": [
+     {
+      "orderId": "01a122d8-9d9a-7be2-9732-b114de388d20",
+      "price": "0.91",
+      "qty": 15000
+     }
+    ]
+   }
+  },
+  "01a11c24-ca51-7c72-bd5e-25d4f6cae512": {
+   "marketId": "01a11c24-ca51-7c72-bd5e-25d4f6cae512",
+   "seq": 5407,
+   "orders": {
+    "01a11c24-ca51-7c72-bd5e-25e4d3352bee": [
+     {
+      "orderId": "01a122d7-9cbc-7422-8b81-2986c3466f6d",
+      "price": "0.355",
+      "qty": 1326
+     },
+     {
+      "orderId": "01a122d7-af37-78a2-9b44-a618c1a25af3",
+      "price": "0.355",
+      "qty": 28169
+     },
+     {
+      "orderId": "01a122ca-a9ac-72e0-8300-3666dcedd5af",
+      "price": "0.35",
+      "qty": 181363
+     },
+     {
+      "orderId": "01a122ca-b0c1-7b92-b52d-bdae72dea531",
+      "price": "0.35",
+      "qty": 16800
+     },
+     {
+      "orderId": "01a122ce-ab90-7381-99be-c88373bb4ed2",
+      "price": "0.35",
+      "qty": 14285
+     },
+     {
+      "orderId": "01a122d6-4b5d-7f72-9df6-07c4a5f51e51",
+      "price": "0.35",
+      "qty": 57142
+     }
+    ],
+    "01a11c24-ca51-7c72-bd5e-25fe924136c2": [
+     {
+      "orderId": "01a122bd-e183-73e0-a59b-7bb198488078",
+      "price": "0.64",
+      "qty": 9648
+     },
+     {
+      "orderId": "01a122c9-6242-73a2-bf79-51f67d05c655",
+      "price": "0.64",
+      "qty": 8593
+     },
+     {
+      "orderId": "01a122d5-6889-72c1-805e-319d223c9d13",
+      "price": "0.64",
+      "qty": 8600
+     },
+     {
+      "orderId": "01a122d7-7288-79c2-9677-299eedfcfcc2",
+      "price": "0.64",
+      "qty": 1766
+     },
+     {
+      "orderId": "01a122d6-5c3f-75d3-bcc1-04d17c5fac57",
+      "price": "0.635",
+      "qty": 78740
+     },
+     {
+      "orderId": "01a122d8-af16-7f72-bbba-4dc66248dc5c",
+      "price": "0.635",
+      "qty": 1327
+     }
+    ]
+   }
+  },
+  "01a11c0a-77a8-7ce1-82e2-91e529a4cd5d": {
+   "marketId": "01a11c0a-77a8-7ce1-82e2-91e529a4cd5d",
+   "seq": 1796,
+   "orders": {
+    "01a11c0a-77a8-7ce1-82e2-91f149931953": [
+     {
+      "orderId": "01a12278-c104-73d2-be15-39d88225fd66",
+      "price": "0.065",
+      "qty": 100
+     },
+     {
+      "orderId": "01a122d5-3a6d-7e70-bb6a-8006b422b517",
+      "price": "0.065",
+      "qty": 25000
+     },
+     {
+      "orderId": "01a122d4-7515-7061-a9b0-717dbcc6186b",
+      "price": "0.06",
+      "qty": 8000
+     },
+     {
+      "orderId": "01a122d7-6a0e-72c0-bd6d-0b47b240dd7e",
+      "price": "0.04",
+      "qty": 15000
+     }
+    ],
+    "01a11c0a-77a8-7ce1-82e2-920b6f8df246": [
+     {
+      "orderId": "01a121b1-1b41-76d2-868d-ac30cff5b202",
+      "price": "0.91",
+      "qty": 23700
+     },
+     {
+      "orderId": "01a122b5-87b1-78d3-adec-78cf45e5ee6f",
+      "price": "0.91",
+      "qty": 2000
+     },
+     {
+      "orderId": "01a122d7-6a0e-72c0-bd6d-0b57a635cba7",
+      "price": "0.91",
+      "qty": 15000
+     }
+    ]
+   }
+  },
+  "01a11c0a-77a8-7ce1-82e2-91b0d0551317": {
+   "marketId": "01a11c0a-77a8-7ce1-82e2-91b0d0551317",
+   "seq": 1667,
+   "orders": {
+    "01a11c0a-77a8-7ce1-82e2-91c93f395179": [
+     {
+      "orderId": "01a121ef-ea8e-7e11-a328-3f7f9829592d",
+      "price": "0.17",
+      "qty": 2884
+     },
+     {
+      "orderId": "01a122d5-2dd6-7441-8c54-6548bf1e3dd4",
+      "price": "0.165",
+      "qty": 291515
+     },
+     {
+      "orderId": "01a122d5-83ec-7273-b711-1b8f9185bfe3",
+      "price": "0.165",
+      "qty": 289600
+     },
+     {
+      "orderId": "01a122d8-ef2e-7162-ad9b-5f9b52206039",
+      "price": "0.165",
+      "qty": 40000
+     },
+     {
+      "orderId": "01a122d5-2c90-7512-acb7-fce2f453d573",
+      "price": "0.16",
+      "qty": 296250
+     },
+     {
+      "orderId": "01a122d5-aebc-7d90-807b-db7a64bd95c7",
+      "price": "0.16",
+      "qty": 8400
+     }
+    ],
+    "01a11c0a-77a8-7ce1-82e2-91dc47589451": [
+     {
+      "orderId": "01a121fe-bde4-7363-af7a-f7e7b71cab43",
+      "price": "0.82",
+      "qty": 39895
+     },
+     {
+      "orderId": "01a121fe-bdf9-7a02-ba94-31ebfbeefec7",
+      "price": "0.82",
+      "qty": 22700
+     },
+     {
+      "orderId": "01a122d5-6e35-7b43-a801-391d7fc320c6",
+      "price": "0.82",
+      "qty": 40000
+     },
+     {
+      "orderId": "01a122d6-6c23-7521-bb79-db2b65b8835c",
+      "price": "0.82",
+      "qty": 284390
+     },
+     {
+      "orderId": "01a120a8-c62e-7353-907d-eb0a95c2fd4a",
+      "price": "0.815",
+      "qty": 280122
+     },
+     {
+      "orderId": "01a122a3-eba7-7ff3-a92b-7c17a67601df",
+      "price": "0.80",
+      "qty": 4000
+     }
+    ]
+   }
+  },
+  "01a11c0a-77a8-7ce1-82e2-91885e71e1d6": {
+   "marketId": "01a11c0a-77a8-7ce1-82e2-91885e71e1d6",
+   "seq": 3843,
+   "orders": {
+    "01a11c0a-77a8-7ce1-82e2-9191e6aeddee": [
+     {
+      "orderId": "01a11f11-d92d-7f81-96b8-51c11dc6de7d",
+      "price": "0.24",
+      "qty": 12300
+     },
+     {
+      "orderId": "01a121fe-bdde-7962-99cf-db8f24623daf",
+      "price": "0.24",
+      "qty": 40000
+     },
+     {
+      "orderId": "01a122c7-caac-7301-8241-2a4462c9b3c8",
+      "price": "0.24",
+      "qty": 163200
+     },
+     {
+      "orderId": "01a122ca-ebfa-7f31-ad31-b99086f03196",
+      "price": "0.24",
+      "qty": 4000
+     },
+     {
+      "orderId": "01a122d5-5ff4-7382-ae86-985d4482df48",
+      "price": "0.24",
+      "qty": 282917
+     },
+     {
+      "orderId": "01a122db-7163-7df0-b9f0-781be36c4f4d",
+      "price": "0.24",
+      "qty": 800
+     }
+    ],
+    "01a11c0a-77a8-7ce1-82e2-91acf73f4a49": [
+     {
+      "orderId": "01a122d5-95bc-7f81-92b6-8bb8a1c0c408",
+      "price": "0.745",
+      "qty": 283221
+     },
+     {
+      "orderId": "01a120a8-c62e-7353-907d-eb51562d07a4",
+      "price": "0.74",
+      "qty": 265981
+     },
+     {
+      "orderId": "01a122d5-691e-7b11-8487-792466471ac6",
+      "price": "0.74",
+      "qty": 14500
+     },
+     {
+      "orderId": "01a122d5-81d2-7711-91b0-54a6d5602a44",
+      "price": "0.74",
+      "qty": 40000
+     },
+     {
+      "orderId": "01a122d5-883f-7521-b5e5-894334be4596",
+      "price": "0.735",
+      "qty": 216500
+     },
+     {
+      "orderId": "01a122db-6e6f-76f0-9203-d5820336d436",
+      "price": "0.735",
+      "qty": 68027
+     }
+    ]
+   }
+  },
+  "01a11c0a-77a8-7ce1-82e2-915f02063adb": {
+   "marketId": "01a11c0a-77a8-7ce1-82e2-915f02063adb",
+   "seq": 4294,
+   "orders": {
+    "01a11c0a-77a8-7ce1-82e2-9161e8a5ed65": [
+     {
+      "orderId": "01a122d5-bea7-7582-9c33-ded3abfe91d4",
+      "price": "0.555",
+      "qty": 72252
+     },
+     {
+      "orderId": "01a122d5-beb8-7c12-9596-fc25bad0eed1",
+      "price": "0.555",
+      "qty": 17700
+     },
+     {
+      "orderId": "01a12228-a5f3-7550-9ab4-9a196055081a",
+      "price": "0.55",
+      "qty": 40000
+     },
+     {
+      "orderId": "01a122ac-1447-78b0-a93f-4fd0da115bad",
+      "price": "0.55",
+      "qty": 245272
+     },
+     {
+      "orderId": "01a122bf-7b75-7452-b5fb-de7473921f98",
+      "price": "0.55",
+      "qty": 2000
+     },
+     {
+      "orderId": "01a122d4-6477-7d22-ab51-ae965d39b1ac",
+      "price": "0.55",
+      "qty": 35000
+     }
+    ],
+    "01a11c0a-77a8-7ce1-82e2-917f97f16902": [
+     {
+      "orderId": "01a122d5-f802-7ec1-b435-e1f492ab94fa",
+      "price": "0.44",
+      "qty": 13801
+     },
+     {
+      "orderId": "01a122ae-e71b-74d1-966b-da7fb534833e",
+      "price": "0.435",
+      "qty": 1049569
+     },
+     {
+      "orderId": "01a122af-52a5-7f53-bac6-a17e2beb2500",
+      "price": "0.435",
+      "qty": 80000
+     },
+     {
+      "orderId": "01a11e23-f8ea-75f2-b15a-da53d6832fba",
+      "price": "0.43",
+      "qty": 20100
+     },
+     {
+      "orderId": "01a12007-1685-7cc3-a539-0bbf5a077ea0",
+      "price": "0.43",
+      "qty": 400
+     },
+     {
+      "orderId": "01a12032-858c-7560-b6b5-f5b62bfee6a4",
+      "price": "0.43",
+      "qty": 4800
+     }
+    ]
+   }
+  },
+  "01a11c0a-77a7-7153-a353-91792ef7e86e": {
+   "marketId": "01a11c0a-77a7-7153-a353-91792ef7e86e",
+   "seq": 2776,
+   "orders": {
+    "01a11c0a-77a7-7153-a353-9180e65c6650": [
+     {
+      "orderId": "01a1217e-2c9f-7b52-be66-537c8edb72ec",
+      "price": "0.775",
+      "qty": 275870
+     },
+     {
+      "orderId": "01a12284-9f42-7583-9269-610f15cfc03b",
+      "price": "0.77",
+      "qty": 15400
+     },
+     {
+      "orderId": "01a122ca-a2c2-7793-91de-5424100e7ac0",
+      "price": "0.77",
+      "qty": 404500
+     },
+     {
+      "orderId": "01a122d5-2c90-7512-acb7-fcfc865a26b9",
+      "price": "0.77",
+      "qty": 283117
+     },
+     {
+      "orderId": "01a120a8-c664-7093-adbb-b986afd37dda",
+      "price": "0.76",
+      "qty": 294400
+     },
+     {
+      "orderId": "01a120cf-7d17-78b3-9b0a-35971cdffadb",
+      "price": "0.76",
+      "qty": 3400
+     }
+    ],
+    "01a11c0a-77a7-7153-a353-9192a31d8290": [
+     {
+      "orderId": "01a12284-9ff0-7ba0-9b64-55393cff07b3",
+      "price": "0.215",
+      "qty": 39873
+     },
+     {
+      "orderId": "01a12284-a712-7961-aa55-831855a95126",
+      "price": "0.215",
+      "qty": 25000
+     },
+     {
+      "orderId": "01a122ac-12bf-7911-b386-c651fec3ae5e",
+      "price": "0.21",
+      "qty": 287619
+     },
+     {
+      "orderId": "01a121a5-a8e5-7070-987f-cb72e0f03670",
+      "price": "0.205",
+      "qty": 291220
+     },
+     {
+      "orderId": "01a122d5-61a9-79d2-b7b4-80004492ee9a",
+      "price": "0.205",
+      "qty": 351900
+     },
+     {
+      "orderId": "01a122a3-b642-7e23-8525-e5fa835986b6",
+      "price": "0.20",
+      "qty": 4000
+     }
+    ]
+   }
+  },
+  "01a11c0a-77a7-7153-a353-91451c079e26": {
+   "marketId": "01a11c0a-77a7-7153-a353-91451c079e26",
+   "seq": 14124,
+   "orders": {
+    "01a11c0a-77a7-7153-a353-915a1e6349f0": [
+     {
+      "orderId": "01a12277-c3d8-7091-b142-07943034706e",
+      "price": "0.84",
+      "qty": 100
+     },
+     {
+      "orderId": "01a122d5-5c2d-7503-9e86-98b3a381b2c0",
+      "price": "0.84",
+      "qty": 25000
+     },
+     {
+      "orderId": "01a122db-c592-7aa1-99e6-bbf255d6ff62",
+      "price": "0.84",
+      "qty": 3500
+     },
+     {
+      "orderId": "01a122d5-5c46-7ea1-bdab-faa784de48ff",
+      "price": "0.83",
+      "qty": 15000
+     }
+    ],
+    "01a11c0a-77a7-7153-a353-91681530dfd7": [
+     {
+      "orderId": "01a12277-c887-79f2-866a-83ddb475b218",
+      "price": "0.125",
+      "qty": 100
+     },
+     {
+      "orderId": "01a122d5-5c3b-7763-94bb-fb1d36bb91e3",
+      "price": "0.125",
+      "qty": 25000
+     },
+     {
+      "orderId": "01a122c6-38cd-79f0-8990-f2a092bfd589",
+      "price": "0.12",
+      "qty": 6500
+     },
+     {
+      "orderId": "01a122d9-f8f5-7bd0-bd97-88686360d752",
+      "price": "0.12",
+      "qty": 15000
+     }
+    ]
+   }
+  },
+  "01a11c0a-77a7-7153-a353-911556386116": {
+   "marketId": "01a11c0a-77a7-7153-a353-911556386116",
+   "seq": 7320,
+   "orders": {
+    "01a11c0a-77a7-7153-a353-91274a17e2b2": [
+     {
+      "orderId": "01a122d6-5c16-7162-a929-13999c354e42",
+      "price": "0.58",
+      "qty": 649756
+     },
+     {
+      "orderId": "01a122d6-5c16-7313-b655-9241e91fc332",
+      "price": "0.58",
+      "qty": 862069
+     },
+     {
+      "orderId": "01a122d6-636a-7112-b461-1d5633b8724d",
+      "price": "0.58",
+      "qty": 500000
+     },
+     {
+      "orderId": "01a122d7-1d75-70f0-be3f-55f0afe20d44",
+      "price": "0.58",
+      "qty": 2071
+     },
+     {
+      "orderId": "01a122d7-1d75-70f0-be3f-56072a506dbe",
+      "price": "0.58",
+      "qty": 2031
+     },
+     {
+      "orderId": "01a122d7-6be6-7541-a26d-3085eeaa143c",
+      "price": "0.58",
+      "qty": 6339
+     }
+    ],
+    "01a11c0a-77a7-7153-a353-9137d3147e8d": [
+     {
+      "orderId": "01a122db-94a4-77b3-b3b9-41faeafb3481",
+      "price": "0.415",
+      "qty": 1
+     },
+     {
+      "orderId": "01a122af-3bd5-75a2-b00d-e36ea683a9d8",
+      "price": "0.41",
+      "qty": 1034121
+     },
+     {
+      "orderId": "01a122d4-9abb-7df0-b8b1-a5f642f46d54",
+      "price": "0.41",
+      "qty": 500000
+     },
+     {
+      "orderId": "01a122db-4c6e-7483-af6c-934de50dd333",
+      "price": "0.41",
+      "qty": 2439
+     },
+     {
+      "orderId": "01a122d0-a161-70a3-b0ab-1ebbb5c6afe7",
+      "price": "0.405",
+      "qty": 257531
+     },
+     {
+      "orderId": "01a122d3-65b7-7961-9a6b-bf188b8f5fe8",
+      "price": "0.405",
+      "qty": 20567
+     }
+    ]
+   }
+  },
+  "01a11c0a-77a7-7153-a353-90e6edb826bc": {
+   "marketId": "01a11c0a-77a7-7153-a353-90e6edb826bc",
+   "seq": 5399,
+   "orders": {
+    "01a11c0a-77a7-7153-a353-90f8dfba9546": [
+     {
+      "orderId": "01a122d9-0cab-7cc1-a6f9-2ed909c15b05",
+      "price": "0.44",
+      "qty": 194290
+     },
+     {
+      "orderId": "01a122d9-15f1-7882-9d06-1b101d38590c",
+      "price": "0.44",
+      "qty": 100000
+     },
+     {
+      "orderId": "01a122c1-73ab-7a93-b893-f80fd9c87251",
+      "price": "0.435",
+      "qty": 422861
+     },
+     {
+      "orderId": "01a122cf-903c-7be0-9743-137af6b3b33b",
+      "price": "0.435",
+      "qty": 9900
+     },
+     {
+      "orderId": "01a122d5-252f-79b3-b6a1-69537b87539c",
+      "price": "0.435",
+      "qty": 114943
+     },
+     {
+      "orderId": "01a122db-7351-7431-a9b6-10cafe51cb0a",
+      "price": "0.435",
+      "qty": 469
+     }
+    ],
+    "01a11c0a-77a7-7153-a353-910eb9983cae": [
+     {
+      "orderId": "01a122d8-1b24-7e71-bb6d-5c326df99715",
+      "price": "0.555",
+      "qty": 257666
+     },
+     {
+      "orderId": "01a122d8-af5f-76d0-8113-fe2da4093b00",
+      "price": "0.555",
+      "qty": 8600
+     },
+     {
+      "orderId": "01a11ed3-20ca-7e11-9ecd-08f0da9a3785",
+      "price": "0.55",
+      "qty": 59
+     },
+     {
+      "orderId": "01a121aa-2857-71f1-9488-8ec2c37edab0",
+      "price": "0.55",
+      "qty": 363
+     },
+     {
+      "orderId": "01a122d8-234e-71d1-9960-04a0f9de95ab",
+      "price": "0.55",
+      "qty": 100000
+     },
+     {
+      "orderId": "01a122db-38a3-7a70-a8ed-69298abec1df",
+      "price": "0.55",
+      "qty": 28334
+     }
+    ]
+   }
+  },
+  "01a12144-2a13-7e03-bb87-4b178af2b32d": {
+   "marketId": "01a12144-2a13-7e03-bb87-4b178af2b32d",
+   "seq": 60,
+   "orders": {
+    "01a12144-2a13-7e03-bb87-4b3de1f432cb": [
+     {
+      "orderId": "01a122da-0407-7761-86f2-61e45c8bdcc9",
+      "price": "0.70",
+      "qty": 4200
+     },
+     {
+      "orderId": "01a122da-8ba3-79a3-8521-9022bdee5eb9",
+      "price": "0.69",
+      "qty": 5000
+     },
+     {
+      "orderId": "01a122da-5018-7461-8b10-fcdbf88a7a0f",
+      "price": "0.685",
+      "qty": 20000
+     },
+     {
+      "orderId": "01a122da-0407-7761-86f2-635697c7d814",
+      "price": "0.68",
+      "qty": 4200
+     }
+    ]
+   }
+  },
+  "01a12126-0249-7aa2-bb57-d0edeea901e8": {
+   "marketId": "01a12126-0249-7aa2-bb57-d0edeea901e8",
+   "seq": 40,
+   "orders": {
+    "01a12126-0249-7aa2-bb57-d10d05b1948f": [
+     {
+      "orderId": "01a122d8-0225-7983-8213-70e59088680d",
+      "price": "0.77",
+      "qty": 20000
+     },
+     {
+      "orderId": "01a122d8-16f6-78e1-b9dc-e1bb7d400fc5",
+      "price": "0.77",
+      "qty": 5000
+     },
+     {
+      "orderId": "01a122da-0407-7761-86f2-61cce5670f78",
+      "price": "0.77",
+      "qty": 4200
+     },
+     {
+      "orderId": "01a122da-0407-7761-86f2-63318e87e6ea",
+      "price": "0.75",
+      "qty": 4200
+     }
+    ]
+   }
+  },
+  "01a12126-0248-7083-bd2c-1c1d1f5653ee": {
+   "marketId": "01a12126-0248-7083-bd2c-1c1d1f5653ee",
+   "seq": 57,
+   "orders": {
+    "01a12126-0248-7083-bd2c-1c38e6f9caef": [
+     {
+      "orderId": "01a122d5-32bd-7592-a3ae-1d487c246e9e",
+      "price": "0.735",
+      "qty": 5000
+     },
+     {
+      "orderId": "01a122b9-2213-7771-aaa9-ae28fa0986a6",
+      "price": "0.73",
+      "qty": 4200
+     },
+     {
+      "orderId": "01a122d9-521a-78e1-8640-1fb729fd5ba3",
+      "price": "0.72",
+      "qty": 55000
+     },
+     {
+      "orderId": "01a122b9-255b-7df3-8682-d300e978ce39",
+      "price": "0.71",
+      "qty": 4200
+     },
+     {
+      "orderId": "01a122bd-8e20-7e70-9f40-4dc760c10da9",
+      "price": "0.69",
+      "qty": 4100
+     }
+    ]
+   }
+  },
+  "01a122d3-60ec-7a13-98c2-76b75998b3bc": {
+   "marketId": "01a122d3-60ec-7a13-98c2-76b75998b3bc",
+   "seq": 26,
+   "orders": {
+    "01a122d3-60ec-7a13-98c2-76c4a9359485": [
+     {
+      "orderId": "01a122d7-1890-7582-a822-b1ed158888c8",
+      "price": "0.43",
+      "qty": 284400
+     }
+    ],
+    "01a122d3-60ec-7a13-98c2-76dc1c2504d2": [
+     {
+      "orderId": "01a122da-e94b-7963-a72a-801d37dcbc2c",
+      "price": "0.455",
+      "qty": 20000
+     },
+     {
+      "orderId": "01a122d3-d09b-7b42-8c80-891224d50ff1",
+      "price": "0.42",
+      "qty": 4200
+     },
+     {
+      "orderId": "01a122d3-d09b-7b42-8c80-8923b6bca976",
+      "price": "0.40",
+      "qty": 4200
+     }
+    ]
+   }
+  },
+  "01a11e9d-8be7-7ab1-95f3-465997790743": {
+   "marketId": "01a11e9d-8be7-7ab1-95f3-465997790743",
+   "seq": 677,
+   "orders": {
+    "01a11e9d-8be7-7ab1-95f3-466d570eaf83": [
+     {
+      "orderId": "01a122db-19ce-71d1-9dd6-a0bbc38f7fce",
+      "price": "0.01",
+      "qty": 50000
+     }
+    ],
+    "01a11e9d-8be7-7ab1-95f3-467970bffec0": [
+     {
+      "orderId": "01a122b8-c766-7723-a00c-2a5c31aaabfd",
+      "price": "0.961",
+      "qty": 10000
+     },
+     {
+      "orderId": "01a122c2-419e-7753-a48a-ef883c2a2e95",
+      "price": "0.952",
+      "qty": 5000
+     },
+     {
+      "orderId": "01a1223f-9a8f-7732-8603-57299a5bda61",
+      "price": "0.94",
+      "qty": 60000
+     },
+     {
+      "orderId": "01a122c7-fb31-7ac2-8aa0-5a43dc45f61e",
+      "price": "0.94",
+      "qty": 5000
+     },
+     {
+      "orderId": "01a122da-0623-71c3-9b50-da1c3cecea6c",
+      "price": "0.93",
+      "qty": 5000
+     },
+     {
+      "orderId": "01a122db-19ce-71d1-9dd6-a0cf5dbad66e",
+      "price": "0.93",
+      "qty": 50000
+     }
+    ]
+   }
+  },
+  "01a11d8b-01bc-7931-96cf-56b04b82d3b1": {
+   "marketId": "01a11d8b-01bc-7931-96cf-56b04b82d3b1",
+   "seq": 1266,
+   "orders": {
+    "01a11d8b-01bc-7931-96cf-56ccf88cee21": [
+     {
+      "orderId": "01a1224e-7d0c-75f2-b9dd-66bd1b804b13",
+      "price": "0.245",
+      "qty": 50000
+     },
+     {
+      "orderId": "01a122b4-a7fa-7332-9af8-f2ec8677b00d",
+      "price": "0.245",
+      "qty": 10000
+     },
+     {
+      "orderId": "01a12215-180a-7831-a055-2beb858e976e",
+      "price": "0.24",
+      "qty": 2500
+     },
+     {
+      "orderId": "01a12280-8877-7941-a47d-840f7e0515e4",
+      "price": "0.24",
+      "qty": 5000
+     },
+     {
+      "orderId": "01a122db-824c-75f3-b736-75e470ed7137",
+      "price": "0.24",
+      "qty": 50000
+     },
+     {
+      "orderId": "01a11f18-401a-7d32-b36c-4dd8fac3719e",
+      "price": "0.215",
+      "qty": 4651
+     }
+    ],
+    "01a11d8b-01bc-7931-96cf-56d34f6bdd77": [
+     {
+      "orderId": "01a122db-824c-75f3-b736-75fac69338e1",
+      "price": "0.745",
+      "qty": 50000
+     },
+     {
+      "orderId": "01a12215-180a-7831-a055-2bd13a150d73",
+      "price": "0.74",
+      "qty": 50000
+     },
+     {
+      "orderId": "01a12217-5496-7fb3-8ae3-68cc9191be9b",
+      "price": "0.74",
+      "qty": 6757
+     },
+     {
+      "orderId": "01a122b4-a83a-7880-89f7-f1aa039e4a2a",
+      "price": "0.74",
+      "qty": 10000
+     },
+     {
+      "orderId": "01a122d8-39b2-7990-a40e-49af48e7ffc5",
+      "price": "0.73",
+      "qty": 2000
+     },
+     {
+      "orderId": "01a122da-5018-7461-8b10-fd86097db074",
+      "price": "0.725",
+      "qty": 140000
+     }
+    ]
+   }
+  },
+  "01a11e9d-8bf1-7801-b72e-ead3338ac211": {
+   "marketId": "01a11e9d-8bf1-7801-b72e-ead3338ac211",
+   "seq": 3,
+   "orders": {
+    "01a11e9d-8bf1-7801-b72e-eafd11f9391b": [
+     {
+      "orderId": "01a12242-d7e0-7a23-82b5-6314362eabb3",
+      "price": "0.935",
+      "qty": 5000
+     },
+     {
+      "orderId": "01a1224f-cdd0-74d2-ae85-cb670e2c4e84",
+      "price": "0.925",
+      "qty": 5000
+     },
+     {
+      "orderId": "01a122ba-0b6b-77b0-93b6-09c02660c4e2",
+      "price": "0.915",
+      "qty": 5000
+     }
+    ]
+   }
+  },
+  "01a12120-87f6-7f81-a22a-f166718123e3": {
+   "marketId": "01a12120-87f6-7f81-a22a-f166718123e3",
+   "seq": 280,
+   "orders": {
+    "01a12120-87f6-7f81-a22a-f17ff89ef17f": [
+     {
+      "orderId": "01a122ce-5654-7590-8828-35fe73167b50",
+      "price": "0.465",
+      "qty": 3222
+     },
+     {
+      "orderId": "01a122d5-e9e3-7032-950e-c26a59ae9fe1",
+      "price": "0.46",
+      "qty": 20000
+     },
+     {
+      "orderId": "01a12249-9789-7523-8c95-f723d1d57587",
+      "price": "0.455",
+      "qty": 500
+     },
+     {
+      "orderId": "01a1213d-8044-7193-8200-6d1a92378b50",
+      "price": "0.43",
+      "qty": 2039
+     }
+    ],
+    "01a12120-87f6-7f81-a22a-f185dd656987": [
+     {
+      "orderId": "01a121e6-5275-7992-b47b-a20b04c80f97",
+      "price": "0.49",
+      "qty": 12563
+     },
+     {
+      "orderId": "01a12246-86fe-7c71-97ca-559b90009682",
+      "price": "0.475",
+      "qty": 6000
+     },
+     {
+      "orderId": "01a122cc-9bd2-7d60-b2f3-153379ec54ce",
+      "price": "0.47",
+      "qty": 20000
+     },
+     {
+      "orderId": "01a1227d-ef3c-7100-a080-85c350bebbf5",
+      "price": "0.465",
+      "qty": 6000
+     },
+     {
+      "orderId": "01a121eb-ef55-7a30-a727-a453a5407177",
+      "price": "0.455",
+      "qty": 5494
+     },
+     {
+      "orderId": "01a122d5-f44f-74c2-983c-aec48be4392f",
+      "price": "0.45",
+      "qty": 7500
+     }
+    ]
+   }
+  },
+  "01a1211f-0092-7510-96d8-0fa619781284": {
+   "marketId": "01a1211f-0092-7510-96d8-0fa619781284",
+   "seq": 112,
+   "orders": {
+    "01a1211f-0092-7510-96d8-0fb4b520ddaa": [
+     {
+      "orderId": "01a12288-1fa8-7371-b5f3-069b01aa57ab",
+      "price": "0.33",
+      "qty": 4544
+     }
+    ],
+    "01a1211f-0092-7510-96d8-0fc32a91dda7": [
+     {
+      "orderId": "01a121e9-9601-7712-b363-fc7e68e39a1f",
+      "price": "0.615",
+      "qty": 26829
+     },
+     {
+      "orderId": "01a1229f-8d5b-7481-b8f5-0ac57c39b32a",
+      "price": "0.615",
+      "qty": 50000
+     },
+     {
+      "orderId": "01a122b3-6b46-7811-9845-14965d2535fb",
+      "price": "0.60",
+      "qty": 6000
+     },
+     {
+      "orderId": "01a122d9-521a-78e1-8640-1f4b4ace0186",
+      "price": "0.595",
+      "qty": 80000
+     },
+     {
+      "orderId": "01a122b3-6b46-7811-9845-15ae26a80678",
+      "price": "0.59",
+      "qty": 6000
+     },
+     {
+      "orderId": "01a122d5-f44f-74c2-983c-af0fae5cb686",
+      "price": "0.59",
+      "qty": 7500
+     }
+    ]
+   }
+  },
+  "01a1211f-0093-7a70-8dcc-f8c72dbabe6d": {
+   "marketId": "01a1211f-0093-7a70-8dcc-f8c72dbabe6d",
+   "seq": 73,
+   "orders": {
+    "01a1211f-0093-7a70-8dcc-f8d25dc4e61f": [
+     {
+      "orderId": "01a122da-b1df-7732-92d8-a273451cc0a2",
+      "price": "0.16",
+      "qty": 15625
+     }
+    ],
+    "01a1211f-0093-7a70-8dcc-f8e4ad232499": [
+     {
+      "orderId": "01a122d4-7e83-7441-a186-5ead3e83831d",
+      "price": "0.755",
+      "qty": 50000
+     },
+     {
+      "orderId": "01a122d8-daf2-7c42-8d41-8957e1dc1f28",
+      "price": "0.75",
+      "qty": 70000
+     },
+     {
+      "orderId": "01a122b8-be34-7da3-9421-6fedaa38f344",
+      "price": "0.745",
+      "qty": 7500
+     },
+     {
+      "orderId": "01a12279-4c9d-7810-872a-d46e82f5237e",
+      "price": "0.74",
+      "qty": 5000
+     },
+     {
+      "orderId": "01a122b9-244a-7f20-9659-02fd170c298b",
+      "price": "0.73",
+      "qty": 5000
+     },
+     {
+      "orderId": "01a122bd-8f1c-7f62-be7e-3f24425c628a",
+      "price": "0.72",
+      "qty": 5000
+     }
+    ]
+   }
+  },
+  "01a1228a-1e72-7c60-998c-d8873f076bb0": {
+   "marketId": "01a1228a-1e72-7c60-998c-d8873f076bb0",
+   "seq": 6,
+   "orders": {
+    "01a1228a-1e72-7c60-998c-d8a17f44fb74": [
+     {
+      "orderId": "01a122da-0407-7761-86f2-620a6faf5c2f",
+      "price": "0.31",
+      "qty": 4200
+     },
+     {
+      "orderId": "01a122da-0407-7761-86f2-637ce5473ed4",
+      "price": "0.29",
+      "qty": 4200
+     }
+    ]
+   }
+  },
+  "01a12204-8a0a-7832-ae54-5933786dc7de": {
+   "marketId": "01a12204-8a0a-7832-ae54-5933786dc7de",
+   "seq": 336,
+   "orders": {
+    "01a12204-8a0a-7832-ae54-5942323d518e": [
+     {
+      "orderId": "01a122db-4a32-7f40-9563-cd7540ed8525",
+      "price": "0.47",
+      "qty": 11664
+     },
+     {
+      "orderId": "01a122cf-b4ea-75e0-be74-947786ecee6d",
+      "price": "0.45",
+      "qty": 5555
+     },
+     {
+      "orderId": "01a122d2-47d3-7590-b325-f7755db297a0",
+      "price": "0.45",
+      "qty": 5000
+     }
+    ],
+    "01a12204-8a0a-7832-ae54-595e7a381c5a": [
+     {
+      "orderId": "01a122db-4a0e-7353-b0f0-bed69e2306f2",
+      "price": "0.51",
+      "qty": 25927
+     },
+     {
+      "orderId": "01a122da-4a4a-78e3-9550-8a91dd702aa1",
+      "price": "0.50",
+      "qty": 5000
+     },
+     {
+      "orderId": "01a12296-d83d-7d40-8648-e7a3cf4bf923",
+      "price": "0.47",
+      "qty": 4200
+     },
+     {
+      "orderId": "01a1224f-ceda-7ae2-9b0c-88829cfa5999",
+      "price": "0.45",
+      "qty": 4200
+     }
+    ]
+   }
+  },
+  "01a121ee-6ae4-7a02-9745-bba45047f19d": {
+   "marketId": "01a121ee-6ae4-7a02-9745-bba45047f19d",
+   "seq": 7,
+   "orders": {
+    "01a121ee-6ae4-7a02-9745-bbccc18fb4d4": [
+     {
+      "orderId": "01a122ce-a9b2-7572-ae9e-eb70e18e4f8d",
+      "price": "0.685",
+      "qty": 40000
+     }
+    ]
+   }
+  },
+  "01a11fcb-b81d-76e0-9f14-553b904019f3": {
+   "marketId": "01a11fcb-b81d-76e0-9f14-553b904019f3",
+   "seq": 20,
+   "orders": {
+    "01a11fcb-b81d-76e0-9f14-555e3db37ec4": [
+     {
+      "orderId": "01a122b8-be34-7da3-9421-7085b26885cd",
+      "price": "0.99",
+      "qty": 15000
+     },
+     {
+      "orderId": "01a122ba-096a-7421-a1dc-3e219ba33589",
+      "price": "0.974",
+      "qty": 8000
+     },
+     {
+      "orderId": "01a12156-c8f7-73a0-9e2d-1cefcd590f4a",
+      "price": "0.945",
+      "qty": 2500
+     },
+     {
+      "orderId": "01a12156-c928-7a21-af55-265fbcf47745",
+      "price": "0.935",
+      "qty": 2500
+     }
+    ]
+   }
+  },
+  "01a11da6-1c2f-7832-a314-3fdfacb0fee2": {
+   "marketId": "01a11da6-1c2f-7832-a314-3fdfacb0fee2",
+   "seq": 33,
+   "orders": {
+    "01a11da6-1c2f-7832-a314-3ff3e1ec28cc": [
+     {
+      "orderId": "01a122da-8ba3-79a3-8521-91b9bee92917",
+      "price": "0.98",
+      "qty": 15000
+     },
+     {
+      "orderId": "01a122ba-eae0-7923-889c-e68488d251dd",
+      "price": "0.978",
+      "qty": 8000
+     },
+     {
+      "orderId": "01a122ba-ecfc-7ce2-a580-7d481bb09729",
+      "price": "0.968",
+      "qty": 8000
+     }
+    ]
+   }
+  }
+ }
+}
