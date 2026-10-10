@@ -49,8 +49,9 @@ SIDES = ("over", "under", "yes", "no")
 PROP_KEY = ("book", "game_id", "player_name", "prop_type", "line", "side")
 #: Values whose change makes a poll worth storing.
 PROP_VALUES = ("price",)
-#: Grain of the props seen table: one line of one player's prop at one book (both sides).
-SEEN_KEY = ("book", "game_id", "player_name", "prop_type", "line")
+#: Grain of the props seen table: one side of one line of one player's prop at one book (per
+#: side, as an exchange often drops one side too thin to fill while the other stays).
+SEEN_KEY = ("book", "game_id", "player_name", "prop_type", "line", "side")
 
 PROPS_SCHEMA: dict[str, pl.DataType] = {
     "book": pl.Utf8,

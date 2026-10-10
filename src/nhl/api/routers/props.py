@@ -40,8 +40,9 @@ def _same_book(rows: pl.DataFrame, data: SiteData, book: str, out: str) -> pl.Da
     now = datetime.now(timezone.utc)
     cut = starts_utc(data.games().filter(pl.col("game_id").is_in(ids))).with_columns(
         pl.min_horizontal(pl.col("start_utc"), pl.lit(now)).alias("_cut")).select("game_id", "_cut")
-    latest = (quotes.join(cut, on="game_id").filter(pl.col("captured_at") <= pl.col("_cut")).sort("captured_at")
-              .group_by(SERIES).last().select(*SERIES, pl.col("price").cast(pl.Float64).alias(out)).rename({"book": book}))
+    latest = live.drop_pulled(quotes.join(cut, on="game_id").filter(pl.col("captured_at") <= pl.col("_cut")).sort("captured_at")
+                              .group_by(SERIES).last(), data.props_seen(_season(int(ids[0]))))
+    latest = latest.select(*SERIES, pl.col("price").cast(pl.Float64).alias(out)).rename({"book": book})
     keys_ = [book, *[c for c in SERIES if c != "book"]]
     return rows.join(latest.cast({c: rows.schema[c] for c in keys_ if c in rows.schema}), on=keys_, how="left")
 
@@ -145,7 +146,8 @@ def build_game_props(data: SiteData, game: dict) -> dict:
     if game.get("start_time_et"):
         start = datetime.fromisoformat(game["start_time_et"]).replace(tzinfo=EASTERN).astimezone(timezone.utc)
         cutoff = min(cutoff, start)  # a started game shows its closing quotes
-    latest = quotes.filter(pl.col("captured_at") <= cutoff).sort("captured_at").group_by(SERIES).last()
+    latest = live.drop_pulled(quotes.filter(pl.col("captured_at") <= cutoff).sort("captured_at").group_by(SERIES).last(),
+                              data.props_seen(_season(game_id)))
     probs = live.market_probs(latest) if latest.height else latest
 
     edges = data.props_edges(day)

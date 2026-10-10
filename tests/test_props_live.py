@@ -281,7 +281,7 @@ def test_closing_quotes_drop_props_pulled_before_puck_drop() -> None:
     seen = pl.DataFrame({
         "book": ["FanDuel", "LowVig"], "game_id": [2026020070] * 2, "player_name": ["A", "A"], "prop_type": ["points"] * 2,
         "line": [0.5, 0.5], "last_seen": [start - timedelta(minutes=4), early],
-    }, schema_overrides={"last_seen": pl.Datetime("us", "UTC")})
+    }, schema_overrides={"last_seen": pl.Datetime("us", "UTC")}).join(pl.DataFrame({"side": ["over", "under"]}), how="cross")
     store = FakeStore({props_key(20262027, "x"): pl.DataFrame(rows, schema_overrides={"captured_at": pl.Datetime("us", "UTC"),
                                                                                     "start_time": pl.Datetime("us", "UTC")}),
                        keys.props_seen(20262027, "x"): seen})
@@ -290,3 +290,30 @@ def test_closing_quotes_drop_props_pulled_before_puck_drop() -> None:
     # has no seen entry for the game (polled before the table existed) and is kept.
     assert sorted(close["book"].unique().to_list()) == ["DraftKings", "FanDuel"]
     assert close.height == 4
+
+
+def test_current_quotes_leave_out_props_missing_from_the_books_latest_poll() -> None:
+    from datetime import timedelta
+
+    from nhl.odds.props import props_key
+    from nhl.props.live import current_quotes
+    from nhl.storage import keys
+
+    utc = timezone.utc
+    start = datetime(2026, 10, 11, 23, 0, tzinfo=utc)
+    t1, t2 = start - timedelta(hours=5), start - timedelta(hours=4)  # two LowVig polls, 1 h apart
+    rows = [
+        {"book": "LowVig", "game_id": 2026020090, "captured_at": t1, "start_time": start, "player_name": n, "player_id": pid,
+         "prop_type": "points", "line": 0.5, "side": side, "price": price}
+        for n, pid in (("Kept", 1), ("Pulled", 2)) for side, price in (("over", -120.0), ("under", 100.0))
+    ] + [{"book": "FanDuel", "game_id": 2026020090, "captured_at": t1, "start_time": start, "player_name": "Old",
+          "player_id": 3, "prop_type": "points", "line": 0.5, "side": "over", "price": 150.0}]
+    dt = pl.Datetime("us", "UTC")
+    seen = pl.DataFrame({  # "Kept" was listed at the 2nd poll, "Pulled" only at the 1st; FanDuel isn't tracked yet
+        "book": ["LowVig", "LowVig"], "game_id": [2026020090] * 2, "player_name": ["Kept", "Pulled"],
+        "prop_type": ["points"] * 2, "line": [0.5, 0.5], "last_seen": [t2, t1],
+    }, schema_overrides={"last_seen": dt}).join(pl.DataFrame({"side": ["over", "under"]}), how="cross")
+    store = FakeStore({props_key(20262027, "x"): pl.DataFrame(rows, schema_overrides={"captured_at": dt, "start_time": dt}),
+                       keys.props_seen(20262027, "x"): seen})
+    q = current_quotes(store, 20262027, [2026020090], t2 + timedelta(minutes=5))  # type: ignore[arg-type]
+    assert sorted(q["player_name"].unique().to_list()) == ["Kept", "Old"]
