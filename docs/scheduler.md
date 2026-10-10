@@ -43,7 +43,10 @@ local, and this machine runs on **America/New_York**, so every time below is ET.
 **Edges** (`--edges` on every poll): after a reprice, or whenever an odds poll stores a
 change, `nhl edges` (for every date in the horizon) compares the latest prices with the latest odds from every book, sizes
 stakes (¼ Kelly, 2 u per bet, 3 u per game, no daily cap while tracking; bankroll 100 u) and writes
-`pregame/edges/{date}/{stamp}`. A newly flagged bet (moneyline, puck line or total) goes into the paper ledger `bets/ledger.parquet` at the price available then.
+`pregame/edges/{date}/{stamp}`. Stakes are **laddered** by time to puck drop: a position may hold
+25% of the per-bet cap more than 24 h out, 50% until 6 h, 100% after, and each tier fills once
+(at its first run where the side still flags) as its own row in the paper ledger
+`bets/ledger.parquet`, at the price available then. The site rolls fills up into one position.
 Real bets go in with `nhl record-bet`. See `src/nhl/betting/edges.py`.
 
 **Site views** (every poll that passes its window, plus `nhl pregame`, `edges`, `props-edges` and

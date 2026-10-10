@@ -16,8 +16,10 @@ same way on closing-line value (CLV) and result.
   only when no book quoted the bet's line at the close), ``result`` (``win`` | ``loss`` |
   ``push``), ``pnl_units``, ``graded_at``.
 
-A paper bet is recorded the first time a (game, market, side) is flagged and never re-added,
-so the ledger reflects the price available when the model first liked it.
+Paper bets are **laddered** (:mod:`nhl.betting.edges`): a (game, market, side) position takes
+up to three fills, one per tier of time to puck drop. Each fill is a row with ``fill`` (1, 2,
+3) and ``ladder`` (``early`` | ``day`` | ``late``), graded on its own at its own price and line.
+:func:`positions` rolls fills up into one row per position for the site.
 """
 
 from __future__ import annotations
@@ -39,7 +41,7 @@ SCHEMA = {
     "bet_id": pl.String, "kind": pl.String, "placed_at": pl.Datetime("us", "UTC"), "game_id": pl.Int64, "game_date": pl.Date,
     "market": pl.String, "side": pl.Int8, "line": pl.Float64, "book": pl.String, "price": pl.Float64, "stake_units": pl.Float64,
     "tier": pl.String, "p_model": pl.Float64, "p_market": pl.Float64, "p_blend": pl.Float64, "edge": pl.Float64,
-    "pregame_stamp": pl.String, "note": pl.String,
+    "pregame_stamp": pl.String, "note": pl.String, "fill": pl.Int8, "ladder": pl.String,
     "close_line": pl.Float64, "close_price": pl.Float64, "p_close": pl.Float64, "clv": pl.Float64, "result": pl.String, "pnl_units": pl.Float64,
     "graded_at": pl.Datetime("us", "UTC"),
     **info.SCHEMA,
@@ -51,7 +53,7 @@ def load(store: Store) -> pl.DataFrame:
     if led is None:
         return pl.DataFrame(schema=SCHEMA)
     missing = [pl.lit(None, dtype=t).alias(c) for c, t in SCHEMA.items() if c not in led.columns]
-    return led.with_columns(missing).cast(SCHEMA).select(list(SCHEMA))
+    return led.with_columns(missing).with_columns(pl.col("fill").fill_null(1)).cast(SCHEMA).select(list(SCHEMA))
 
 
 def _bet_id(*parts) -> str:
@@ -67,21 +69,30 @@ def day_stakes(store: Store, day: date, exclude: pl.DataFrame | None = None) -> 
 
 
 def add_paper(store: Store, edges: pl.DataFrame) -> int:
-    """Append paper bets for edges whose (game, market, side) isn't in the ledger yet."""
+    """Append a fill for each edge row whose (game, market, side) has no fill in its ``ladder``
+    tier yet (rows from :func:`nhl.betting.edges._stakes` with ``fill_new``; the row's stake is
+    ``fill_units``). Returns fills added."""
     if edges.is_empty():
         return 0
+    key = ["game_id", "market", "side"]
     led = load(store)
+    paper = led.filter(pl.col("kind") == "paper")
     new = edges.select(
-        "game_id", "game_date", "market", pl.col("side").cast(pl.Int8), "line", "book", "price", "stake_units", "tier",
+        "game_id", "game_date", "market", pl.col("side").cast(pl.Int8), "line", "book", "price",
+        pl.col("fill_units").alias("stake_units"), "ladder", "tier",
         pl.col("p_model_side").alias("p_model"), pl.col("p_market_side").alias("p_market"), pl.col("p").alias("p_blend"),
         "edge", "pregame_stamp", pl.col("as_of").alias("placed_at"),
-    ).join(led.filter(pl.col("kind") == "paper").select("game_id", "market", "side"), on=["game_id", "market", "side"], how="anti")
+    ).join(paper.select(*key, "ladder"), on=[*key, "ladder"], how="anti", nulls_equal=True).unique(key, keep="first")
     if new.is_empty():
         return 0
+    prior = paper.group_by(key).agg(pl.col("fill").max().alias("_prior"))
+    new = new.join(prior, on=key, how="left").with_columns((pl.col("_prior").fill_null(0) + 1).cast(pl.Int8).alias("fill")).drop("_prior")
+    # Fill 1 keeps the id paper bets had before the ladder; later fills add their number.
+    ident = pl.when(pl.col("fill") == 1).then(pl.concat_str([pl.lit("paper"), "game_id", "market", "side"], separator="|")).otherwise(
+        pl.concat_str([pl.lit("paper"), "game_id", "market", "side", "fill"], separator="|"))
     new = info.attach(store, new, info.game_prefix).with_columns(
         pl.lit("paper").alias("kind"), pl.lit(None, dtype=pl.String).alias("note"),
-        pl.concat_str([pl.lit("paper"), "game_id", "market", "side"], separator="|").map_elements(
-            lambda s: hashlib.sha1(s.encode()).hexdigest()[:16], return_dtype=pl.String).alias("bet_id"),
+        ident.map_elements(lambda s: hashlib.sha1(s.encode()).hexdigest()[:16], return_dtype=pl.String).alias("bet_id"),
     )
     store.put_parquet(keys.BETS_LEDGER, pl.concat([led, new], how="diagonal_relaxed").cast(SCHEMA).select(list(SCHEMA)))
     return new.height
@@ -193,6 +204,62 @@ def grade(store: Store, regrade: bool = False) -> int:
     out = pl.concat([led.join(g.select("bet_id"), on="bet_id", how="anti"), g]).sort("placed_at")
     store.put_parquet(keys.BETS_LEDGER, out)
     return g.height
+
+
+def _decimal(price: pl.Expr) -> pl.Expr:
+    return pl.when(price < 0).then(1 + 100 / -price).otherwise(1 + price / 100)
+
+
+def _american(dec: pl.Expr) -> pl.Expr:
+    return pl.when(dec >= 2).then((dec - 1) * 100).otherwise(-100 / (dec - 1)).round(0)
+
+
+def positions(bets: pl.DataFrame) -> pl.DataFrame:
+    """One row per position: a paper (game, market, side) with its fills rolled up, and each real
+    bet as its own position.
+
+    Sums ``stake_units`` and ``pnl_units``; ``price`` is the unit-weighted average (in decimal
+    odds, back to American); ``clv`` / ``p_close`` and any of ``clv_now``, ``price_clv`` are
+    unit-weighted means (plain means for a position of 0 u fills). The first fill gives the
+    identity, line, book, timing and model view; the latest fill gives the live columns
+    (``status``, ``now_price``, ``now_book``, ``book_now``). ``result`` follows the units won
+    (win / loss / push). ``n_fills`` and ``fills`` (time, tier, line, book, price, units, CLV,
+    units won) describe the fills.
+    """
+    if bets.is_empty():
+        return bets.with_columns(pl.lit(None, dtype=pl.Int64).alias("n_fills"))
+    pos = pl.when(pl.col("kind") == "paper").then(
+        pl.concat_str([pl.lit("paper"), "game_id", "market", "side"], separator="|")).otherwise(pl.col("bet_id"))
+    b = bets.with_columns(pos.alias("_pos"), pl.col("stake_units").fill_null(0.0).alias("_w")).sort("placed_at")
+    staked = pl.col("_w").sum()
+
+    def weighted(c: str) -> pl.Expr:
+        w = pl.when(pl.col(c).is_not_null()).then(pl.col("_w")).otherwise(0.0)
+        return pl.when(w.sum() > 0).then((pl.col(c).fill_null(0.0) * pl.col("_w")).sum() / w.sum()).otherwise(pl.col(c).mean())
+    mean_cols = [c for c in ("clv", "p_close", "clv_now", "price_clv") if c in b.columns]
+    latest = [c for c in ("status", "now_price", "now_book", "book_now", "now_stamp") if c in b.columns]
+    fill_fields = [c for c in ("placed_at", "ladder", "line", "book", "price", "stake_units", "clv", "pnl_units", "result")
+                   if c in b.columns]
+    firsts = [c for c in b.columns if c not in {"_pos", "_w", "stake_units", "pnl_units", "price", "result", "graded_at",
+                                               *mean_cols, *latest}]
+    out = b.group_by("_pos", maintain_order=True).agg(
+        *[pl.col(c).first() for c in firsts],
+        *[pl.col(c).last() for c in latest],
+        pl.col("stake_units").sum(),
+        pl.when(pl.col("pnl_units").is_null().any()).then(None).otherwise(pl.col("pnl_units").sum()).alias("pnl_units"),
+        _american(pl.when(staked > 0).then((_decimal(pl.col("price")) * pl.col("_w")).sum() / staked)
+                  .otherwise(_decimal(pl.col("price")).mean())).alias("price"),
+        *[weighted(c).alias(c) for c in mean_cols],
+        pl.when(pl.col("graded_at").is_null().any()).then(None).otherwise(pl.col("graded_at").max()).alias("graded_at"),
+        pl.when(pl.len() == 1).then(pl.col("result").first()).alias("_one_result"),
+        pl.len().alias("n_fills"),
+        pl.struct(fill_fields).alias("fills"),
+    )
+    won = pl.col("pnl_units")
+    result = (pl.when(pl.col("n_fills") == 1).then(pl.col("_one_result"))
+              .when(won.is_null()).then(None).when(won > 0).then(pl.lit("win")).when(won < 0).then(pl.lit("loss"))
+              .otherwise(pl.lit("push")))
+    return out.with_columns(result.alias("result")).drop("_pos", "_one_result")
 
 
 def summary(store: Store) -> pl.DataFrame:

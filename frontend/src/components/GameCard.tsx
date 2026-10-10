@@ -46,7 +46,8 @@ interface SideSpec {
 
 /** A bar side from the side's best edge row and any bets on it. */
 function fromEdge(spec: SideSpec, e: Edge | undefined, bets: Bet[], closing: boolean): BarSide {
-  const stake = e ? bets.filter((b) => b.market === e.market && b.side === e.side && (b.line ?? null) === (e.line ?? null))
+  // A position's fills can sit at different lines, so it counts whatever line this row shows.
+  const stake = e ? bets.filter((b) => b.market === e.market && b.side === e.side)
     .reduce((a, b) => a + b.stake_units, 0) : 0;
   return {
     key: spec.key, label: spec.label, color: spec.color,

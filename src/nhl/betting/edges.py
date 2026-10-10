@@ -13,7 +13,12 @@ For every game on a date that hasn't started, every captured book and every main
 5. **Stake** (owner, 2026-10-06): ¼ Kelly on a bankroll of :data:`BANKROLL_UNITS` units,
    at most 2 u per bet and 3 u per game (moneyline and puck line on a game are correlated),
    counting bets already in the ledger. No daily cap while paper bets are being tracked
-   (owner, 2026-10-10): every flagged edge is recorded at full size.
+   (owner, 2026-10-10). **Laddered** (owner, 2026-10-10; docs/plans/bet-timing.md phase B):
+   a position's ceiling is a share of the per-bet cap set by the time to puck drop
+   (:data:`LADDER`: 25% more than 24 h out, 50% to 6 h, 100% after). Each tier fills at most
+   once, at its first run where the side still flags, up to ``min(¼ Kelly now, ceiling)``; a
+   top-up under :data:`MIN_TOP_UP` is skipped and a position never shrinks. Every fill is its
+   own ledger row (``fill``, ``ladder``), at its own price and line.
    A side whose market already has the other side in the ledger is ``blocked`` (no stake, no
    paper bet): the official ledger never hedges itself when the model flips (owner, 2026-10-10).
 6. **Flag** when the edge clears :data:`MIN_EDGE`.
@@ -54,6 +59,10 @@ BANKROLL_UNITS = 100.0
 KELLY_FRACTION = 0.25
 MAX_BET_UNITS = 2.0
 MAX_GAME_UNITS = 3.0
+#: (hours before puck drop at least, share of :data:`MAX_BET_UNITS`, tier) — first match wins.
+LADDER = ((24.0, 0.25, "early"), (6.0, 0.5, "day"), (0.0, 1.0, "late"))
+#: Smallest top-up worth a fill (a first fill is recorded at any size, even 0 when the game is full).
+MIN_TOP_UP = 0.1
 MIN_EDGE = {"moneyline": 0.02, "puckline": 0.03, "total": 0.03}
 OUTLIER = 0.03
 LOCK_PATH = "/tmp/nhl_data_edges.lock"
@@ -223,36 +232,58 @@ def closing(store: Store, day: date, now: datetime | None = None) -> pl.DataFram
     return _price(store, rows, prices, games, day, now).with_columns(pl.lit(0.0).alias("stake_units"))
 
 
-def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:
-    """Units per flagged bet after the per-bet and per-game caps (no daily cap).
+def ladder_tier(start: pl.Expr, as_of: pl.Expr) -> tuple[pl.Expr, pl.Expr]:
+    """``(tier, share of the per-bet cap)`` for a run at ``as_of`` before a ``start``."""
+    hours = (start - as_of).dt.total_seconds() / 3600
+    tier, share = pl.lit(LADDER[-1][2]), pl.lit(LADDER[-1][1])
+    for h, frac, name in reversed(LADDER[:-1]):
+        tier = pl.when(hours > h).then(pl.lit(name)).otherwise(tier)
+        share = pl.when(hours > h).then(pl.lit(frac)).otherwise(share)
+    return tier, share
 
-    A (game, market, side) already in the paper ledger keeps its placed stake and uses up its
-    game's room; only new bets are sized, within what's left. A flagged side is ``blocked`` when
-    the other side of its (game, market) is in the ledger, or flags on the same run with a
-    bigger edge. (Resizing placed
-    bets and counting only new ones let a day's ledger pass the cap as later runs added bets.)
+
+def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:
+    """Fills per flagged side under the ladder and the per-bet and per-game caps.
+
+    Adds ``ladder`` (this run's tier), ``blocked``, ``fill_units`` (this run's new units on the
+    side), ``fill_new`` (the row gets a ledger fill) and ``stake_units`` (the position after
+    this run). A side already in the paper ledger keeps what it has; it tops up once per
+    tier, only on its best row this run (the highest edge across books and lines). A flagged
+    side is ``blocked`` when the other side of its (game, market) is in the ledger, or flags
+    on the same run with a bigger edge. Game room counts everything placed on the game.
     """
     key = ["game_id", "market", "side"]
-    placed = ledger.load(store).filter((pl.col("kind") == "paper") & (pl.col("game_date") == day))
-    led = placed.select(*key, pl.col("stake_units").alias("_placed")).unique(key).cast({"side": pl.Int64})
-    taken = placed.group_by("game_id", "market").agg(pl.col("side").cast(pl.Int64).first().alias("_taken"))
-    e = edges.with_columns(pl.col("side").cast(pl.Int64)).join(led, on=key, how="left").join(
-        taken, on=["game_id", "market"], how="left")
-    fresh = pl.col("flagged") & pl.col("_placed").is_null()
-    best = pl.when(fresh).then(pl.col("edge")).max().over("game_id", "market", "side")
-    rival = pl.when(fresh).then(pl.col("edge")).max().over("game_id", "market")
-    e = e.with_columns((fresh & pl.when(pl.col("_taken").is_null()).then(best < rival)
-                        .otherwise(pl.col("_taken") != pl.col("side"))).alias("blocked")).with_columns(
-        pl.when(fresh & ~pl.col("blocked"))
-        .then((pl.col("kelly") * BANKROLL_UNITS).clip(0, MAX_BET_UNITS)).otherwise(0.0).alias("_new"))
+    placed = ledger.load(store).filter((pl.col("kind") == "paper") & (pl.col("game_date") == day)).with_columns(
+        pl.col("side").cast(pl.Int64))
+    pos = placed.group_by(key).agg(pl.col("stake_units").sum().alias("_placed"), pl.col("ladder").alias("_filled"))
+    taken = placed.group_by("game_id", "market").agg(pl.col("side").first().alias("_taken"))
+    tier, share = ladder_tier(pl.col("start_utc"), pl.col("as_of"))
+    e = (edges.with_columns(pl.col("side").cast(pl.Int64)).join(pos, on=key, how="left")
+         .join(taken, on=["game_id", "market"], how="left").with_columns(tier.alias("ladder"), share.alias("_share")))
+    flagged = pl.col("flagged")
+    best = pl.when(flagged).then(pl.col("edge")).max().over(*key)
+    rival = pl.when(flagged).then(pl.col("edge")).max().over("game_id", "market")
+    e = e.with_columns((flagged & pl.when(pl.col("_taken").is_null()).then(best < rival)
+                        .otherwise(pl.col("_taken") != pl.col("side"))).alias("blocked"))
+    open_tier = pl.col("_filled").is_null() | ~pl.col("_filled").list.contains(pl.col("ladder"))
+    can = flagged & ~pl.col("blocked") & open_tier
+    eligible = can & (pl.when(can).then(pl.col("edge")).rank("ordinal", descending=True).over(*key) == 1).fill_null(False)
+    target = (pl.col("kelly") * BANKROLL_UNITS).clip(0, None).clip(None, MAX_BET_UNITS * pl.col("_share"))
+    e = e.with_columns(eligible.alias("_eligible"), pl.when(eligible).then(
+        (target - pl.col("_placed").fill_null(0.0)).clip(0, None)).otherwise(0.0).alias("_new"))
     game_used = placed.group_by("game_id").agg(pl.col("stake_units").sum().alias("_used"))
     e = e.join(game_used, on="game_id", how="left").with_columns(
         (MAX_GAME_UNITS - pl.col("_used").fill_null(0.0)).clip(0, None).alias("_room"))
     new_game = pl.col("_new").sum().over("game_id")
     e = e.with_columns(pl.when(new_game > pl.col("_room")).then(pl.col("_new") * pl.col("_room") / new_game)
-                       .otherwise(pl.col("_new")).alias("_new"))
-    return e.with_columns(pl.coalesce("_placed", pl.col("_new").round(2)).alias("stake_units")).drop(
-        "_placed", "_new", "_used", "_room", "_taken")
+                       .otherwise(pl.col("_new")).round(2).alias("_new"))
+    first_fill = pl.col("_placed").is_null()
+    e = e.with_columns(
+        (pl.col("_eligible") & (first_fill | (pl.col("_new") >= MIN_TOP_UP))).alias("fill_new"))
+    return e.with_columns(
+        pl.when(pl.col("fill_new")).then(pl.col("_new")).otherwise(0.0).alias("fill_units"),
+    ).with_columns((pl.col("_placed").fill_null(0.0) + pl.col("fill_units")).round(2).alias("stake_units")).drop(
+        "_placed", "_filled", "_taken", "_share", "_eligible", "_new", "_used", "_room")
 
 
 def run(store: Store, day: date | None = None, write: bool = True) -> pl.DataFrame:
@@ -265,9 +296,9 @@ def run(store: Store, day: date | None = None, write: bool = True) -> pl.DataFra
             return e
         st = stamp(now)
         store.put_parquet(keys.betting_edges(day, st), e.drop("score_matrix", strict=False).with_columns(pl.lit(st).alias("stamp")))
-        new = ledger.add_paper(store, e.filter(pl.col("flagged") & ~pl.col("blocked")))
-        logger.info("edges %s: %d flagged (%.1f u), %d new paper bets", day, e.filter(pl.col("flagged")).height,
-                    float(e["stake_units"].sum()), new)
+        new = ledger.add_paper(store, e.filter(pl.col("fill_new")))
+        logger.info("edges %s: %d flagged, %d new fills (%.2f u)", day, e.filter(pl.col("flagged")).height, new,
+                    float(e["fill_units"].sum()))
         return e
 
 

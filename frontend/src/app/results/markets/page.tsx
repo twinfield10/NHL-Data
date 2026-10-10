@@ -26,7 +26,7 @@ const toRow = (b: Bet): LedgerRow => ({
     </span>
   ),
   betSort: `${MARKET_LABEL[b.market] ?? b.market} ${b.selection}`,
-  book: b.book, price: b.price, stake: b.stake_units, edge: b.edge, nowPrice: b.now_price, nowBook: b.now_book,
+  book: b.book, price: b.price, stake: b.stake_units, fills: b.fills, edge: b.edge, nowPrice: b.now_price, nowBook: b.now_book,
   closePrice: b.close_price, clv: b.clv, clvNow: b.clv_now, priceClv: b.price_clv, bookNow: b.book_now, status: b.status, result: b.result, pnl: b.pnl_units, info: b,
 });
 

@@ -139,11 +139,13 @@ export interface Edge {
   stamp: string;
   /** "close" = every book's last price before puck drop (game started); "live" = latest. */
   point?: "close" | "live";
-  /** The paper bet already placed on this side, if any, and its CLV against this row's consensus. */
+  /** The paper position already held on this side, if any (price: unit-weighted average over its
+   *  fills; book and time: the first fill's; stake: all fills), and its CLV against this row's consensus. */
   bet_price?: number | null;
   bet_book?: string | null;
   bet_stake?: number | null;
   placed_at?: string | null;
+  bet_fills?: number | null;
   bet_clv?: number | null;
   /** The bet's book's price now (the close once started), and price CLV against it. */
   bet_book_now?: number | null;
@@ -206,8 +208,30 @@ export interface GameResponse {
   markets: MarketView;
 }
 
+/** Laddered paper stakes (nhl.betting.edges.LADDER): the tier of time to puck drop a fill went in at. */
+export type LadderTier = "early" | "day" | "late";
+
+/** One fill of a paper position. */
+export interface BetFill {
+  placed_at: string;
+  ladder: LadderTier | null;
+  line: number | null;
+  book: string;
+  price: number;
+  stake_units: number;
+  clv: number | null;
+  pnl_units: number | null;
+  result: string | null;
+}
+
+/** A ledger position: a paper (game, market, side) with its fills rolled up, or one real bet.
+ *  ``price`` is the unit-weighted average, ``stake_units`` / ``pnl_units`` the sums; the first
+ *  fill gives the line, book and timing. */
 export interface Bet extends BetInfo, LiveBet {
   bet_id: string;
+  n_fills: number;
+  fills: BetFill[];
+  ladder: LadderTier | null;
   kind: "paper" | "real";
   side: number;
   line: number | null;

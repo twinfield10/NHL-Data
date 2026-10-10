@@ -73,14 +73,16 @@ def _day_edges(data: SiteData, day: date) -> pl.DataFrame | None:
 
 
 def _day_bets(data: SiteData, day: date, games: pl.DataFrame) -> pl.DataFrame | None:
-    """Ledger bets on ``day``'s games, labelled."""
+    """Ledger positions on ``day``'s games (paper fills rolled up), labelled."""
+    from nhl.betting.ledger import positions
+
     ledger = data.ledger()
     if ledger is None:
         return None
     bets = ledger.filter(pl.col("game_date") == day)
     if bets.is_empty():
         return None
-    return with_selection(bets.join(games.select("game_id", "home_abbr", "away_abbr"), on="game_id", how="left"))
+    return with_selection(positions(bets).join(games.select("game_id", "home_abbr", "away_abbr"), on="game_id", how="left"))
 
 
 def _market_lines(data: SiteData, games: pl.DataFrame, day: date, unpriced: pl.DataFrame) -> pl.DataFrame | None:

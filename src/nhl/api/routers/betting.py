@@ -11,7 +11,7 @@ from nhl.api.data import SiteData
 from nhl.api.deps import game_day, get_data
 from nhl.api.serialize import rows, starts_utc, with_selection
 from nhl.betting import info
-from nhl.betting.ledger import price_clv
+from nhl.betting.ledger import positions, price_clv
 from nhl.props import ledger as props_ledger
 
 router = APIRouter(prefix="/api", tags=["betting"])
@@ -48,19 +48,22 @@ def _same_book(rows: pl.DataFrame, data: SiteData, book: str, out: str) -> pl.Da
 
 
 def _with_bets(edges: pl.DataFrame, data: SiteData) -> pl.DataFrame:
-    """Add the paper bet already recorded for each row (``bet_price``, ``bet_book``,
-    ``bet_stake``, ``placed_at``) and its CLV against this row's consensus (``bet_clv``)."""
+    """Add the paper position already held on each row's side (``bet_price``: the unit-weighted
+    average over its fills; ``bet_book`` and ``placed_at``: the first fill's; ``bet_stake``: all
+    fills; ``bet_fills``) and its CLV against this row's consensus (``bet_clv``)."""
     ledger = data.ledger()
-    cols = {"bet_price": pl.Float64, "bet_book": pl.String, "bet_stake": pl.Float64, "placed_at": pl.Datetime("us", "UTC")}
+    cols = {"bet_price": pl.Float64, "bet_book": pl.String, "bet_stake": pl.Float64, "placed_at": pl.Datetime("us", "UTC"),
+            "bet_fills": pl.Int64}
     if ledger is None or ledger.is_empty():
         return edges.with_columns(*[pl.lit(None, dtype=t).alias(c) for c, t in cols.items()],
                                   *[pl.lit(None, dtype=pl.Float64).alias(c) for c in ("bet_clv", "bet_book_now", "bet_price_clv")])
-    bets = ledger.filter(pl.col("kind") == "paper").select(
-        *BET_KEY, pl.col("price").alias("bet_price"), pl.col("book").alias("bet_book"),
-        pl.col("stake_units").alias("bet_stake"), "placed_at").unique(BET_KEY, keep="first")
-    bets = bets.cast({c: edges.schema[c] for c in BET_KEY})
+    side_key = ["game_id", "market", "side"]
+    bets = positions(ledger.filter(pl.col("kind") == "paper")).select(
+        *side_key, pl.col("price").alias("bet_price"), pl.col("book").alias("bet_book"),
+        pl.col("stake_units").alias("bet_stake"), "placed_at", pl.col("n_fills").cast(pl.Int64).alias("bet_fills"))
+    bets = bets.cast({c: edges.schema[c] for c in side_key})
     dec = pl.when(pl.col("bet_price") < 0).then(1 + 100 / -pl.col("bet_price")).otherwise(1 + pl.col("bet_price") / 100)
-    out = edges.join(bets, on=BET_KEY, how="left", nulls_equal=True).with_columns(
+    out = edges.join(bets, on=side_key, how="left").with_columns(
         (pl.col("p_market_side") * dec - 1).alias("bet_clv"))
     out = _same_book(out, data, "bet_book", "bet_book_now")
     return out.with_columns(price_clv(pl.col("bet_price"), pl.col("bet_book_now")).alias("bet_price_clv"))
@@ -112,9 +115,11 @@ def get_bets(
     kind: str | None = Query(None, pattern="^(paper|real)$", description="paper or real; default both"),
     data: SiteData = Depends(get_data),
 ) -> dict:
-    """Every ledger bet (newest first) beside the market now (best price, live CLV, still a play?),
-    with totals, a market breakdown and a breakdown by placement window and information grade
-    (graded bets)."""
+    """Every ledger position (newest first; paper fills rolled up, see
+    :func:`nhl.betting.ledger.positions`) beside the market now (best price, live CLV, still a
+    play?), with totals, a market breakdown and a breakdown by placement window and
+    information grade. Totals and the market breakdown count positions; the timing / info
+    breakdown counts fills, since each fill was placed with its own information."""
     ledger = data.ledger()
     if ledger is None or ledger.is_empty():
         return {"bets": [], "totals": _totals(pl.DataFrame()), "open": _open_totals(pl.DataFrame()), "breakdown": [],
@@ -133,7 +138,8 @@ def get_bets(
                         open_], how="diagonal_relaxed")
     ledger = ledger.with_columns(price_clv(pl.col("price"), pl.coalesce("close_price", "book_now")).alias("price_clv"))
     teams = games.select("game_id", "home_abbr", "away_abbr")
-    ledger = with_selection(ledger.join(teams, on="game_id", how="left")).sort("placed_at", descending=True)
+    fills = ledger
+    ledger = with_selection(positions(fills).join(teams, on="game_id", how="left")).sort("placed_at", descending=True)
 
     graded = ledger.filter(pl.col("graded_at").is_not_null())
     breakdown = graded.group_by("kind", "market").agg(
@@ -142,4 +148,4 @@ def get_bets(
         pl.col("price_clv").mean().alias("mean_price_clv"),
     ).with_columns((pl.col("pnl") / pl.col("staked")).alias("roi")).sort("kind", "market")
     return {"bets": rows(ledger), "totals": _totals(graded), "open": _open_totals(ledger), "breakdown": rows(breakdown),
-            "info": rows(info.breakdown(ledger))}
+            "info": rows(info.breakdown(fills))}
