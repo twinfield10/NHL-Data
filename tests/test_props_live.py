@@ -260,3 +260,33 @@ def test_live_view_status_clv_and_timing() -> None:
     t = ledger.timing(after)
     assert t.to_dicts() == [{"lead_bucket": "12h+", "bets": 1, "staked": 0.3, "pnl": 0.5, "mean_clv": 0.1,
                              "beat_close": 1.0, "mean_price_clv": None, "roi": pytest.approx(0.5 / 0.3)}]
+
+
+def test_closing_quotes_drop_props_pulled_before_puck_drop() -> None:
+    from datetime import timedelta
+
+    from nhl.odds.props import props_key
+    from nhl.props.live import closing_quotes
+    from nhl.storage import keys
+
+    utc = timezone.utc
+    start = datetime(2026, 10, 10, 23, 0, tzinfo=utc)
+    early = start - timedelta(hours=3)
+    rows = [
+        {"book": b, "game_id": 2026020070, "captured_at": early, "start_time": start, "player_name": n, "player_id": pid,
+         "prop_type": "points", "line": 0.5, "side": side, "price": price}
+        for b, n, pid in (("FanDuel", "A", 1), ("LowVig", "A", 1), ("DraftKings", "B", 2))
+        for side, price in (("over", -120.0), ("under", 100.0))
+    ]
+    seen = pl.DataFrame({
+        "book": ["FanDuel", "LowVig"], "game_id": [2026020070] * 2, "player_name": ["A", "A"], "prop_type": ["points"] * 2,
+        "line": [0.5, 0.5], "last_seen": [start - timedelta(minutes=4), early],
+    }, schema_overrides={"last_seen": pl.Datetime("us", "UTC")})
+    store = FakeStore({props_key(20262027, "x"): pl.DataFrame(rows, schema_overrides={"captured_at": pl.Datetime("us", "UTC"),
+                                                                                    "start_time": pl.Datetime("us", "UTC")}),
+                       keys.props_seen(20262027, "x"): seen})
+    close = closing_quotes(store, 20262027, {2026020070: start})  # type: ignore[arg-type]
+    # FanDuel still listed it at the last poll; LowVig pulled it after its early quote; DraftKings
+    # has no seen entry for the game (polled before the table existed) and is kept.
+    assert sorted(close["book"].unique().to_list()) == ["DraftKings", "FanDuel"]
+    assert close.height == 4

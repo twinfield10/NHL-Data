@@ -84,6 +84,17 @@ def test_take_walks_opposite_bids() -> None:
     assert depth == pytest.approx(40.0 + 450.0)
 
 
+def test_take_sizes_favourites_to_win_and_underdogs_to_stake() -> None:
+    # Bids at 0.60 on the other side sell this side at 0.40 (an underdog): $100 staked fills.
+    dog = [{"price": "0.60", "qty": 25000}]  # $100 of stake resting
+    assert novig.take(dog, 100.0) == (pytest.approx(0.40), 100.0)
+    # Bids at 0.25 sell this side at 0.75 (−300): to win $100 needs $300 staked.
+    fav = [{"price": "0.25", "qty": 30000}]  # $225 resting
+    assert novig.take(fav, 100.0) is False
+    p, depth = novig.take([{"price": "0.25", "qty": 40000}], 100.0)  # $300 resting
+    assert p == pytest.approx(0.75) and depth == 300.0
+
+
 def test_take_thin_and_empty() -> None:
     assert novig.take([{"price": "0.70", "qty": 10000}], 50.0) is False  # $30 resting
     assert novig.take([], 50.0) is None
@@ -116,8 +127,8 @@ def test_main_lines(frames: tuple[pl.DataFrame, pl.DataFrame]) -> None:
     # One main total and one main team total per team; every other rung is an alternate.
     assert pick(main, market="total")["line"].unique().to_list() == [6.5]
     assert sorted(pick(main, market="team_total")["subject"].to_list()) == ["away", "away", "home", "home"]
-    assert pick(odds, market="total", is_alternate=True)["line"].unique().sort().to_list() == [3.5, 4.5, 5.5, 7.5, 8.5,
-                                                                                              9.5]
+    # 3.5 and 9.5 are lopsided: their favourite sides can't fill "to win $100", so they're absent.
+    assert pick(odds, market="total", is_alternate=True)["line"].unique().sort().to_list() == [4.5, 5.5, 7.5, 8.5]
     # Both sides of an alternate rung share the home-perspective market_uid.
     rung = pick(odds, market="puckline", market_uid="game|puckline|game|-2.5")
     assert dict(rung.select("side", "line").iter_rows()) == {"home": -2.5, "away": 2.5}
@@ -284,7 +295,7 @@ def test_signed_fetch_reads_books_in_one_snapshot(raw: dict) -> None:
     assert len(ws.sent) == 1 and ws.sent[0]["snapshot"]["events"] == {raw["events"][0]["eventId"]: "book"}
     assert ws.url == "wss://api.novig.com/v3/ws" and any(h.startswith("Novig-Signature: ") for h in ws.header)
     assert ws.closed
-    assert novig.normalize(got, CAPTURED)[0].height == 29
+    assert novig.normalize(got, CAPTURED)[0].height == 26
 
 
 def test_snapshot_gaps_filled_over_rest(raw: dict) -> None:
@@ -375,9 +386,10 @@ def test_poll_stores_odds_and_props(raw: dict, monkeypatch: pytest.MonkeyPatch) 
     store = FakeStore()
     client, _ = client_for(raw)
     odds_n, props_n = novig.poll(store, games, client=client, resolver=NoRosters())  # type: ignore[arg-type]
-    assert odds_n == 29 and props_n == 18
+    # Heavy-favourite sides (e.g. a 0.5-goal under) must fill "to win" the minimum, so a few drop.
+    assert odds_n == 26 and props_n == 15
     assert set(store.parquet[keys.odds(20262027, "novig")]["game_id"]) == {2026020061}
-    assert store.parquet["external/odds/props/20262027/novig.parquet"].height == 18
+    assert store.parquet["external/odds/props/20262027/novig.parquet"].height == 15
     assert any(k.startswith("raw/external/novig/") and k.endswith("-board.json.gz") for k in store.json)
     # A second poll of an unchanged board stores nothing.
     assert novig.poll(store, games, client=client, resolver=NoRosters()) == (0, 0)  # type: ignore[arg-type]

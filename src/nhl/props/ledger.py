@@ -9,7 +9,8 @@
 * the view when placed: ``p_model``, ``p_market``, ``p_blend``, ``edge``, ``books``,
   ``pregame_stamp``;
 * grading (:func:`grade`, once the game is final and its game logs are in):
-  - ``close_price``: the same book's last price before puck drop;
+  - ``close_price``: the same book's last price before puck drop, if it still listed the prop
+    near puck drop (:func:`nhl.props.live.closing_quotes`);
   - ``p_close``: the devigged consensus for the side at the bet's line, at the close;
   - ``clv`` = p_close × decimal(price) − 1;
   - ``stat``: the player's goals / assists / points;
@@ -109,13 +110,14 @@ def outcomes(store: Store, game_ids: list[int]) -> pl.DataFrame:
     ).with_columns((pl.col("goals") + pl.col("assists")).alias("points"))
 
 
-def grade(store: Store) -> int:
-    """Grade every ungraded prop bet whose game is final and logged. Returns bets graded."""
+def grade(store: Store, regrade: bool = False) -> int:
+    """Grade every ungraded prop bet whose game is final and logged (every such bet with
+    ``regrade``, e.g. after the close definition changes). Returns bets graded."""
     from nhl.betting.edges import _games
-    from nhl.props.live import latest_quotes, market_probs
+    from nhl.props.live import closing_quotes, market_probs
 
     led = load(store)
-    todo = led.filter(pl.col("graded_at").is_null())
+    todo = led if regrade else led.filter(pl.col("graded_at").is_null())
     if todo.is_empty():
         return 0
     games = _games(store, todo["game_id"].unique().to_list()).filter(pl.col("is_final"))
@@ -126,7 +128,7 @@ def grade(store: Store) -> int:
         return 0
     starts = dict(games.select("game_id", "start_utc").iter_rows())
     season = int(games["season"][0])
-    quotes = latest_quotes(store, season, todo["game_id"].unique().to_list(), {g: starts[g] for g in logged})
+    quotes = closing_quotes(store, season, {g: starts[g] for g in logged})
     probs = market_probs(quotes)
     close = probs.select("book", "game_id", "player_id", "prop_type", "line", "price_over", "price_under", "p_market")
     consensus = close.group_by("game_id", "player_id", "prop_type", "line").agg(pl.col("p_market").first().alias("_p_close"))

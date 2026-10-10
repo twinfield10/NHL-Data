@@ -43,9 +43,9 @@ MARKET_KEY = ("book", "game_id", "market_uid", "side")
 #: Values whose change makes a poll worth storing.
 TRANSITION_VALUES = ("line", "price")
 
-#: Books whose closing prices may serve as the CLV benchmark. 4Casters is an exchange that
-#: keeps quoting after puck drop, so its "close" can be an in-play price.
-REFERENCE_BOOKS = ("LowVig", "DraftKings", "FanDuel", "Caesars", "BetMGM", "ESPN BET")
+#: Books whose closing prices may serve as the CLV benchmark. The exchanges count: the live
+#: close stops at the scheduled start, so an in-play exchange price never becomes a close.
+REFERENCE_BOOKS = ("4Casters", "Novig", "LowVig", "DraftKings", "FanDuel", "Caesars", "BetMGM", "ESPN BET")
 
 ODDS_SCHEMA: dict[str, pl.DataType] = {
     "book": pl.Utf8,

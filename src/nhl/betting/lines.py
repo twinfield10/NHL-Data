@@ -9,25 +9,40 @@ Both sides of a market sit on one row, ready for devig:
 * ``price_1`` / ``price_2``: American prices of **home / away** (moneyline, puck line) or
   **over / under** (totals).
 * ``line``: the home handicap for puck lines (−1.5 or +1.5), the total for totals, null for
-  moneylines.
+  moneylines. Sides always pair **at the same line** (over 6.5 with under 6.5, home −1.5 with
+  away +1.5).
 * ``source``: ``live`` (our polls), ``espn_history``, ``sbr``.
 
-**Live close** = the last transition before puck drop (4Casters keeps quoting in-play, so
-nothing after ``start_time`` counts); ``open`` = the first capture; ``last`` = the latest.
-Historical rows carry their own ``open`` / ``close`` / ``last``.
+By default each book contributes its main line only. With ``alternates=True`` the live rows
+also carry every alternate total rung and the ±1.5 puck-line rungs a book quotes (LowVig's
+alternates, the exchanges' ladders), so the closing consensus can find each total's primary
+line and price a bet at its own line (:mod:`nhl.betting.devig`).
+
+**Live close** = each book's price at our last poll before the scheduled start: its last
+transition before ``start_time`` (nothing after counts, so an exchange still quoting in-play
+can't leak in), kept only if the book **still listed the market** within
+:data:`CLOSE_MAX_GAP` of the start. Transitions store changes only, so the seen table
+(:func:`nhl.odds.store.load_seen`) is what separates a price that held from a market taken
+down hours earlier; a pulled market has no close. Games polled before the seen table existed
+(no entry for that book and game) keep their last transition unchecked.
+``open`` = the first capture; ``last`` = the latest. Historical rows carry their own
+``open`` / ``close`` / ``last``.
 
 **Cleaning** (counted and logged, never repaired): totals outside 4-9 and history puck lines
-other than ±1.5 (line and price swapped in some ESPN rows), pairs whose two sides disagree
-on the line, and pairs whose implied probabilities sum outside 0.98-1.15.
+other than ±1.5 (line and price swapped in some ESPN rows), sides with no partner at their
+line, and pairs whose implied probabilities sum outside 0.98-1.15.
 """
 
 from __future__ import annotations
 
 import logging
+from datetime import timedelta
 
 import polars as pl
 
 from nhl.betting.devig import implied
+from nhl.odds.core import MAIN_LINE
+from nhl.odds.store import SEEN_KEY, load_seen, still_listed
 from nhl.storage import keys
 from nhl.storage.s3 import Store
 
@@ -44,9 +59,10 @@ BOOK_NAMES = {
     "BetfairSportsbook": "Betfair",
     "Caesars Sportsbook": "Caesars",
 }
-#: Books excluded from the closing consensus (4Casters quotes in-play after puck drop;
-#: SBR consensus is already a consensus, used only when no single book exists).
-NOT_IN_CONSENSUS = ("4Casters", "SBR consensus")
+#: A book's live close counts only if it listed the market this close to the start. Every
+#: book is polled every 5 minutes in the last 90, so 15 minutes allows two missed polls while
+#: still catching markets pulled earlier in the day.
+CLOSE_MAX_GAP = timedelta(minutes=15)
 
 LINES_SCHEMA = {
     "game_id": pl.Int64, "season": pl.Int32, "book": pl.String, "market": pl.String, "point": pl.String,
@@ -73,31 +89,42 @@ def _main(odds: pl.DataFrame) -> pl.DataFrame:
     ).with_columns(canonical_book(pl.col("book")).alias("book"))
 
 
-def pair_sides(rows: pl.DataFrame, source: str) -> pl.DataFrame:
-    """One row per (game, book, market, point) from per-side rows with a ``point`` column.
+def _ladder(odds: pl.DataFrame) -> pl.DataFrame:
+    """Alternate full-game total rungs and the ±1.5 puck-line rungs."""
+    return odds.filter(
+        (pl.col("period") == "game") & pl.col("is_alternate").fill_null(False) & pl.col("game_id").is_not_null()
+        & ((pl.col("market") == "total") | ((pl.col("market") == "puckline") & (pl.col("line").abs() == 1.5)))
+    ).with_columns(canonical_book(pl.col("book")).alias("book"))
 
-    Puck-line and total sides must agree on the line (home −1.5 ↔ away +1.5; over 6 ↔
-    under 6); disagreeing pairs are dropped. Book skins collapsed onto one name keep the
-    first pair.
+
+def pair_sides(rows: pl.DataFrame, source: str) -> pl.DataFrame:
+    """One row per (game, book, market, point, line) from per-side rows with a ``point`` column.
+
+    Sides pair only at the same line (home −1.5 ↔ away +1.5; over 6 ↔ under 6); a side with no
+    partner at its line is dropped. Book skins collapsed onto one name keep the first pair, a
+    book's main line wins over an alternate rung at the same line, and a book's main lines keep
+    one line per point (the first) so main-only readers see one line per book.
     """
+    alt = pl.col("is_alternate").fill_null(False) if "is_alternate" in rows.columns else pl.lit(False)
+    rows = rows.with_columns(alt.alias("_alt")).sort("_alt", maintain_order=True)
     out = []
     for market, (s1, s2) in SIDES.items():
         m = rows.filter(pl.col("market") == market)
-        key = ["game_id", "book", "point"]
-        a = m.filter(pl.col("side") == s1).unique(subset=key, keep="first").select(*key, pl.col("line").alias("l1"), pl.col("price").alias("price_1"), "captured_at")
-        b = m.filter(pl.col("side") == s2).unique(subset=key, keep="first").select(*key, pl.col("line").alias("l2"), pl.col("price").alias("price_2"))
-        j = a.join(b, on=key, how="inner")
-        agree = (
-            pl.lit(True) if market == "moneyline"
-            else (pl.col("l1") == -pl.col("l2")) if market == "puckline"
-            else (pl.col("l1") == pl.col("l2"))
-        )
-        bad = j.filter(~agree).height
+        key = ["game_id", "book", "point", "_pl"]
+        partner = (-pl.col("line")) if market == "puckline" else pl.col("line")
+        a = m.filter(pl.col("side") == s1).with_columns(pl.col("line").alias("_pl")).unique(
+            subset=key, keep="first", maintain_order=True).select(*key, pl.col("price").alias("price_1"), "captured_at", "_alt")
+        b = m.filter(pl.col("side") == s2).with_columns(partner.alias("_pl")).unique(
+            subset=key, keep="first", maintain_order=True).select(*key, pl.col("price").alias("price_2"))
+        j = a.join(b, on=key, how="inner", nulls_equal=True)
+        bad = a.join(b.select("game_id", "book", "point").unique(), on=["game_id", "book", "point"], how="semi").join(
+            j.select(key), on=key, how="anti", nulls_equal=True).height
         if bad:
-            logger.info("%s %s: %d pairs with mismatched lines dropped", source, market, bad)
-        out.append(j.filter(agree).select(
+            logger.info("%s %s: %d sides with no partner at their line dropped", source, market, bad)
+        main = j.filter(~pl.col("_alt")).unique(subset=["game_id", "book", "point"], keep="first", maintain_order=True)
+        out.append(pl.concat([main, j.filter(pl.col("_alt"))]).select(
             "game_id", _season(pl.col("game_id")).alias("season"), "book", pl.lit(market).alias("market"), "point",
-            (pl.lit(None, dtype=pl.Float64) if market == "moneyline" else pl.col("l1")).alias("line"),
+            (pl.lit(None, dtype=pl.Float64) if market == "moneyline" else pl.col("_pl")).alias("line"),
             "price_1", "price_2", "captured_at", pl.lit(source).alias("source"),
         ))
     return pl.concat(out).cast(LINES_SCHEMA)
@@ -132,25 +159,35 @@ def history_lines(store: Store, season: int) -> pl.DataFrame:
     return pl.concat(frames) if frames else pl.DataFrame(schema=LINES_SCHEMA)
 
 
-def live_lines(store: Store, season: int) -> pl.DataFrame:
-    """Open / close / last from our own polls (transitions) for one season."""
+def live_lines(store: Store, season: int, alternates: bool = False) -> pl.DataFrame:
+    """Open / close / last from our own polls (transitions) for one season; with
+    ``alternates``, the alternate total and ±1.5 puck-line rungs too."""
     files = [k for k in store.list_keys(keys.odds_live_prefix(season)) if k.endswith(".parquet")]
     if not files:
         return pl.DataFrame(schema=LINES_SCHEMA)
-    odds = _main(pl.concat([store.read_parquet_required(k) for k in files], how="diagonal_relaxed")).sort("captured_at")
-    sides = ["book", "game_id", "market", "side"]
+    raw = pl.concat([store.read_parquet_required(k) for k in files], how="diagonal_relaxed")
+    odds = (pl.concat([_main(raw), _ladder(raw)], how="diagonal_relaxed") if alternates else _main(raw)).sort("captured_at")
+    # A main market keeps one market_uid as its line moves; each alternate rung has its own.
+    sides = ["book", "game_id", "market", "market_uid", "side"]
     before = odds.filter(pl.col("captured_at") < pl.col("start_time"))
+    rung = (~pl.col("market_uid").str.ends_with(f"|{MAIN_LINE}")).alias("_rung")
+    seen = load_seen(store, keys.odds_seen_prefix(season))
+    if seen is not None:  # Caesars' state skins are one book here too
+        seen = seen.with_columns(canonical_book(pl.col("book"))).group_by(SEEN_KEY).agg(pl.col("last_seen").max()).with_columns(rung)
+    # Rungs were first tracked after main lines, so each is checked only once its kind is tracked.
+    close = still_listed(before.group_by(sides).last().with_columns(rung), seen, SEEN_KEY, CLOSE_MAX_GAP,
+                         cover_by=("book", "game_id", "_rung")).drop("_rung")
     points = pl.concat([
         before.group_by(sides).first().with_columns(pl.lit("open").alias("point")),
-        before.group_by(sides).last().with_columns(pl.lit("close").alias("point")),
+        close.with_columns(pl.lit("close").alias("point")),
         odds.group_by(sides).last().with_columns(pl.lit("last").alias("point")),
     ], how="diagonal_relaxed")
     return pair_sides(points, "live")
 
 
-def build(store: Store, season: int) -> pl.DataFrame:
-    """The season's cleaned lines table from every source."""
-    lines = pl.concat([history_lines(store, season), live_lines(store, season)])
+def build(store: Store, season: int, alternates: bool = False) -> pl.DataFrame:
+    """The season's cleaned lines table from every source (``alternates``: see :func:`live_lines`)."""
+    lines = pl.concat([history_lines(store, season), live_lines(store, season, alternates)])
     return clean(lines).sort("game_id", "market", "book", "point")
 
 

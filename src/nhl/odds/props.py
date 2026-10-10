@@ -19,7 +19,9 @@ Row grain is one price on one side of one player prop from one book at one momen
 * ``away_team`` / ``home_team`` / ``start_time`` are kept to match the NHL ``game_id``.
 
 Each poller writes its own file (:func:`props_key`), like the odds tables, so pollers
-never read-modify-write the same object.
+never read-modify-write the same object. Each poll also refreshes the poller's seen table
+(:data:`SEEN_KEY`, :func:`nhl.odds.store.record_seen`): when each book last listed each prop
+before puck drop, so a prop taken down hours early has no close.
 """
 
 from __future__ import annotations
@@ -30,7 +32,7 @@ from typing import Any
 import polars as pl
 
 from nhl.odds.core import attach_game_ids
-from nhl.odds.store import season_of_game
+from nhl.odds.store import record_seen, season_of_game
 from nhl.sources.common import append_transitions
 from nhl.sources.dailyfaceoff import PlayerResolver, norm_name
 from nhl.storage import keys
@@ -47,6 +49,8 @@ SIDES = ("over", "under", "yes", "no")
 PROP_KEY = ("book", "game_id", "player_name", "prop_type", "line", "side")
 #: Values whose change makes a poll worth storing.
 PROP_VALUES = ("price",)
+#: Grain of the props seen table: one line of one player's prop at one book (both sides).
+SEEN_KEY = ("book", "game_id", "player_name", "prop_type", "line")
 
 PROPS_SCHEMA: dict[str, pl.DataType] = {
     "book": pl.Utf8,
@@ -217,6 +221,7 @@ def store_props(
     ).items():
         written += append_transitions(store, props_key(int(season), source), part.drop("_season"),
                                       PROP_KEY, PROP_VALUES)
+        record_seen(store, keys.props_seen(int(season), source), part, SEEN_KEY)
     logger.info("[%s] props: %d row(s) written", source, written)
     return written
 
@@ -231,5 +236,5 @@ def load_props(store: Store, season: int) -> pl.DataFrame:
     return pl.concat(frames, how="diagonal_relaxed").sort("game_id", "captured_at")
 
 
-__all__ = ["PROPS_SCHEMA", "PROP_KEY", "PROP_TYPES", "PROP_VALUES", "SIDES", "load_props", "milestone_line",
+__all__ = ["PROPS_SCHEMA", "PROP_KEY", "PROP_TYPES", "PROP_VALUES", "SEEN_KEY", "SIDES", "load_props", "milestone_line",
            "props_frame", "props_key", "resolve_player", "resolve_player_ids", "store_props"]

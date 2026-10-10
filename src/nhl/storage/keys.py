@@ -111,6 +111,21 @@ def odds_live_prefix(season: int) -> str:
     return f"external/odds/live/{season}/"
 
 
+def odds_seen(season: int, source: str) -> str:
+    """When each book last listed each main market before puck drop, from one poller's polls.
+
+    Transitions only record changes, so this is what tells a price that held from a market
+    that was pulled (see :func:`nhl.odds.store.record_seen`). Kept outside
+    :func:`odds_live_prefix` so readers of the transitions never pick it up.
+    """
+    return f"external/odds/seen/{season}/{source}.parquet"
+
+
+def odds_seen_prefix(season: int) -> str:
+    """Prefix holding every poller's :func:`odds_seen` table for a season."""
+    return f"external/odds/seen/{season}/"
+
+
 def odds_history(season: int) -> str:
     """Backfilled historical prices (open/close/last) from sources without poll times."""
     return f"external/odds/history/{season}.parquet"
@@ -147,6 +162,17 @@ def odds_history_sbr(season: int) -> str:
 def odds_props(season: int) -> str:
     """Player and goalie prop price transitions from live polls."""
     return f"external/odds/props/{season}.parquet"
+
+
+def props_seen(season: int, source: str) -> str:
+    """When each book last listed each player prop (both sides of a line) before puck drop,
+    from one poller's polls; the props counterpart of :func:`odds_seen`."""
+    return f"external/odds/props_seen/{season}/{source}.parquet"
+
+
+def props_seen_prefix(season: int) -> str:
+    """Prefix holding every poller's :func:`props_seen` table for a season."""
+    return f"external/odds/props_seen/{season}/"
 
 
 def officials(season: int) -> str:

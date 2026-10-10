@@ -24,9 +24,10 @@ catalog on 2026-10-09:
 * **Contracts pay 1 cent.** ``qty`` contracts at price ``q`` stake ``qty * q / 100`` dollars;
   prices are probabilities on a 0.001/0.005 grid.
 * **A price is only real at a size.** :func:`take` walks the opposite bids until
-  :data:`GAME_MIN_STAKE` (game lines) or :data:`PROP_MIN_STAKE` (props) of stake fills and
-  returns the VWAP; a side that cannot fill it is omitted, not quoted at a price nobody can
-  take. ``depth`` is every dollar of stake resting for that side.
+  :data:`GAME_MIN_STAKE` (game lines) or :data:`PROP_MIN_STAKE` (props) of exposure fills, as
+  4Casters does: an underdog stakes that much, a favourite stakes enough to win it (at −200,
+  twice as much). It returns the VWAP; a side that cannot fill it is omitted, not quoted at a
+  price nobody can take. ``depth`` is every dollar of stake resting for that side.
 * **No vig to add back.** Unlike 4Casters there is no fee pregame: NHL markets carry
   ``fee.charged == "WHEN_LIVE"`` (a 0.06 taker fee from 2026-10-08, only once the event is
   ``OPEN_INGAME``). In-play events are skipped, so the stored price is exactly what a taker
@@ -77,7 +78,8 @@ SOURCE = "novig"
 LEAGUE = "NHL"
 SCHEME = "NOVIG-V3"
 
-#: Stake (dollars) a game-line price must fill, and a prop price.
+#: Exposure (dollars) a game-line price must fill, and a prop price: staked on an underdog,
+#: to win on a favourite (the same rule as :data:`nhl.sources.fourcasters.UNIT_SIZE`).
 GAME_MIN_STAKE: float = 100.0
 PROP_MIN_STAKE: float = 50.0
 
@@ -88,6 +90,10 @@ SIGNED_RPS: float = 14.0
 HORIZON_HOURS: float = 24.0
 #: Wall-clock budget for book requests in one poll; markets not reached wait for the next.
 TIME_BUDGET_S: float = 420.0
+#: The budget when Novig polls inside the odds job (every 5 min near puck drop): a REST
+#: fallback must not hold the odds lock past the next poll, or every book misses the close.
+#: Game lines are read first, so they still fit; props not reached wait for the next poll.
+SHARED_BUDGET_S: float = 60.0
 PAGE_LIMIT = 100
 #: Markets one websocket connection may watch (``MAX_WATCHED_MARKETS``), with headroom.
 MAX_WS_MARKETS = 8000
@@ -402,20 +408,22 @@ def fetch(
 def take(
     bids: Iterable[dict[str, Any]], min_stake: float, fee: dict[str, Any] | None = None
 ) -> tuple[float, float] | None | bool:
-    """The probability a taker pays to stake ``min_stake`` against the opposite side's bids.
+    """The probability a taker pays for ``min_stake`` of exposure against the opposite side's bids.
 
     Each bid at ``q`` for ``qty`` contracts (1 cent each) lets a taker buy the other outcome
     at ``1 - q``, staking up to ``qty * (1 - q) / 100`` dollars. Bids are walked best (highest
-    ``q``) first until ``min_stake`` fills.
+    ``q``) first until the target stake fills: ``min_stake`` on an underdog (best price
+    ``p <= 0.5``), or enough to win ``min_stake`` on a favourite (``min_stake * p / (1 - p)``),
+    as 4Casters sizes its VWAP.
 
     Args:
         bids: The *opposite* outcome's resting orders (``price``, ``qty``).
-        min_stake: Dollars that must fill for the price to count.
+        min_stake: Exposure that must fill for the price to count.
         fee: The market's ``fee`` block; only ``charged == "ALWAYS"`` adds a fee pregame.
 
     Returns:
         ``(probability, depth)`` with depth every dollar of stake resting; None when nothing
-        rests; False when less than ``min_stake`` does.
+        rests; False when less than the target stake does.
     """
     levels = sorted(((float(b["price"]), float(b.get("qty") or 0)) for b in bids or []
                      if b and b.get("price") is not None), key=lambda lv: lv[0], reverse=True)
@@ -423,12 +431,14 @@ def take(
     if not levels:
         return None
     depth = sum(n * (1.0 - q) for q, n in levels) / 100.0
-    if depth < min_stake:
+    best = 1.0 - levels[0][0]
+    target = min_stake * max(1.0, best / (1.0 - best))
+    if depth < target:
         return False
     staked = payout = 0.0
     for q, n in levels:
         cost = 1.0 - q
-        stake = min(n * cost / 100.0, min_stake - staked)
+        stake = min(n * cost / 100.0, target - staked)
         if stake <= 0:
             break
         staked += stake
