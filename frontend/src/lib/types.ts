@@ -674,6 +674,18 @@ export interface MarketView {
   books: Partial<Record<MarketKey, BookQuote[]>>;
   consensus: Partial<Record<MarketKey, Consensus>>;
   three_way: ThreeWay | null;
+  /** The model's latest final-score distributions (book-graded); null before the game is priced. */
+  goals?: GoalDistributions | null;
+}
+
+/** P(goals = i) for i = 0..12 per team (the top cell folds in more), the game total (0..24) and the
+ *  home margin (``margin[i]`` is a margin of ``margin_min + i``). */
+export interface GoalDistributions {
+  home: number[];
+  away: number[];
+  total: number[];
+  margin: number[];
+  margin_min: number;
 }
 
 // ---------------------------------------------------------------- lineups tab
@@ -807,6 +819,31 @@ export interface GameLineupsResponse {
   };
   home: TeamLineup;
   away: TeamLineup;
+  /** Lineup / goalie changes between pregame runs, newest first (see nhl.pregame.changes). */
+  changes?: LineupChange[];
+}
+
+export type LineupChangeKind = "starter" | "goalie_status" | "goalie_p" | "out" | "in" | "gtd" | "line" | "pp" | "price";
+
+/** One change between two pregame runs; the price fields are the whole step's move (shared by
+ *  ``step_changes`` changes). */
+export interface LineupChange {
+  stamp: string;
+  prev_stamp: string;
+  as_of: string;
+  team_id: number | null;
+  team: string | null;
+  kind: LineupChangeKind;
+  player_id: number | null;
+  player_name: string | null;
+  before: string | null;
+  after: string | null;
+  p_home_win_before: number;
+  p_home_win: number;
+  dp_home_win: number;
+  d_home_goals: number;
+  d_away_goals: number;
+  step_changes: number;
 }
 
 // /api/props, /api/games/{id}/props, /api/props/bets (see nhl.props.live and nhl.props.ledger).
@@ -977,3 +1014,49 @@ export interface PropBetsResponse {
   timing: PropBetTiming[];
   info: BetInfoBreakdown[];
 }
+
+// /api/live (see nhl.api.routers.live): in-game state from the NHL's score feed.
+export interface LiveGame {
+  game_id: number;
+  state: "pre" | "live" | "final";
+  game_state: string | null;
+  /** "12:34 2nd", "2nd INT", "Final/OT"; null before puck drop. */
+  detail: string | null;
+  period: number | null;
+  period_type: string | null;
+  clock: string | null;
+  intermission: boolean;
+  home_abbr: string;
+  away_abbr: string;
+  home_score: number | null;
+  away_score: number | null;
+  home_sog: number | null;
+  away_sog: number | null;
+  start_utc: string | null;
+  gamecenter_url: string | null;
+  espn_url: string | null;
+}
+
+export interface LiveResponse {
+  date: string;
+  games: LiveGame[];
+}
+
+export interface LivePlayer {
+  player_id: number;
+  team: string;
+  position: string | null;
+  goals: number | null;
+  assists: number | null;
+  points: number | null;
+  shots: number | null;
+  blocks: number | null;
+  saves: number | null;
+}
+
+export interface LiveBoxscore {
+  game_id: number;
+  state: LiveGame["state"];
+  players: LivePlayer[];
+}
+

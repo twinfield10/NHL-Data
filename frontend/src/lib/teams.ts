@@ -137,3 +137,8 @@ export const OVER_COLOR = "#85D4A1";
 export const UNDER_COLOR = "#D48585";
 /** The three-way's draw (overtime) segment. */
 export const DRAW_COLOR = "#64748b";
+
+/** NHL.com GameCenter page for a game (the URL the NHL's own score feed links to). */
+export const gameCenterUrl = (gameId: number, date: string, away: string, home: string) =>
+  `https://www.nhl.com/gamecenter/${away.toLowerCase()}-vs-${home.toLowerCase()}/${date.replace(/-/g, "/")}/${gameId}`;
+

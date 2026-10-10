@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type {
-  BetsResponse, EdgesResponse, GamePropsResponse, PropBetsResponse, PropsResponse, GameLineupsResponse, GameResponse, LinesResponse, PlayerContextResponse, PlayersResponse, PlayerStyleResponse, SlateResponse, TeamMatchupsResponse, TeamsResponse,
+  BetsResponse, EdgesResponse, GamePropsResponse, PropBetsResponse, PropsResponse, GameLineupsResponse, GameResponse, LinesResponse, LiveBoxscore, LiveResponse, PlayerContextResponse, PlayersResponse, PlayerStyleResponse, SlateResponse, TeamMatchupsResponse, TeamsResponse,
 } from "./types";
 
 async function apiFetch<T>(path: string): Promise<T> {
@@ -92,3 +92,28 @@ export const useGameProps = (gameId: string, enabled = true) =>
 
 export const usePropBets = () =>
   useQuery({ queryKey: ["prop-bets"], queryFn: () => apiFetch<PropBetsResponse>("/api/props/bets") });
+
+/** Live scores for a date: every 30 s while a game is on, every 5 min until the last one ends. */
+export const useLive = (date: string | null | undefined, enabled = true) =>
+  useQuery({
+    queryKey: ["live", date],
+    queryFn: () => apiFetch<LiveResponse>(`/api/live?date=${date}`),
+    enabled: enabled && !!date,
+    retry: false,
+    refetchInterval: (q) => {
+      const games = q.state.data?.games ?? [];
+      if (games.some((g) => g.state === "live")) return 30_000;
+      return games.some((g) => g.state === "pre") ? 300_000 : false;
+    },
+  });
+
+/** One game's box score while it is on (30 s); stops once final. */
+export const useLiveBoxscore = (gameId: number, enabled = true) =>
+  useQuery({
+    queryKey: ["live-box", gameId],
+    queryFn: () => apiFetch<LiveBoxscore>(`/api/live/${gameId}/boxscore`),
+    enabled,
+    retry: false,
+    refetchInterval: (q) => (q.state.data?.state === "final" ? false : 30_000),
+  });
+
