@@ -41,7 +41,8 @@ What shapes the normalizer:
   and go to the odds table. Prop books are a few hundred dollars deep, so they are priced
   at :data:`PROP_UNIT_SIZE`, not :data:`UNIT_SIZE`; ``depth`` keeps what was resting.
 * ``live`` games are skipped: an in-play book is not a pregame price. The exchange also
-  keeps quoting after puck drop, which is why it is not a CLV reference book.
+  keeps quoting after puck drop; the live close stops at the scheduled start, so those
+  prices never become a close (:mod:`nhl.betting.lines`).
 """
 
 from __future__ import annotations
@@ -74,8 +75,9 @@ LEAGUE = "NHL"
 PROPS_LEAGUE = "NHL-PROPS"
 RPS = 1.0
 
-#: Target exposure the VWAP walks to (dollars risked on a dog, to win on a favourite).
-UNIT_SIZE: float = 600.0
+#: Target exposure the VWAP walks to (dollars risked on a dog, to win on a favourite). $100,
+#: the same floor as Novig's game lines (:data:`nhl.sources.novig.GAME_MIN_STAKE`).
+UNIT_SIZE: float = 100.0
 #: Share of the target that must fill for a price to count.
 MIN_FILL_RATIO: float = 0.95
 #: Vig added to the filled probability so exchange prices are comparable with a book's.

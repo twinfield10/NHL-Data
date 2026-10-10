@@ -27,7 +27,7 @@ local, and this machine runs on **America/New_York**, so every time below is ET.
 | Time (ET) | What runs | Why then |
 |---|---|---|
 | **04:19** | `nightly.sh`: `nhl update` (catalog → ingest last night's games → events, xG, freeze → game state → **rating snapshot dated today**), then a transactions + injuries poll, then **`nhl site-tables`** (the site's ratings boards from the new snapshot, so off days stay current, plus team matchup views and the archetype history), then **`nhl grade-bets`** (CLV against our captured closes, results, units), then **`nhl site-views --force`** for yesterday and today (final scores, graded bets) | The last West Coast games end ~01:30 and the NHL posts shift data soon after; done before the 05:35 cluster. The snapshot dated today uses only games before today, so it's point-in-time for tonight. |
-| 00:00-24:00 | Odds and FanDuel props every 15 min (:03 :18 :33 :48) while a game is within 24 h; DraftKings props come with the ESPN odds | Captures **opening lines** whenever books post them (often the evening before) and the drift through the day. |
+| 00:00-24:00 | Odds (LowVig, 4Casters, ESPN books, Novig) and FanDuel props every 15 min (:03 :18 :33 :48) while a game is within 24 h; DraftKings props come with the ESPN odds, Novig props with Novig | Captures **opening lines** whenever books post them (often the evening before) and the drift through the day. |
 | **08:07** | First lineup poll (DailyFaceoff goalies, ESPN injuries, transactions, referee crews), then every 15 min (:07 :22 :37 :52) until 23:52 | News starts with morning reports. On an off day (no game within 16 h) it skips. |
 | **08:11** | DailyFaceoff line combinations, hourly at :11 until 23:11 | Lines change after practices and morning skates; 32 pages take ~65 s, so hourly is polite. |
 | **09:14** | `pregame.sh`: the **morning slate**, always, then **`nhl edges`** | The first full set of prices with the new ratings snapshot, even if no source changed overnight, and the first edges of the day against the morning odds. Every pregame run that writes (this one and each `--reprice`) also rebuilds the site's ratings boards under `site/ratings/` (~5 s, non-fatal; see `nhl.site.tables`). |
@@ -73,18 +73,21 @@ first and then prices with everything captured so far.
 | Lineups, pregame | `2,12,17,27,32,42,47,57 * * * *` | same, `--window 90` | game within 90 min | same lock as above | `logs/poll_lineups.log` | same |
 | Lines, game day | `11 8-23 * * *` | `poll.sh lines --window 960 --reprice` | game within 16 h | `lines` | `logs/poll_lines.log` | ~65-80 s |
 | Lines, pregame | `26,41,56 * * * *` | same, `--window 90` | game within 90 min | `lines` | `logs/poll_lines.log` | same |
-| Odds, baseline | `3,18,33,48 * * * *` | `poll.sh odds,props --window 1440` | game within 24 h | `odds,props` | `logs/poll_odds.log` | ~55-75 s (FanDuel props ~35 s of it) |
-| Odds, closing | `8,13,23,28,38,43,53,58 * * * *` | `poll.sh odds,props --window 90` | game within 90 min | `odds,props` | `logs/poll_odds.log` | same |
+| Odds, baseline | `3,18,33,48 * * * *` | `poll.sh odds,props,novig --window 1440 --edges` | game within 24 h | `odds,props,novig` | `logs/poll_odds.log` | ~65-90 s (FanDuel props ~35 s, Novig ~10 s) ² |
+| Odds, closing | `8,13,23,28,38,43,53,58 * * * *` | `poll.sh odds,props,novig --window 90 --edges` | game within 90 min | `odds,props,novig` | `logs/poll_odds.log` | same |
 | LowVig props, game day | `4,19,34,49 9-23 * * *` | `poll.sh props_lowvig --window 960 --edges` | game within 16 h | `props_lowvig` | `logs/poll_props.log` | ~75 s (headless Chromium) |
 | LowVig props, pregame | `9,24,39,54 * * * *` | same, `--window 90 --edges` | game within 90 min | `props_lowvig` | `logs/poll_props.log` | same |
-| Novig | `14,29,44,59 * * * *` | `poll.sh novig --window 1440 --edges` | game within 24 h | `novig` | `logs/poll_novig.log` | ~5 s signed (one websocket snapshot); up to 7 min public (`TIME_BUDGET_S`) ² |
 
 ¹ 40 s early in the season; a few minutes later on. See [Timing](#timing).
 
-² With the `trading::read` key, every order book arrives in one websocket snapshot. Without
-it (or if the websocket fails) books are read over REST, one request per market (~250 per
-game) at ~2 requests/s on the public routes, so a poll reads game lines first, then props for
-the soonest games, and leaves the rest for the next poll. See `src/nhl/sources/novig.py`.
+² Novig: with the `trading::read` key, every order book arrives in one websocket snapshot
+(~5 s). Without it (or if the websocket fails) books are read over REST, one request per
+market (~250 per game) at ~2 requests/s on the public routes (14/s signed), game lines first,
+then props for the soonest games. Inside the odds job that REST read is capped at
+`SHARED_BUDGET_S` (60 s), so it can't hold the odds lock into the next 5-minute poll and
+cost every book its close; what it doesn't reach waits for the next poll. Novig used to be
+its own every-15-minute job from when REST was the only way in; it polls with the other
+books so every book's close comes from the same poll. See `src/nhl/sources/novig.py`.
 
 **Minute map.** Each job type has its own residue mod 5, so NHL jobs never start on the
 same minute as each other or as any other job on this machine:
@@ -95,7 +98,7 @@ same minute as each other or as any other job on this machine:
 | 1 | NHL lines (:11 :26 :41 :56) |
 | 2 | NHL lineups (:02 :07 :12 … :57) |
 | 3 | NHL odds (:03 :08 :13 … :58) |
-| 4 | NHL nightly (04:19), morning slate (09:14), LowVig props (:04 :09 :19 :24 … :54), Novig (:14 :29 :44 :59) |
+| 4 | NHL nightly (04:19), morning slate (09:14), LowVig props (:04 :09 :19 :24 … :54) |
 
 Other jobs that run every minute (`rebirtha-cfb/pool_lock_watch.sh`) or for minutes at a
 time (the NFL refreshes at :30) can still overlap in time; NHL polls are light (HTTP plus a

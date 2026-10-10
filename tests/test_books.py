@@ -19,7 +19,7 @@ import pytest
 
 from nhl.ingest.http import SourceUnavailable
 from nhl.odds.core import implied_probability
-from nhl.sources import fourcasters, lowvig
+from nhl.sources import fourcasters, lowvig, novig
 from nhl.sources.dailyfaceoff import PlayerResolver
 from nhl.storage import keys
 
@@ -230,7 +230,7 @@ def fc() -> pl.DataFrame:
 
 
 def test_vwap_underdog_walks_levels() -> None:
-    price, filled = fourcasters.vwap([(130, 1000), (150, 300), (140, 300)])
+    price, filled = fourcasters.vwap([(130, 1000), (150, 300), (140, 300)], unit_size=600)
     assert filled == 600
     p = (300 * implied_probability(150) + 300 * implied_probability(140)) / 600 + fourcasters.EXCHANGE_VIG
     assert price == pytest.approx((1 - p) / p * 100)
@@ -239,7 +239,7 @@ def test_vwap_underdog_walks_levels() -> None:
 
 def test_vwap_favourite_scales_target() -> None:
     # -200 best: target is 600 * 2 = 1200 risked.
-    price, filled = fourcasters.vwap([(-210, 500), (-200, 1000)])
+    price, filled = fourcasters.vwap([(-210, 500), (-200, 1000)], unit_size=600)
     assert filled == 1200
     p = (1000 * implied_probability(-200) + 200 * implied_probability(-210)) / 1200 + fourcasters.EXCHANGE_VIG
     assert price == pytest.approx(-p / (1 - p) * 100)
@@ -247,9 +247,16 @@ def test_vwap_favourite_scales_target() -> None:
 
 
 def test_vwap_thin_is_none() -> None:
-    assert fourcasters.vwap([(150, 500)]) is None  # 500 < 95% of 600
-    assert fourcasters.vwap([(150, 580)]) is not None
+    assert fourcasters.vwap([(150, 500)], unit_size=600) is None  # 500 < 95% of 600
+    assert fourcasters.vwap([(150, 580)], unit_size=600) is not None
     assert fourcasters.vwap([]) is None
+
+
+def test_vwap_default_size_matches_novig_floor() -> None:
+    assert fourcasters.UNIT_SIZE == novig.GAME_MIN_STAKE == 100
+    assert fourcasters.vwap([(150, 90)]) is None  # 90 < 95% of 100
+    assert fourcasters.vwap([(150, 100)])[1] == 100
+    assert fourcasters.vwap([(-200, 150), (-210, 100)])[1] == 200  # a favourite bets to win 100
 
 
 def test_fourcasters_main_lines(fc: pl.DataFrame) -> None:
@@ -257,8 +264,8 @@ def test_fourcasters_main_lines(fc: pl.DataFrame) -> None:
     assert set(tbl["book"]) == {"4Casters"}
     got = {(r["market"], r["side"]): (r["line"], r["price"]) for r in tbl.iter_rows(named=True)}
     assert got == {
-        ("moneyline", "home"): (None, -214.0), ("moneyline", "away"): (None, 189.0),
-        ("puckline", "home"): (-1.5, 119.0), ("puckline", "away"): (1.5, -132.0),
+        ("moneyline", "home"): (None, -213.0), ("moneyline", "away"): (None, 190.0),
+        ("puckline", "home"): (-1.5, 120.0), ("puckline", "away"): (1.5, -132.0),
         ("total", "over"): (5.5, -123.0), ("total", "under"): (5.5, 110.0),
     }
     # Depth is the dollars resting on that side, far above the unit size here.
@@ -279,9 +286,11 @@ def test_fourcasters_alternate_rungs(fc: pl.DataFrame) -> None:
 
 
 def test_fourcasters_thin_and_missing_omitted(fc: pl.DataFrame) -> None:
-    # NYI@NYR: puck line and total each rest on one or two small orders -> thin, omitted;
-    # its 6.5 alternate total is thin too and is simply absent.
-    assert set(pick(fc, home_team="NYR")["market"]) == {"moneyline"}
+    # NYI@NYR: puck line and total rest on a few hundred dollars, enough for $100, and so
+    # does its 6.5 alternate total.
+    nyr = pick(fc, home_team="NYR")
+    assert set(nyr["market"]) == {"moneyline", "puckline", "total"}
+    assert set(nyr.filter(pl.col("is_alternate"))["line"]) == {6.5}
     # PIT@WSH: mainTotal 0 means no total yet; EDM@ANA has an empty book.
     assert set(pick(fc, home_team="WSH")["market"]) == {"moneyline", "puckline"}
     assert pick(fc, home_team="ANA").is_empty()
