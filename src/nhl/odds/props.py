@@ -34,7 +34,7 @@ import polars as pl
 from nhl.odds.core import attach_game_ids
 from nhl.odds.store import record_seen, season_of_game
 from nhl.sources.common import append_transitions
-from nhl.sources.dailyfaceoff import PlayerResolver, norm_name
+from nhl.sources.dailyfaceoff import NAMESAKES, PlayerResolver, norm_name, split_jersey
 from nhl.storage import keys
 from nhl.storage.s3 import Store
 from nhl.teams import resolve_team
@@ -121,12 +121,18 @@ def props_frame(rows: list[dict[str, Any]]) -> pl.DataFrame:
                                   maintain_order=True)
 
 
-def _roster_match(resolver: PlayerResolver, team: str, key: str) -> int | None:
-    """``player_id`` on one team's roster by full name, else unique last name + initial."""
+def _roster_match(resolver: PlayerResolver, team: str, key: str, jersey: int | None = None) -> int | None:
+    """``player_id`` on one team's roster by full name (namesakes told apart by ``jersey``, or
+    not at all), else unique last name + initial."""
     roster = resolver.roster(team)
-    exact = [p["player_id"] for p in roster if p["first"] + p["last"] == key]
+    if key in NAMESAKES and jersey is None:
+        return NAMESAKES[key] if any(p["player_id"] == NAMESAKES[key] for p in roster) else None
+    exact = [p for p in roster if p["first"] + p["last"] == key]
+    if len(exact) > 1:
+        hit = [p["player_id"] for p in exact if jersey is not None and p["number"] == jersey]
+        return hit[0] if len(hit) == 1 else None
     if exact:
-        return exact[0]
+        return exact[0]["player_id"]
     same_last = [p["player_id"] for p in roster if p["last"] and key.endswith(p["last"]) and p["first"][:1] == key[:1]]
     return same_last[0] if len(same_last) == 1 else None
 
@@ -149,11 +155,12 @@ def resolve_player(
     """
     if team:
         return resolver.resolve(team, name), team
-    key = norm_name(name)
+    bare, jersey = split_jersey(name)
+    key = norm_name(bare)
     if not key:
         return None, None
     for candidate in (home, away):
-        if candidate and (pid := _roster_match(resolver, candidate, key)) is not None:
+        if candidate and (pid := _roster_match(resolver, candidate, key, jersey)) is not None:
             resolver.stats["resolved"] += 1
             return pid, candidate
     return resolver.resolve(None, name), None

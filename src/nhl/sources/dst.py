@@ -46,7 +46,7 @@ from nhl.ingest.http import SourceUnavailable
 from nhl.odds.core import american_price
 from nhl.odds.props import props_frame, store_props
 from nhl.sources.common import archive_raw, utcnow
-from nhl.sources.dailyfaceoff import PlayerResolver
+from nhl.sources.dailyfaceoff import NAMESAKES, PlayerResolver, norm_name
 from nhl.storage.s3 import Store
 
 logger = logging.getLogger(__name__)
@@ -68,9 +68,8 @@ STATISTICS: dict[str, str] = {"goals": "goals", "assists": "assists", "points": 
                               "shots on goal": "shots", "saves": "saves"}
 FIRST_GOAL_FIELD = "first goalscorer"
 #: DST tells namesakes apart by middle name; the roster can't (both are "Elias Pettersson"
-#: on VAN). Checked 2026-10-08 by position and price: the forward is "Fredrik Elias".
-PLAYER_IDS: dict[str, int] = {"Fredrik Elias Pettersson": 8480012, "Fredrick Elias Pettersson": 8480012,
-                              "Elias Nils Pettersson": 8483678}
+#: on VAN). Checked 2026-10-08 by position and price: the forward is "Fredrik Elias". The
+#: spellings live in :data:`nhl.sources.dailyfaceoff.NAMESAKES`, shared with every book.
 #: ``condition`` codes on ``marketsByOu``.
 OU_SIDES: dict[int, str] = {3: "over", 1: "under"}
 #: ``condition`` code for "at least N" on ``marketsBySs``.
@@ -362,7 +361,7 @@ def normalize(raw: dict[str, Any], captured_at: datetime) -> pl.DataFrame:
         base = {"book": BOOK, "captured_at": captured_at, **game, "source_event_id": str(entry["game_id"])}
         rows.extend(market_rows(entry, base))
     for r in rows:
-        r["player_id"] = PLAYER_IDS.get(r["player_name"])
+        r["player_id"] = NAMESAKES.get(norm_name(r["player_name"]))
     return props_frame(rows)
 
 

@@ -152,3 +152,36 @@ def test_resolver_name_variants() -> None:
     assert r.resolve(None, "Tim Stuetzle") == 8482116
     assert r.resolve(None, "Yurov Danila") == 8483525
     assert r.resolve(None, "Nobody Here") is None
+
+
+def test_resolver_tells_roster_namesakes_apart_only_by_jersey_or_middle_name() -> None:
+    from nhl.odds.props import resolve_player
+
+    van = {"forwards": [{"id": 8480012, "firstName": {"default": "Elias"}, "lastName": {"default": "Pettersson"}, "sweaterNumber": 40}],
+           "defensemen": [{"id": 8483678, "firstName": {"default": "Elias"}, "lastName": {"default": "Pettersson"}, "sweaterNumber": 25}]}
+    players = pl.DataFrame({"player_id": [8480012, 8483678], "player_name": ["Elias Pettersson"] * 2,
+                            "last_season": [20262027, 20262027]})
+    r = PlayerResolver(players=players, roster_loader=lambda team: van if team == "VAN" else {})
+    assert r.resolve("VAN", "Elias Pettersson #25") == 8483678   # FanDuel's sweater suffix
+    assert r.resolve("VAN", "Elias Pettersson #40") == 8480012
+    assert r.resolve("VAN", "Elias N. Pettersson") == 8483678    # DraftKings' middle initial
+    assert r.resolve("VAN", "Fredrik Elias Pettersson") == 8480012
+    assert r.resolve("VAN", "Elias Pettersson") == 8480012        # plain name: the forward (checked by price)
+    # Without a team (4Casters), both rosters are tried; the jersey still decides.
+    assert resolve_player(r, "Elias Pettersson #25", None, "NYR", "VAN") == (8483678, "VAN")
+    assert resolve_player(r, "Elias Pettersson", None, "NYR", "VAN") == (8480012, "VAN")
+
+
+def test_resolver_never_guesses_between_unknown_namesakes() -> None:
+    from nhl.odds.props import resolve_player
+
+    def p(pid: int, num: int) -> dict:
+        return {"id": pid, "firstName": {"default": "John"}, "lastName": {"default": "Smith"}, "sweaterNumber": num}
+
+    roster = {"forwards": [p(1, 11)], "defensemen": [p(2, 22)]}
+    players = pl.DataFrame({"player_id": [1, 2], "player_name": ["John Smith"] * 2, "last_season": [20262027] * 2})
+    r = PlayerResolver(players=players, roster_loader=lambda team: roster if team == "AAA" else {})
+    assert r.resolve("AAA", "John Smith") is None           # same name on one roster
+    assert r.resolve(None, "John Smith") is None            # both active: no league guess
+    assert r.resolve("AAA", "John Smith #22") == 2
+    assert resolve_player(r, "John Smith", None, "AAA", "BBB") == (None, None)
