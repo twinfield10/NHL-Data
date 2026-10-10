@@ -30,7 +30,7 @@ local, and this machine runs on **America/New_York**, so every time below is ET.
 | Time (ET) | What runs | Why then |
 |---|---|---|
 | **04:19** | `nightly.sh`: `nhl update` (catalog → ingest last night's games → events, xG, freeze → game state → **rating snapshot dated today**), then a transactions + injuries poll, then **`nhl site-tables`** (the site's ratings boards from the new snapshot, so off days stay current, plus team matchup views and the archetype history), then **`nhl odds-history`** (ESPN's published open/close for last night's games: fills games we never polled, and logs our closes vs ESPN's), then **`nhl grade-bets`** (CLV against our captured closes, results, units), then **`nhl pregame`**, **`nhl edges`** and **`nhl props-edges`** for every date in the horizon (the day's first prices from the new snapshot; this replaced the 09:14 slate run on 2026-10-10), then **`nhl site-views --force`** for yesterday and today (final scores, graded bets) | The last West Coast games end ~01:30 and the NHL posts shift data soon after; done before the 05:35 cluster. The snapshot dated today uses only games before today, so it's point-in-time for tonight. Every pregame run that writes today's prices also rebuilds the site's ratings boards under `site/ratings/` (~5 s, non-fatal; see `nhl.site.tables`). |
-| 00:00-24:00 | Odds (LowVig, 4Casters, ESPN books, Novig) and FanDuel props every 15 min (:03 :18 :33 :48) while a game is within 24 h; DraftKings props come with the ESPN odds, Novig props with Novig | Captures **opening lines** whenever books post them (often the evening before) and the drift through the day. |
+| 00:00-24:00 | Odds (LowVig, 4Casters, ESPN books, Novig) and FanDuel props hourly (:03) while a game is within 72 h, and every 15 min (:03 :18 :33 :48) while one is within 24 h; DraftKings props come with the ESPN odds, Novig props with Novig. A poll that sees a game on a date not yet priced prices it | Captures **opening lines** whenever books post them (~30-53 h ahead, so on off days too) and the drift through the day. |
 | **08:07** | First lineup poll (DailyFaceoff goalies, ESPN injuries, transactions, referee crews), then every 15 min (:07 :22 :37 :52) until 23:52 | News starts with morning reports. On an off day (no game within 16 h) it skips. |
 | **08:11** | DailyFaceoff line combinations, hourly at :11 until 23:11 | Lines change after practices and morning skates; 32 pages take ~65 s, so hourly is polite. |
 | 10:00-12:00 | Morning skates: DailyFaceoff "Likely"/"Confirmed" starters arrive | Picked up by the 15-minute lineup polls; each change reprices. |
@@ -74,7 +74,8 @@ first and then prices with everything captured so far.
 | Lineups, pregame | `2,12,17,27,32,42,47,57 * * * *` | same, `--window 90` | game within 90 min | same lock as above | `logs/poll_lineups.log` | same |
 | Lines, game day | `11 8-23 * * *` | `poll.sh lines --window 960 --reprice` | game within 16 h | `lines` | `logs/poll_lines.log` | ~65-80 s |
 | Lines, pregame | `26,41,56 * * * *` | same, `--window 90` | game within 90 min | `lines` | `logs/poll_lines.log` | same |
-| Odds, baseline | `3,18,33,48 * * * *` | `poll.sh odds,props,novig --window 1440 --edges` | game within 24 h | `odds,props,novig` | `logs/poll_odds.log` | ~65-90 s (FanDuel props ~35 s, Novig ~10 s) ² |
+| Odds, openers | `3 * * * *` | `poll.sh odds,props,novig --window 4320 --edges` | game within 72 h | `odds,props,novig` | `logs/poll_odds.log` | ~65-90 s ² (+ ~20 s per newly listed date priced) |
+| Odds, baseline | `18,33,48 * * * *` | `poll.sh odds,props,novig --window 1440 --edges` | game within 24 h | `odds,props,novig` | `logs/poll_odds.log` | ~65-90 s (FanDuel props ~35 s, Novig ~10 s) ² |
 | Odds, closing | `8,13,23,28,38,43,53,58 * * * *` | `poll.sh odds,props,novig --window 90 --edges` | game within 90 min | `odds,props,novig` | `logs/poll_odds.log` | same |
 | LowVig props, game day | `4,19,34,49 9-23 * * *` | `poll.sh props_lowvig --window 960 --edges` | game within 16 h | `props_lowvig` | `logs/poll_props.log` | ~75 s (headless Chromium) |
 | LowVig props, pregame | `9,24,39,54 * * * *` | same, `--window 90 --edges` | game within 90 min | `props_lowvig` | `logs/poll_props.log` | same |
@@ -125,7 +126,7 @@ Every pregame run reports each input's age and warns when it passes its limit
 | ESPN injuries | 12 h | every 15 min on game days, and nightly |
 | Transactions | 24 h | every 15 min on game days, and nightly |
 | Referee assignments | 24 h | every 15 min on game days |
-| Odds | 6 h | every 15 min while a game is within 24 h |
+| Odds | 6 h | hourly while a game is within 72 h; every 15 min within 24 h |
 | Rating snapshot | 36 h | nightly at 04:19 |
 | Game state (player logs) | 36 h | nightly at 04:19 |
 
