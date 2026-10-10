@@ -26,8 +26,8 @@ over/unders and N+ ladders from every captured book (DraftKings via ESPN, FanDue
    market and :data:`MIN_TWO_WAY_BOOKS` of them quoting both sides, the skater projected to dress for certain (no game-time decision) with high lineup
    confidence, or the goalie at least :data:`MIN_P_START` likely to start.
 6. **Stake**: ¼ Kelly on the 100-unit bankroll, at most :data:`MAX_BET_UNITS` per bet,
-   :data:`MAX_PLAYER_UNITS` per player-game and :data:`MAX_DAY_UNITS` per day of props,
-   counting bets already in the props ledger. That's separate from the game-line caps.
+   and :data:`MAX_PLAYER_UNITS` per player-game, counting bets already in the props ledger.
+   No daily cap while paper bets are being tracked (owner, 2026-10-10).
 
 Every evaluated quote is snapshotted at ``pregame/props_edges/{date}/{stamp}.parquet``, and
 newly flagged bets go to the props paper ledger (:mod:`nhl.props.ledger`).
@@ -78,7 +78,6 @@ BANKROLL_UNITS = 100.0
 KELLY_FRACTION = 0.25
 MAX_BET_UNITS = 0.5
 MAX_PLAYER_UNITS = 1.0
-MAX_DAY_UNITS = 5.0
 #: Reporting floor for the edges snapshot: every best quote at or above it is kept.
 SNAPSHOT_MIN_EDGE = -1.0
 LOCK_PATH = "/tmp/nhl_data_props_edges.lock"
@@ -349,7 +348,7 @@ def price_quotes(probs: pl.DataFrame, proj: pl.DataFrame) -> pl.DataFrame:
 
 def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:
     """Units per flagged quote. A bet already in the ledger keeps its placed stake and uses up
-    room; only new bets are sized, within what's left of the per-player and per-day caps."""
+    room; only new bets are sized, within what's left of the per-player cap."""
     from nhl.props import ledger
 
     key = ledger.BET_KEY
@@ -363,10 +362,6 @@ def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:
     new_total = pl.col("_new").sum().over("game_id", "player_id")
     e = e.with_columns(pl.when(new_total > pl.col("_room")).then(pl.col("_new") * pl.col("_room") / new_total)
                        .otherwise(pl.col("_new")).alias("_new"))
-    room = max(MAX_DAY_UNITS - float(placed["stake_units"].sum()), 0.0)
-    total = float(e["_new"].sum())
-    if total > room:
-        e = e.with_columns((pl.col("_new") * (room / total if total else 0.0)).alias("_new"))
     return e.with_columns(pl.coalesce("_placed", pl.col("_new").round(2)).alias("stake_units")).drop(
         "_placed", "_new", "_used", "_room")
 

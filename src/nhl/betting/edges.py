@@ -11,8 +11,9 @@ For every game on a date that hasn't started, every captured book and every main
 4. **Edge** = (1 − P(push)) × (p × decimal − 1) for each side; the best book per side wins.
    A book more than :data:`OUTLIER` from the consensus is treated as a bad quote and skipped.
 5. **Stake** (owner, 2026-10-06): ¼ Kelly on a bankroll of :data:`BANKROLL_UNITS` units,
-   at most 2 u per bet, 3 u per game (moneyline and puck line on a game are correlated) and
-   10 u per day including bets already in the ledger.
+   at most 2 u per bet and 3 u per game (moneyline and puck line on a game are correlated),
+   counting bets already in the ledger. No daily cap while paper bets are being tracked
+   (owner, 2026-10-10): every flagged edge is recorded at full size.
 6. **Flag** when the edge clears :data:`MIN_EDGE`.
 
 **Tiers** say how much history stands behind a bet (all are staked the same, by the owner's
@@ -51,7 +52,6 @@ BANKROLL_UNITS = 100.0
 KELLY_FRACTION = 0.25
 MAX_BET_UNITS = 2.0
 MAX_GAME_UNITS = 3.0
-MAX_DAY_UNITS = 10.0
 MIN_EDGE = {"moneyline": 0.02, "puckline": 0.03, "total": 0.03}
 OUTLIER = 0.03
 LOCK_PATH = "/tmp/nhl_data_edges.lock"
@@ -222,10 +222,10 @@ def closing(store: Store, day: date, now: datetime | None = None) -> pl.DataFram
 
 
 def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:
-    """Units per flagged bet after the per-bet, per-game and per-day caps.
+    """Units per flagged bet after the per-bet and per-game caps (no daily cap).
 
     A (game, market, side) already in the paper ledger keeps its placed stake and uses up its
-    game's and the day's room; only new bets are sized, within what's left. (Resizing placed
+    game's room; only new bets are sized, within what's left. (Resizing placed
     bets and counting only new ones let a day's ledger pass the cap as later runs added bets.)
     """
     key = ["game_id", "market", "side"]
@@ -240,10 +240,6 @@ def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:
     new_game = pl.col("_new").sum().over("game_id")
     e = e.with_columns(pl.when(new_game > pl.col("_room")).then(pl.col("_new") * pl.col("_room") / new_game)
                        .otherwise(pl.col("_new")).alias("_new"))
-    room = max(MAX_DAY_UNITS - float(placed["stake_units"].sum()), 0.0)
-    total = float(e["_new"].sum())
-    if total > room:
-        e = e.with_columns((pl.col("_new") * (room / total if total else 0.0)).alias("_new"))
     return e.with_columns(pl.coalesce("_placed", pl.col("_new").round(2)).alias("stake_units")).drop(
         "_placed", "_new", "_used", "_room")
 

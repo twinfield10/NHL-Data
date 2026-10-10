@@ -182,8 +182,9 @@ def test_stakes_count_placed_bets_against_the_caps() -> None:
     out = {(r["player_id"], r["prop_type"]): r["stake_units"]
            for r in live._stakes(e, store, date(2026, 10, 8)).iter_rows(named=True)}  # type: ignore[arg-type]
     assert out[(1, "points")] == 0.5  # already placed: keeps its stake, adds nothing
-    # 5 u day cap with 5.0 u placed: nothing left for new bets.
-    assert out[(20, "points")] == out[(20, "assists")] == out[(30, "points")] == 0.0
+    # No day cap: 5 u already placed doesn't stop new bets. Player 20 has 0.5 u of its 1 u left,
+    # split across two new bets; player 30 gets the full 0.5 u.
+    assert out[(20, "points")] == out[(20, "assists")] == 0.25 and out[(30, "points")] == 0.5
 
 
 def test_stakes_player_cap_counts_placed() -> None:
