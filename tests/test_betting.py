@@ -265,14 +265,14 @@ def test_record_seen_keeps_latest_pregame_poll_per_market():
 
     start = _START
     store, key = _Mem(), keys.odds_seen(20262027, "test")
-    assert record_seen(store, key, _odds(_poll("LowVig", 1, start - timedelta(hours=3), -120.0, 100.0))) == 1
+    assert record_seen(store, key, _odds(_poll("LowVig", 1, start - timedelta(hours=3), -120.0, 100.0))) == 2  # per side
     record_seen(store, key, _odds(_poll("LowVig", 1, start - timedelta(minutes=5), -120.0, 100.0)
                                   + _poll("LowVig", 2, start - timedelta(minutes=5), -110.0, -110.0, alternate=True)))
     # In-play polls never count as seen pregame.
     record_seen(store, key, _odds(_poll("LowVig", 1, start + timedelta(minutes=10), -300.0, 240.0)))
     seen = load_seen(store, keys.odds_seen_prefix(20262027)).sort("game_id")
-    assert seen.height == 2  # the alternate rung is tracked too
-    assert seen["last_seen"].to_list() == [start - timedelta(minutes=5)] * 2
+    assert seen.height == 4  # each side, and the alternate rung's too
+    assert seen["last_seen"].to_list() == [start - timedelta(minutes=5)] * 4
 
 
 def test_live_close_drops_markets_pulled_before_puck_drop():
@@ -289,7 +289,8 @@ def test_live_close_drops_markets_pulled_before_puck_drop():
     seen = pl.DataFrame({
         "book": ["LowVig", "4Casters"], "game_id": [2026020050] * 2,
         "market_uid": ["game|moneyline|game|main"] * 2, "last_seen": [late, early],
-    }, schema={"book": pl.Utf8, "game_id": pl.Int64, "market_uid": pl.Utf8, "last_seen": pl.Datetime("us", "UTC")})
+    }, schema={"book": pl.Utf8, "game_id": pl.Int64, "market_uid": pl.Utf8, "last_seen": pl.Datetime("us", "UTC")}).join(
+        pl.DataFrame({"side": ["home", "away"]}), how="cross")
     store = _Mem({keys.odds(20262027, "x"): odds, keys.odds_seen(20262027, "x"): seen})
     close = L.live_lines(store, 20262027).filter(pl.col("point") == "close")
     got = {r["book"]: r["price_1"] for r in close.iter_rows(named=True)}
@@ -363,3 +364,20 @@ def test_exchange_primary_ties_on_hold_go_to_the_line_nearest_even():
             + _alt(_rows("Novig", g, "total", "close", 7.5, 7.5, 208.0, -212.0))
             + _alt(_rows("Novig", g, "total", "close", 4.5, 4.5, -525.0, 466.0)))
     assert D.consensus(_pairs(rows), "multiplicative")["line"].to_list() == [5.5]
+
+
+def test_live_close_drops_a_side_the_book_stopped_quoting():
+    from datetime import timedelta
+
+    from nhl.storage import keys
+
+    start = _START
+    early, late = start - timedelta(hours=4), start - timedelta(minutes=5)
+    # 4Casters' away side went too thin to fill after its early quote; its home side stayed.
+    odds = _odds(_poll("4Casters", 2026020051, early, -125.0, 108.0))
+    seen = pl.DataFrame({"book": ["4Casters"] * 2, "game_id": [2026020051] * 2, "market_uid": ["game|moneyline|game|main"] * 2,
+                         "side": ["home", "away"], "last_seen": [late, early]},
+                        schema_overrides={"last_seen": pl.Datetime("us", "UTC")})
+    store = _Mem({keys.odds(20262027, "x"): odds, keys.odds_seen(20262027, "x"): seen})
+    # Without both sides at the close there is no closing pair.
+    assert L.live_lines(store, 20262027).filter(pl.col("point") == "close").is_empty()

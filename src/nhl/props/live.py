@@ -46,7 +46,7 @@ import polars as pl
 from nhl.betting.edges import _games, last_pregame_prices
 from nhl.odds.props import SEEN_KEY as PROP_SEEN_KEY
 from nhl.odds.props import load_props
-from nhl.odds.store import load_seen, still_listed
+from nhl.odds.store import in_latest_poll, load_seen, still_listed
 from nhl.props import project, rates, volume
 from nhl.sources.common import stamp
 from nhl.storage import keys
@@ -276,18 +276,36 @@ def latest_quotes(store: Store, season: int, game_ids: list[int], cutoff: dateti
 PROP_CLOSE_MAX_GAP = timedelta(minutes=20)
 
 
+def drop_pulled(quotes: pl.DataFrame, seen: pl.DataFrame | None) -> pl.DataFrame:
+    """Prop quotes whose book still listed them at its latest poll of the game
+    (:func:`nhl.odds.store.in_latest_poll`): a prop taken down keeps its last stored price in
+    the transitions, which must never read as a current price or a close."""
+    return in_latest_poll(quotes, seen, PROP_SEEN_KEY)
+
+
+def load_props_seen(store: Store, season: int) -> pl.DataFrame | None:
+    """Every prop poller's seen table for ``season``."""
+    return load_seen(store, keys.props_seen_prefix(season), PROP_SEEN_KEY)
+
+
+def current_quotes(store: Store, season: int, game_ids: list[int], now: datetime) -> pl.DataFrame:
+    """Each book's latest price per prop side as of ``now``, props it has taken down left out."""
+    return drop_pulled(latest_quotes(store, season, game_ids, now), load_props_seen(store, season))
+
+
 def closing_quotes(store: Store, season: int, starts: dict[int, datetime]) -> pl.DataFrame:
-    """Each book's closing price per prop side: the last before each game's ``starts`` time,
-    kept only if the book still listed that prop within :data:`PROP_CLOSE_MAX_GAP` of it
-    (:func:`nhl.odds.store.still_listed`); a prop pulled earlier has no close."""
+    """Each book's closing price per prop side: the last before each game's ``starts`` time, kept
+    only if the book listed that prop at its last pregame poll of the game and that poll was
+    within :data:`PROP_CLOSE_MAX_GAP` of the start (:func:`nhl.odds.store.still_listed`); a
+    prop pulled earlier has no close."""
     quotes = latest_quotes(store, season, list(starts), starts)
     if quotes.is_empty():
         return quotes
     limits = pl.DataFrame({"game_id": list(starts), "start_time": list(starts.values())},
                           schema={"game_id": pl.Int64, "start_time": pl.Datetime("us", "UTC")})
     quotes = quotes.drop("start_time", strict=False).join(limits, on="game_id")
-    seen = load_seen(store, keys.props_seen_prefix(season), PROP_SEEN_KEY)
-    return still_listed(quotes, seen, PROP_SEEN_KEY, PROP_CLOSE_MAX_GAP)
+    seen = load_props_seen(store, season)
+    return still_listed(drop_pulled(quotes, seen), seen, PROP_SEEN_KEY, PROP_CLOSE_MAX_GAP)
 
 
 def _model_over(proj: pl.DataFrame) -> pl.DataFrame:
@@ -365,7 +383,7 @@ def compute(store: Store, day: date | None = None, now: datetime | None = None, 
     games = _games(store, proj["game_id"].unique().to_list()).filter(pl.col("start_utc") > now)
     if games.is_empty():
         return pl.DataFrame()
-    quotes = latest_quotes(store, int(games["season"][0]), games["game_id"].to_list(), now)
+    quotes = current_quotes(store, int(games["season"][0]), games["game_id"].to_list(), now)
     if quotes.is_empty():
         logger.info("props edges %s: no prop prices", day)
         return pl.DataFrame()

@@ -427,6 +427,14 @@ class SiteData:
         return self._timed_get(f"props_quotes/{season}", LIST_TTL_SECONDS, lambda: load_props(self.store, season),
                                stale_ok=True)
 
+    def props_seen(self, season: int) -> pl.DataFrame | None:
+        """When each book last listed each prop (re-read every :data:`LIST_TTL_SECONDS`), to
+        leave out props a book has taken down."""
+        from nhl.props.live import load_props_seen
+
+        return self._timed_get(f"props_seen/{season}", LIST_TTL_SECONDS, lambda: load_props_seen(self.store, season),
+                               stale_ok=True)
+
     def props_ledger(self) -> pl.DataFrame | None:
         """The player-prop paper ledger (re-read every :data:`MUTABLE_TTL_SECONDS`)."""
         return self._timed_get("props_ledger", MUTABLE_TTL_SECONDS, lambda: _ledger(self.store, "props"))
