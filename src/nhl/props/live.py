@@ -28,7 +28,10 @@ over/unders and N+ ladders from every captured book (DraftKings via ESPN, FanDue
 6. **Stake**: ¼ Kelly on the 100-unit bankroll scaled by :data:`UNIT_SCALE` (props are sized at a
    tenth of game lines, owner 2026-10-10), at most :data:`MAX_BET_UNITS` per bet,
    and :data:`MAX_PLAYER_UNITS` per player-game, counting bets already in the props ledger.
-   No daily cap while paper bets are being tracked (owner, 2026-10-10). A side is ``blocked``
+   No daily cap while paper bets are being tracked (owner, 2026-10-10). A bet placed at least
+   :data:`EARLY_HOURS` before puck drop is staked at :data:`EARLY_MULTIPLIER` × (stake and
+   both caps): early props carried the CLV in the first graded days (owner, 2026-10-10).
+   A side is ``blocked``
    when the player's same stat already has the other side in the ledger, at any line: the
    official ledger never hedges itself (owner, 2026-10-10).
 
@@ -83,6 +86,10 @@ KELLY_FRACTION = 0.25
 UNIT_SCALE = 0.1
 MAX_BET_UNITS = 0.05
 MAX_PLAYER_UNITS = 0.1
+#: Props placed at least this many hours before puck drop get :data:`EARLY_MULTIPLIER` × the
+#: stake and caps above. A late run never adds to them: a placed bet keeps its stake.
+EARLY_HOURS = 4.0
+EARLY_MULTIPLIER = 2.0
 #: Reporting floor for the edges snapshot: every best quote at or above it is kept.
 SNAPSHOT_MIN_EDGE = -1.0
 LOCK_PATH = "/tmp/nhl_data_props_edges.lock"
@@ -353,7 +360,9 @@ def price_quotes(probs: pl.DataFrame, proj: pl.DataFrame) -> pl.DataFrame:
 
 def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:
     """Units per flagged quote. A bet already in the ledger keeps its placed stake and uses up
-    room; only new bets are sized, within what's left of the per-player cap. A flagged side is
+    room; only new bets are sized, within what's left of the per-player cap. Stake and caps are
+    :data:`EARLY_MULTIPLIER` × when the run is at least :data:`EARLY_HOURS` before puck drop.
+    A flagged side is
     ``blocked`` when the other side of the player's stat (any line) is in the ledger, or flags
     on the same run with a bigger edge."""
     from nhl.props import ledger
@@ -362,23 +371,25 @@ def _stakes(edges: pl.DataFrame, store: Store, day: date) -> pl.DataFrame:
     placed = ledger.load(store).filter((pl.col("kind") == "paper") & (pl.col("game_date") == day))
     stat = ["game_id", "player_id", "prop_type"]
     taken = placed.group_by(stat).agg(pl.col("side").first().alias("_taken"))
+    early = (pl.col("start_utc") - pl.col("as_of")) >= timedelta(hours=EARLY_HOURS)
     e = edges.join(placed.select(*key, pl.col("stake_units").alias("_placed")), on=key, how="left").join(
-        taken, on=stat, how="left")
+        taken, on=stat, how="left").with_columns(pl.when(early).then(EARLY_MULTIPLIER).otherwise(1.0).alias("_mult"))
     fresh = pl.col("flagged") & pl.col("_placed").is_null()
     best = pl.when(fresh).then(pl.col("edge")).max().over(*stat, "side")
     rival = pl.when(fresh).then(pl.col("edge")).max().over(stat)
     e = e.with_columns((fresh & pl.when(pl.col("_taken").is_null()).then(best < rival)
                         .otherwise(pl.col("_taken") != pl.col("side"))).alias("blocked")).with_columns(
         pl.when(fresh & ~pl.col("blocked"))
-        .then((pl.col("kelly") * BANKROLL_UNITS * UNIT_SCALE).clip(0, MAX_BET_UNITS)).otherwise(0.0).alias("_new"))
+                .then((pl.col("kelly") * BANKROLL_UNITS * UNIT_SCALE * pl.col("_mult")).clip(0, MAX_BET_UNITS * pl.col("_mult")))
+        .otherwise(0.0).alias("_new"))
     player_used = placed.group_by("game_id", "player_id").agg(pl.col("stake_units").sum().alias("_used"))
     e = e.join(player_used, on=["game_id", "player_id"], how="left").with_columns(
-        (MAX_PLAYER_UNITS - pl.col("_used").fill_null(0.0)).clip(0, None).alias("_room"))
+        (MAX_PLAYER_UNITS * pl.col("_mult") - pl.col("_used").fill_null(0.0)).clip(0, None).alias("_room"))
     new_total = pl.col("_new").sum().over("game_id", "player_id")
     e = e.with_columns(pl.when(new_total > pl.col("_room")).then(pl.col("_new") * pl.col("_room") / new_total)
                        .otherwise(pl.col("_new")).alias("_new"))
     return e.with_columns(pl.coalesce("_placed", pl.col("_new").round(3)).alias("stake_units")).drop(
-        "_placed", "_new", "_used", "_room", "_taken")
+        "_placed", "_new", "_used", "_room", "_taken", "_mult")
 
 
 def compute(store: Store, day: date | None = None, now: datetime | None = None, write: bool = True) -> pl.DataFrame:
