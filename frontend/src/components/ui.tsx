@@ -70,12 +70,12 @@ export function Signed({ value, children }: { value: number | null | undefined; 
 /** Segmented toggle (one option active). */
 export function Pills<K extends string>({ options, value, onChange }: { options: readonly { key: K; label: string }[]; value: K; onChange: (k: K) => void }) {
   return (
-    <div className="flex gap-1">
+    <div className="flex flex-wrap gap-1">
       {options.map((o) => (
         <button
           key={o.key}
           onClick={() => onChange(o.key)}
-          className={cn("rounded-md px-3 py-1 text-sm", value === o.key ? "bg-muted font-medium" : "text-muted-foreground hover:text-foreground")}
+          className={cn("whitespace-nowrap rounded-md px-3 py-1 text-sm", value === o.key ? "bg-muted font-medium" : "text-muted-foreground hover:text-foreground")}
         >
           {o.label}
         </button>

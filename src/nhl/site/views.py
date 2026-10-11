@@ -28,7 +28,7 @@ from fastapi.encoders import jsonable_encoder
 
 PREFIX = "site/views/"
 #: Bump when a view's payload shape changes, so the API ignores views built by older code.
-VERSION = 1
+VERSION = 2
 
 
 def slate_key(day: date) -> str:

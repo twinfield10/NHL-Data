@@ -48,7 +48,7 @@ function GameMarkets() {
 
           <div className="flex flex-wrap items-center gap-3">
             <Pills options={FILTERS} value={filter} onChange={setFilter} />
-            <span className="h-5 w-px bg-border" />
+            <span className="hidden h-5 w-px bg-border sm:block" />
             <Pills options={MARKET_FILTERS} value={market} onChange={setMarket} />
           </div>
 

@@ -165,3 +165,20 @@ def test_lines_source_takes_latest_version_before_puck_drop():
                            "author_handle": ["x"], "created_at": [datetime(2026, 10, 8, 12, tzinfo=UTC)]})
     src = lineupstats.lines_source(df, tweets, "VGK", datetime(2026, 10, 8, 20, tzinfo=UTC))
     assert src["source_name"] == "b" and src["tweet"]["text"] == "lines"
+
+
+def test_goal_distributions_marginals_total_and_margin():
+    from nhl.sim import markets as sim_markets
+
+    k = sim_markets.MAX_GOALS + 1
+    m = np.zeros((3, k, k))
+    m[0, 3, 1] = 0.5   # 3-1 home in regulation
+    m[1, 2, 1] = 0.25  # 2-1 home in overtime
+    m[2, 1, 2] = 0.25  # 1-2 away in a shootout
+    g = mk.goal_distributions(m.ravel())
+    assert g["home"][3] == 0.5 and g["home"][2] == 0.25 and g["home"][1] == 0.25
+    assert g["away"][1] == 0.75 and g["away"][2] == 0.25
+    assert g["total"][4] == 0.5 and g["total"][3] == 0.5
+    zero = -g["margin_min"]
+    assert g["margin"][zero + 2] == 0.5 and g["margin"][zero + 1] == 0.25 and g["margin"][zero - 1] == 0.25
+    assert mk.goal_distributions(None) is None

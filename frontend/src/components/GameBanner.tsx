@@ -68,20 +68,26 @@ function Logo({ abbr, side, large }: { abbr: string; side: "left" | "right"; lar
   return <img src={logoUrl(abbr, "dark")} alt="" className={cls} />;
 }
 
-function TeamBlock({ s, align, large }: { s: BannerSide; align: "left" | "right"; large: boolean }) {
+function TeamBlock({ s, align, large, reserveBadge }: { s: BannerSide; align: "left" | "right"; large: boolean; reserveBadge: boolean }) {
   const right = align === "right";
   const rec = s.info?.record;
   const showPrev = rec && rec.gp === 0 && s.info?.prev_record;
   return (
     <div className={cn("min-w-0", right ? "text-right" : "text-left", large ? (right ? "pr-28" : "pl-28") : right ? "pr-14 sm:pr-20" : "pl-14 sm:pl-20")}>
-      <div className={cn("flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/75 sm:text-[11px]", right && "justify-end")}>
-        {s.tone && (
-          <span className={cn("rounded-full px-1.5 py-px text-[10px] font-bold",
-            s.tone === "warn" ? "bg-red-500/30 text-red-100" : "bg-emerald-500/30 text-emerald-100")}>
-            {s.tone === "warn" ? "WARN" : "PLAY"}
-          </span>
-        )}
-        <span className="truncate">{s.info?.place ?? s.abbr}</span>
+      {/* The badge has its own line, reserved on every card so the place name never shares it
+          and both sides (and neighbouring cards) stay aligned. */}
+      {(reserveBadge || s.tone) && (
+        <div className={cn("flex h-4 items-center", right && "justify-end")}>
+          {s.tone && (
+            <span className={cn("rounded-full px-1.5 py-px text-[10px] font-bold leading-3",
+              s.tone === "warn" ? "bg-red-500/30 text-red-100" : "bg-emerald-500/30 text-emerald-100")}>
+              {s.tone === "warn" ? "WARN" : "PLAY"}
+            </span>
+          )}
+        </div>
+      )}
+      <div className="truncate text-[10px] font-semibold uppercase tracking-wider text-white/75 sm:text-[11px]">
+        {s.info?.place ?? s.abbr}
       </div>
       <div className={cn("truncate font-extrabold uppercase leading-tight tracking-tight",
         large ? "text-3xl" : (s.info?.name ?? s.abbr).length > 11 ? "text-base sm:text-lg" : "text-lg sm:text-xl",
@@ -136,13 +142,15 @@ interface GameBannerProps {
   venue?: string | null;
   location?: string | null;
   chips?: Chip[];
+  /** Under the location, e.g. "GameCenter | Watch" on the game page (not on cards, which are links). */
+  links?: ReactNode;
   large?: boolean;
   className?: string;
 }
 
 /** Matchup header: dark team fills meeting in a darker middle, logos bleeding off the edges, white text
  *  in either theme, records and form. */
-export default function GameBanner({ away, home, status, venue, location, chips, large = false, className }: GameBannerProps) {
+export default function GameBanner({ away, home, status, venue, location, chips, links, large = false, className }: GameBannerProps) {
   const dark = useDark();
   // Light-mode picks are the true primaries (clashes resolved); fillColor makes them carry white text.
   const colors = matchupColors(away.abbr, home.abbr, false);
@@ -154,11 +162,12 @@ export default function GameBanner({ away, home, status, venue, location, chips,
       <Logo abbr={away.abbr} side="left" large={large} />
       <Logo abbr={home.abbr} side="right" large={large} />
       <div className={cn("relative grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3", large ? "px-6 py-7" : "px-3 py-4")}>
-        <TeamBlock s={away} align="left" large={large} />
+        <TeamBlock s={away} align="left" large={large} reserveBadge={!large} />
         <div className="flex flex-col items-center text-center">
           <div className={cn("font-semibold", large ? "text-base" : "text-sm")}>{status}</div>
           {venue && <div className="mt-0.5 max-w-40 truncate text-[11px] text-white/75">{venue}</div>}
           {location && <div className="text-[11px] text-white/75">{location}</div>}
+          {links && <div className="mt-0.5 text-[11px] text-white/90">{links}</div>}
           {chips && chips.length > 0 && (
             <div className="mt-2 flex flex-wrap justify-center gap-1">
               {chips.map((c) => (
@@ -178,7 +187,7 @@ export default function GameBanner({ away, home, status, venue, location, chips,
             </div>
           )}
         </div>
-        <TeamBlock s={home} align="right" large={large} />
+        <TeamBlock s={home} align="right" large={large} reserveBadge={!large} />
       </div>
     </div>
   );

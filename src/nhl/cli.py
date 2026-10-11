@@ -551,6 +551,21 @@ def cmd_pregame(args: argparse.Namespace) -> None:
             publish.publish_quietly(store, day)
 
 
+def cmd_lineup_changes(args: argparse.Namespace) -> None:
+    """Print (and with ``--write``, rebuild and store) a date's lineup / goalie change ledger."""
+    import polars as pl
+
+    from nhl.pregame import changes
+    from nhl.storage.s3 import Store
+
+    store = Store()
+    day = date.fromisoformat(args.date)
+    df = changes.write(store, day) if args.write else changes.build(store, day)
+    if args.game:
+        df = df.filter(pl.col("game_id") == args.game)
+    print(changes.render(df))
+
+
 def cmd_evaluate_deployment(args: argparse.Namespace) -> None:
     """M5 diagnostic: projected vs actual ice time by role; write the report."""
     from pathlib import Path
@@ -1069,6 +1084,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--sims", type=int, default=4000)
     p.add_argument("--no-write", action="store_true", help="don't write snapshots")
     p.set_defaults(func=cmd_pregame)
+
+    p = sub.add_parser("lineup-changes", help="lineup / goalie changes between pregame runs and their price moves")
+    p.add_argument("--date", required=True, help="game date")
+    p.add_argument("--game", type=int, help="only this game_id")
+    p.add_argument("--write", action="store_true", help="rebuild and store pregame/changes/{date}.parquet (backfill)")
+    p.set_defaults(func=cmd_lineup_changes)
 
     p = sub.add_parser("evaluate-deployment", help="M5: projected vs actual ice time by role")
     p.add_argument("--seasons", default="2023-2025")

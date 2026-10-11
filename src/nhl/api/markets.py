@@ -213,3 +213,22 @@ def three_way_card(matrix: np.ndarray | None, cons: dict | None, ml_cons: dict |
             "edge": p * _decimal(best["price"]) - 1 if best and p is not None else None,
         })
     return {"sides": sides, "books": cons["books"] if cons else 0}
+
+
+def goal_distributions(matrix: np.ndarray | None) -> dict | None:
+    """The model's final-score distributions from one score matrix (book-graded scores: overtime
+    goals count, a shootout win adds one): ``home`` / ``away`` goals, the game ``total`` and the
+    home ``margin`` (``margin_min`` is the margin of the first entry). The top cell of each team
+    folds in everything above :data:`nhl.sim.markets.MAX_GOALS`."""
+    if matrix is None:
+        return None
+    k = sim_markets.MAX_GOALS + 1
+    grid = np.asarray(matrix, dtype=np.float64).reshape(3, k, k).sum(axis=0)  # [home, away]
+    grid = grid / grid.sum()
+    h, a = np.indices(grid.shape)
+    total = np.bincount((h + a).ravel(), weights=grid.ravel(), minlength=2 * k - 1)
+    margin = np.bincount((h - a + k - 1).ravel(), weights=grid.ravel(), minlength=2 * k - 1)
+    trim = lambda v: [round(float(x), 5) for x in v]  # noqa: E731
+    return {"home": trim(grid.sum(axis=1)), "away": trim(grid.sum(axis=0)), "total": trim(total),
+            "margin": trim(margin), "margin_min": -(k - 1)}
+

@@ -58,8 +58,8 @@ def _goalies(df: pl.DataFrame | None, team_id: int, names: dict[int, str]) -> li
 
 
 def market_view(data: SiteData, game: dict) -> dict:
-    """Every book's current line, the consensus and the model through the day, and the
-    regulation three-way, per market (see :mod:`nhl.api.markets`)."""
+    """Every book's current line, the consensus and the model through the day, the regulation
+    three-way, per market, and the model's latest goal distributions (see :mod:`nhl.api.markets`)."""
     start = mk.start_utc(game)
     try:
         quotes = mk.game_quotes(data.live_odds(int(game["season"])), game["game_id"], start)
@@ -75,6 +75,7 @@ def market_view(data: SiteData, game: dict) -> dict:
     books = {m: sorted(({"book": b, **v} for b, v in bs.items()), key=lambda r: r["book"]) for m, bs in state.items()}
     return {
         "start": start, "history": history, "model": model, "books": books, "consensus": now,
+        "goals": mk.goal_distributions(matrix),
         "three_way": mk.three_way_card(matrix, now.get("moneyline_3way"), now.get("moneyline"), blend_model,
                                        blend.segment_of(game["game_date"])),
     }
@@ -120,7 +121,8 @@ def get_game(game_id: int, data: SiteData = Depends(get_data)) -> dict:
 def build_lineups(data: SiteData, game: dict) -> dict:
     """Projected lineups and starters with the stats behind them: skater ratings and on-ice 5v5
     results, each projected unit's record together, goalie workload and save talent (this season
-    and last), and the DailyFaceoff reports and source tweets they come from."""
+    and last), the DailyFaceoff reports and source tweets they come from, and the change log
+    (every lineup / goalie change between pregame runs with its price move, newest first)."""
     game_id, day, season = game["game_id"], game["game_date"], int(game["season"])
     names = data.player_names()
     hands = data.player_hands()
@@ -177,7 +179,14 @@ def build_lineups(data: SiteData, game: dict) -> dict:
         "rating": lineupstats.rating_scales(None if r is None else r["players"], None if r is None else r["goalies"]),
         **{k: t["scales"] for k, t in seasons.items()},
     }
-    return {"season": season, "scales": scales, **out}
+    try:
+        changes = data.lineup_changes(day, game_id)
+    except Exception:  # the change log is context; the lineups still show
+        logger.exception("lineup changes failed for game %s", game_id)
+        changes = None
+    return {"season": season, "scales": scales, **out,
+            "changes": rows(changes.sort("stamp", descending=True, maintain_order=True), drop=("game_id", "game_date"))
+            if changes is not None else []}
 
 
 @router.get("/{game_id}/lineups")

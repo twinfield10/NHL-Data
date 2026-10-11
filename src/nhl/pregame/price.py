@@ -9,7 +9,9 @@
    P(home starter) × P(away starter);
 4. writes snapshots (never overwritten), keyed by date and run ``stamp``: lineups, goalies,
    prices, the one-row-per-game slate and input freshness, plus a ``latest`` pointer. The
-   layout is the site's data contract; see :mod:`nhl.pregame.slate`.
+   layout is the site's data contract; see :mod:`nhl.pregame.slate`;
+5. adds this run's lineup / goalie changes and their price moves to the day's change ledger
+   (:mod:`nhl.pregame.changes`).
 
 Forward-only inputs: each team's most recent head coach, and the referees assigned so far
 (Scouting the Refs); with no assignment the crew factor is neutral.
@@ -26,7 +28,7 @@ from zoneinfo import ZoneInfo
 
 import polars as pl
 
-from nhl.pregame import goalies, lineups, slate
+from nhl.pregame import changes, goalies, lineups, slate
 from nhl.pregame.backtest import PRICE_COLS, mixture
 from nhl.sim import constants as sim_constants
 from nhl.sim import engine, inputs, markets
@@ -306,6 +308,10 @@ def _run(store: Store, day: date | None, as_of: datetime | None, n_sims: int, wr
         store.put_parquet(keys.pregame_goalies(day, st), out.goalies)
         store.put_parquet(keys.pregame_prices(day, st), out.prices)
         slate.write(store, day, st, rows, fresh)
+        try:
+            changes.update(store, day, st)
+        except Exception:  # noqa: BLE001 - the change ledger is a record, never a blocker for pricing
+            logger.exception("pregame %s: change ledger update failed", day)
     shapes = lineups.lineup_shape(dep)
     irregular = shapes.filter(~pl.col("regular"))
     if irregular.height:

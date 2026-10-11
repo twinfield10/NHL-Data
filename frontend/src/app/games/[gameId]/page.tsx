@@ -10,9 +10,9 @@ import GameLineups from "@/components/GameLineups";
 import GameProps from "@/components/GameProps";
 import MarketTab from "@/components/MarketTab";
 import { Card, ErrorState, Loading } from "@/components/ui";
-import { useGame } from "@/lib/api";
+import { useGame, useLive } from "@/lib/api";
 import { longDate, timeET } from "@/lib/format";
-import { matchupColors } from "@/lib/teams";
+import { gameCenterUrl, matchupColors } from "@/lib/teams";
 import { useDark } from "@/lib/useDark";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +25,7 @@ type Tab = (typeof TABS)[number]["key"];
 
 function Game({ gameId }: { gameId: string }) {
   const { data, isLoading, error } = useGame(gameId);
+  const live = useLive(data?.game.game_date, !!data);
   const search = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -38,6 +39,21 @@ function Game({ gameId }: { gameId: string }) {
 
   const { game, pregame: p } = data;
   const colors = matchupColors(game.away_abbr, game.home_abbr, dark);
+  const now = live.data?.games.find((g) => g.game_id === game.game_id);
+  const link = "underline-offset-2 hover:underline";
+  const links = (
+    <>
+      <a href={now?.gamecenter_url ?? gameCenterUrl(game.game_id, game.game_date, game.away_abbr, game.home_abbr)}
+        target="_blank" rel="noopener noreferrer" className={link}>GameCenter</a>
+      {now?.espn_url && (
+        <>
+          <span className="mx-1.5 text-white/50">|</span>
+          <a href={now.espn_url} target="_blank" rel="noopener noreferrer" className={link}
+            title="ESPN game page (ESPN+ games stream from here)">Watch</a>
+        </>
+      )}
+    </>
+  );
 
   return (
     <div className="space-y-6">
@@ -54,9 +70,13 @@ function Game({ gameId }: { gameId: string }) {
           home={{ abbr: game.home_abbr, info: data.teams[game.home_abbr],
             goalie: p ? { name: p.home_starter, p: p.home_starter_p, status: p.home_starter_dfo } : undefined,
             lineup: p ? { dfoShare: p.home_dfo_share, issues: p.home_lineup_issues, gtd: p.home_game_time_decisions } : undefined }}
-          status={gameStatus(game, p?.start_time ?? data.markets.start)}
+          status={now?.state === "live" && now.home_score != null ? (
+            <span className="tabular">{now.away_score}–{now.home_score}{" "}
+              <span className="text-xs font-normal text-amber-300">{now.detail}</span></span>
+          ) : gameStatus(game, p?.start_time ?? data.markets.start)}
           venue={game.venue_name}
           location={game.venue_location}
+          links={links}
           chips={p ? [{ label: "Priced", value: timeET(p.as_of) }] : undefined}
         />
       </Card>

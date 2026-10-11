@@ -12,7 +12,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 
 from nhl import config
 from nhl.api.deps import get_data
-from nhl.api.routers import betting, context, games, props, ratings, slate, style
+from nhl.api.routers import betting, context, games, live, props, ratings, slate, style
 from nhl.api.serialize import today_et
 
 
@@ -40,6 +40,7 @@ app.include_router(ratings.router)
 app.include_router(context.router)
 app.include_router(style.router)
 app.include_router(props.router)
+app.include_router(live.router)
 
 
 @app.get("/api/health")
